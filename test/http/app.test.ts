@@ -79,11 +79,22 @@ describe('HTTP app', () => {
     expect(paypal.getDispute).toHaveBeenCalledTimes(6);
   });
 
+  test('GET /api/cases rebuilds cached rows after notes change', async () => {
+    const auth = { 'x-settle-passcode': 'pass' };
+    await request(app).get('/api/cases').set(auth).expect(200);
+    await request(app).put('/api/cases/d-late/notes').set(auth).send({ notes: 'Updated notes' }).expect(200);
+    const { body } = await request(app).get('/api/cases').set(auth).expect(200);
+    expect(body.cases.find((row: { disputeId: string }) => row.disputeId === 'd-late').caseKey).toBe('d-late');
+  });
+
   test('GET /api/cases returns stale data with a warning when PayPal fails after a good fetch', async () => {
     await request(app).get('/api/cases').set('x-settle-passcode', 'pass').expect(200);
     paypal.listDisputes.mockRejectedValueOnce(new PayPalError('down', 503, 'dbg', {}, '/list'));
     const { body } = await request(app).get('/api/cases?refresh=1').set('x-settle-passcode', 'pass').expect(200);
     expect(body).toMatchObject({ stale: true, warning: expect.any(String), cases: expect.any(Array) });
+    paypal.listDisputes.mockRejectedValueOnce(new Error('internal failure'));
+    const fallback = await request(app).get('/api/cases?refresh=1').set('x-settle-passcode', 'pass').expect(200);
+    expect(fallback.body.warning).toBe('PayPal unavailable');
   });
 
   test('GET /api/cases/:id returns detail and warning when an order fetch fails', async () => {
@@ -103,8 +114,33 @@ describe('HTTP app', () => {
     await request(app).put('/api/cases/d-early/notes').set(auth).send({ notes: 'Updated notes' }).expect(200);
     expect(Object.values(store.get().cases)[0].notes).toBe('Updated notes');
     await request(app).post('/api/cases/d-early/attachments?name=../x&type=text/plain').set(auth).send('body').expect(400);
+    await request(app).post('/api/cases/d-early/attachments?name=.&type=text/plain').set(auth).send('body').expect(400);
+    await request(app).post('/api/cases/d-early/attachments?name=..&type=text/plain').set(auth).send('body').expect(400);
     await request(app).post('/api/cases/d-early/attachments?name=proof.txt&type=text%2Fplain').set(auth).set('Content-Type', 'application/octet-stream').send('body').expect(200);
     expect(store.get().attachments['d-early']).toHaveLength(1);
+  });
+
+  test('attachment uploads reject payloads above 5 MB with 413', async () => {
+    await request(app).post('/api/cases/d-early/attachments?name=proof.txt').set('x-settle-passcode', 'pass').set('Content-Type', 'application/octet-stream').send(Buffer.alloc(5 * 1024 * 1024 + 1)).expect(413);
+  });
+
+  test('malformed JSON returns 400 and passcode runs before parsing', async () => {
+    await request(app).put('/api/policy').set('Content-Type', 'application/json').send('{').expect(401);
+    await request(app).put('/api/policy').set('x-settle-passcode', 'pass').set('Content-Type', 'application/json').send('{').expect(400);
+  });
+
+  test('attachment uploads parse raw JSON content types', async () => {
+    await request(app).post('/api/cases/d-early/attachments?name=proof.txt').set('x-settle-passcode', 'pass').set('Content-Type', 'application/json').send('{"proof":true}').expect(200);
+    expect(store.get().attachments['d-early']).toHaveLength(1);
+  });
+
+  test('notes stubs preserve the disputed currency and do not match null capture ids', async () => {
+    disputes[0] = { ...disputes[0], dispute_amount: { currency_code: 'EUR', value: '10.00' }, disputed_transactions: [] };
+    await store.update((state) => { state.cases.A!.captureId = null; });
+    await request(app).put('/api/cases/d-late/notes').set('x-settle-passcode', 'pass').send({ notes: 'No capture' }).expect(200);
+    const stub = Object.values(store.get().cases).find((record) => record.disputeId === 'd-late');
+    expect(stub).toMatchObject({ captureId: null, currency: 'EUR' });
+    expect(stub?.key).toBe('d-late');
   });
 
   test('PayPalError maps to 502 with debugId', async () => {

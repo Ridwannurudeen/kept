@@ -20,9 +20,9 @@ export type Deps = {
 export function createApp(deps: Deps): Express {
   const app = express();
   app.use((_req, res, next) => { res.locals.requestId = randomUUID(); next(); });
-  app.use(express.json());
   app.use('/api', requirePasscode(deps.config.passcode));
   app.use('/api/cases/:id/attachments', express.raw({ type: '*/*', limit: '5mb' }));
+  app.use(express.json());
   const router = express.Router();
   registerRoutes(router, deps);
   app.use(router);

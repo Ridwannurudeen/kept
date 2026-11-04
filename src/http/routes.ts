@@ -2,17 +2,23 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Request, Router } from 'express';
 import { ZodError } from 'zod';
-import { buildCaseDetail, buildCaseRow, joinCases, sortRows, summarize, type CaseRow } from '../cases.js';
+import { buildCaseDetail, buildCaseRow, joinCases, sortRows, summarize } from '../cases.js';
 import { PayPalError } from '../paypal/errors.js';
-import { captureIdOf } from '../paypal/dispute.js';
+import { captureIdOf, disputedAmount } from '../paypal/dispute.js';
 import { parsePolicy } from '../policy.js';
+import type { Dispute } from '../paypal/types.js';
 import type { CaseRecord } from '../../seed/seed.js';
 import type { Deps } from './app.js';
 
-type CachedCases = { cases: CaseRow[]; fetchedAt: string; at: number };
+type CachedCases = { disputes: Dispute[]; fetchedAt: string; at: number };
 const caches = new WeakMap<object, CachedCases>();
 
 function requestId(res: import('express').Response): string { return String(res.locals.requestId ?? 'unknown'); }
+
+function cachedRows(cached: CachedCases, deps: Deps) {
+  const state = deps.store.get();
+  return sortRows(joinCases(cached.disputes, state.cases).map(({ dispute, record }) => buildCaseRow(dispute, record, state, deps.now())));
+}
 
 export function registerRoutes(router: Router, deps: Deps): void {
   router.get('/healthz', (_req, res) => res.json({ ok: true, startedAt: deps.store.get().startedAt, cases: Object.keys(deps.store.get().cases).length, mode: 'live' }));
@@ -22,20 +28,21 @@ export function registerRoutes(router: Router, deps: Deps): void {
       const cachedCases = caches.get(deps.store);
       const refresh = req.query.refresh === '1';
       if (!refresh && cachedCases && deps.now().getTime() - cachedCases.at < 20_000) {
-        res.json({ cases: cachedCases.cases, summary: summarize(cachedCases.cases), fetchedAt: cachedCases.fetchedAt, stale: false });
+        const cases = cachedRows(cachedCases, deps);
+        res.json({ cases, summary: summarize(cases), fetchedAt: cachedCases.fetchedAt, stale: false });
         return;
       }
       const listed = await deps.paypal.listDisputes();
-      const full = await Promise.all(listed.map((entry) => deps.paypal.getDispute(entry.dispute_id)));
-      const records = joinCases(full, deps.store.get().cases);
-      const cases = sortRows(records.map(({ dispute, record }) => buildCaseRow(dispute, record, deps.store.get(), deps.now())));
-      const fresh: CachedCases = { cases, fetchedAt: deps.now().toISOString(), at: deps.now().getTime() };
+      const disputes = await Promise.all(listed.map((entry) => deps.paypal.getDispute(entry.dispute_id)));
+      const fresh: CachedCases = { disputes, fetchedAt: deps.now().toISOString(), at: deps.now().getTime() };
       caches.set(deps.store, fresh);
+      const cases = cachedRows(fresh, deps);
       res.json({ cases, summary: summarize(cases), fetchedAt: fresh.fetchedAt, stale: false });
     } catch (error) {
       const cachedCases = caches.get(deps.store);
       if (cachedCases) {
-        res.json({ cases: cachedCases.cases, summary: summarize(cachedCases.cases), fetchedAt: cachedCases.fetchedAt, stale: true, warning: error instanceof Error ? error.message : String(error) });
+        const cases = cachedRows(cachedCases, deps);
+        res.json({ cases, summary: summarize(cases), fetchedAt: cachedCases.fetchedAt, stale: true, warning: error instanceof PayPalError ? error.message : 'PayPal unavailable' });
         return;
       }
       next(error);
@@ -69,8 +76,10 @@ export function registerRoutes(router: Router, deps: Deps): void {
       if (typeof notes !== 'string' || notes.length > 4000) throw new ZodError([{ code: 'custom', path: ['notes'], message: 'Expected notes up to 4000 characters' }]);
       const dispute = await deps.paypal.getDispute(req.params.id);
       const state = await deps.store.update((current) => {
-        const existing = Object.values(current.cases).find((entry) => entry.disputeId === req.params.id || entry.captureId === captureIdOf(dispute));
-        const record: CaseRecord = existing ?? { key: req.params.id, orderId: '', captureId: captureIdOf(dispute), amount: dispute.dispute_amount.value, currency: 'USD', itemName: '', trackingNumber: null, carrier: null, trackedAt: null, notes: '', attachments: [], disputeId: req.params.id, createdAt: deps.now().toISOString(), observed: null };
+        const captureId = captureIdOf(dispute);
+        const existing = Object.values(current.cases).find((entry) => entry.disputeId === req.params.id || (captureId !== null && entry.captureId === captureId));
+        const amount = disputedAmount(dispute);
+        const record: CaseRecord = existing ?? { key: req.params.id, orderId: '', captureId, amount: amount.value, currency: amount.currency_code as CaseRecord['currency'], itemName: '', trackingNumber: null, carrier: null, trackedAt: null, notes: '', attachments: [], disputeId: req.params.id, createdAt: deps.now().toISOString(), observed: null };
         record.notes = notes;
         if (!existing) current.cases[record.key] = record;
       });
@@ -83,7 +92,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
       if (!/^[A-Za-z0-9_-]+$/.test(req.params.id)) { res.status(400).json({ error: 'dispute_id' }); return; }
       const name = String(req.query.name ?? '');
       const type = String(req.query.type ?? 'application/octet-stream');
-      if (!/^[A-Za-z0-9._-]{1,100}$/.test(name)) { res.status(400).json({ error: 'attachment_name' }); return; }
+      if (!/^[A-Za-z0-9._-]{1,100}$/.test(name) || name === '.' || name === '..') { res.status(400).json({ error: 'attachment_name' }); return; }
       const body = req.body as Buffer;
       if (!Buffer.isBuffer(body) || body.length > 5 * 1024 * 1024) { res.status(413).json({ error: 'attachment_size' }); return; }
       await deps.paypal.getDispute(req.params.id);
@@ -116,6 +125,11 @@ export function errorResponse(error: unknown, _req: Request, res: import('expres
   } else if (error instanceof ZodError) {
     res.status(400).json({ error: 'validation', issues: error.issues });
   } else {
-    res.status(500).json({ error: 'internal' });
+    const parserError = error as { status?: unknown; expose?: unknown; type?: unknown };
+    if (typeof parserError.status === 'number' && parserError.expose === true) {
+      res.status(parserError.status).json({ error: typeof parserError.type === 'string' ? parserError.type : 'request' });
+    } else {
+      res.status(500).json({ error: 'internal' });
+    }
   }
 }
