@@ -1,6 +1,6 @@
 # Settle: design
 
-Date: 2026-11-04. Owner: Ridwan Nurudeen. Status: approved by Ridwan 2026-11-04, waiting on the spike gate (section 8).
+Date: 2026-11-04. Owner: Ridwan Nurudeen. Status: approved by Ridwan 2026-11-04. Spike gate passed 2026-11-04 (section 8); Ridwan approved the two changes it caused (claim-stage fight via supporting info, showing PayPal's dispute hold) the same day.
 
 ## 1. What it is and why
 
@@ -16,7 +16,7 @@ How it was chosen: three research passes, a Fable strategy review and a Codex co
 
 ## 2. Goals
 
-1. One web page shows every open dispute in an AG Grid table: buyer reason, amount, stage, PayPal's seller response deadline, and Settle's recommendation. Sorted by deadline; rows inside the seller's deadline buffer are red.
+1. One web page shows every open dispute in an AG Grid table: buyer reason, amount, stage, PayPal's seller response deadline, the amount PayPal is holding for the case (from the dispute's `fund_movements` `HOLD_PLACED` entries, blank if none), and Settle's recommendation. Sorted by deadline; rows inside the seller's deadline buffer are red.
 2. Opening a case shows PayPal's ask in plain words, the evidence the seller has, the evidence missing, the recommendation (fight / settle / accept) with reasons, and the drafted action.
 3. The seller can edit the draft, then approve. Approval sends the real sandbox API call and the page shows the case state PayPal returns.
 4. A side-by-side "why" view explains why one case was fought and another settled.
@@ -24,12 +24,12 @@ How it was chosen: three research passes, a Fable strategy review and a Codex co
 
 ## 3. Non-goals
 
-- No claim that money was released sooner, and nothing about holds or reserves. No PayPal API exposes seller holds; a "funds released" scene would be fake.
+- No claim that money was released sooner, and nothing about account-level holds or reserves. The only hold shown is the one PayPal reports on a dispute itself (`fund_movements`, `HOLD_PLACED`), stated as PayPal reports it. A "funds released" scene would be fake.
 - No escalate action, no buyer messaging or inquiry chat, no appeal flow.
 - No webhook-driven updates. Sandbox webhooks are unreliable; a refresh button plus a re-fetch after each action is enough.
 - No production mode, no multi-seller accounts, no login beyond the demo passcode.
 - No legal advice wording. Settle explains PayPal's process; it never predicts a legal outcome.
-- No file upload to PayPal in v1. Case A's evidence is the tracking record, sent as `tracking_info`; seller attachments stay inside Settle.
+- No file upload to PayPal in v1. Case A's defence is a notes text built from the tracking record, sent as supporting info (or as `tracking_info` evidence if PayPal lists `provide_evidence` instead); seller attachments stay inside Settle.
 
 ## 4. Anti-goals (a working build that does these has failed)
 
@@ -45,12 +45,12 @@ How it was chosen: three research passes, a Fable strategy review and a Codex co
 
 **PayPal surface** (checked against PayPal's official OpenAPI specs and npm on 2026-11-04):
 - `@paypal/agent-toolkit` 1.11.0, `ai-sdk` export (depends on `ai` ^4), used visibly for reads and the accept path: `list_disputes`, `get_dispute`, `accept_dispute_claim`. Its tracking tools call the deprecated `/v1/shipping/trackers-batch`; do not use them.
-- Direct REST for what the toolkit lacks: `POST /v1/customer/disputes/{id}/provide-evidence` (multipart, an `input` JSON part with `evidences[]` of `evidence_type`, `evidence_info.tracking_info[carrier_name, tracking_number]`, `notes`) and `POST /v1/customer/disputes/{id}/make-offer` (JSON: `note`, `offer_amount`, `offer_type`). OAuth scopes: `disputes/read-seller`, `disputes/update-seller`.
+- Direct REST for what the toolkit lacks: `POST /v1/customer/disputes/{id}/provide-supporting-info` (multipart, an `input` JSON part `{"notes": ...}`; proven in the spike at the `CHARGEBACK` stage), `POST /v1/customer/disputes/{id}/provide-evidence` (multipart, an `input` JSON part with `evidences[]` of `evidence_type`, `evidence_info.tracking_info[carrier_name, tracking_number]`, `notes`) and `POST /v1/customer/disputes/{id}/make-offer` (JSON: `note`, `offer_amount`, `offer_type`). OAuth scopes: `disputes/read-seller`, `disputes/update-seller`.
 - Context: the order and capture records. Tracking is created once per shipped case with `POST /v2/checkout/orders/{id}/track` (`capture_id`, `tracking_number`, `carrier`, `notify_payer`); it exists to give Case A a real shipment record to cite. `GET /v1/reporting/transactions` can lag up to 3 hours and is not on the critical path.
 
-**Dispute stages decide the moves (PayPal spec).** `make-offer` is only allowed at the `INQUIRY` stage. Offer type is `REFUND` (partial refund, buyer keeps the item, buyer must accept a partial offer). Which actions are legal for a case comes from the `links` and allowed response options in `get_dispute`; the app never offers an action PayPal has not listed, and a button for an unlisted action is disabled with a one-line stage note. Settling early, before escalation, is the story. Whether `provide-evidence` is open at `INQUIRY` or only after escalation to a claim is answered by the spike; if claim only, the sandbox buyer escalates Case A on day one.
+**Dispute stages decide the moves (PayPal spec).** `make-offer` is only allowed at the `INQUIRY` stage. Offer type is `REFUND` (partial refund, buyer keeps the item, buyer must accept a partial offer). Which actions are legal for a case comes from the `links` and allowed response options in `get_dispute`; the app never offers an action PayPal has not listed, and a button for an unlisted action is disabled with a one-line stage note. Settling early, before escalation, is the story. The spike showed that a buyer who sees the seller's tracking can only "Report Issue to PayPal", which opens the case at `CHARGEBACK` (a PayPal claim) where PayPal lists `accept_claim` and `provide_supporting_info`. So FIGHT sends whichever of `provide_supporting_info` or `provide_evidence` the case lists; Case A uses supporting info.
 
-**Who calls what (Claude's call).** The model holds only the read tools (`list_disputes`, `get_dispute`). The app fetches the order and capture by the seeded ids and puts them in the prompt. The model never holds a tool that moves money. Approve buttons call `accept_dispute_claim` (toolkit), `provide-evidence` and `make-offer` (REST) from app code.
+**Who calls what (Claude's call).** The model holds only the read tools (`list_disputes`, `get_dispute`). The app fetches the order and capture by the seeded ids and puts them in the prompt. The model never holds a tool that moves money. Approve buttons call `accept_dispute_claim` (toolkit), `provide-supporting-info`, `provide-evidence` and `make-offer` (REST) from app code.
 
 **How the decision comes back (Fable's call).** One `generateText` call per case on Vercel AI SDK v4 with `@ai-sdk/anthropic` (the provider line whose peer dependency is `ai` 4; check npm when installing) and model id `claude-opus-5-5`. Tools: exactly `list_disputes`, `get_dispute` and a `submit_decision` tool whose zod schema is the decision shape above. `toolChoice: 'auto'`, a bounded `maxSteps`, and a prompt that ends by calling `submit_decision`. Forced tool choice (`required` or a named tool) and object helpers that force a tool under the hood are out: Claude Opus 5.5 and Sonnet 5.5 return 400 on forced tool use (checked against the Claude API reference, 2026-11-04). No thinking budget in provider options (also a 400 on these models); set effort explicitly, since Opus 5.5 defaults to `medium`. The app validates the last `submit_decision` call with zod; if there is none, one retry, then the case shows "no decision yet" with a retry button. Free text is never parsed as a decision.
 
@@ -68,14 +68,14 @@ How it was chosen: three research passes, a Fable strategy review and a Codex co
 
 **Stack (Claude's call).** TypeScript on Node. Vercel AI SDK v4 with the Anthropic provider and Claude Opus 5.5 (`claude-opus-5-5`), the current default Claude model. Claude Sonnet 5.5 (`claude-sonnet-5-5`, half the price) is a one-line swap if Ridwan chooses it. A small server holding the sandbox credentials and the AI key; a single-page front end with AG Grid Community (MIT, v36). Hosted on Render. Public GitHub repo with an MIT LICENSE at the root.
 
-**Demo cases (Claude's call).** A: item not received, a tracking record exists, recommendation FIGHT. B: item not as described, weak seller notes, `INQUIRY` stage, recommendation SETTLE with a partial refund under the cap. C: small amount, the seller's own notes admit the fault, recommendation ACCEPT (full refund). D: a fresh case with plenty of time, shown green. Red rows come from PayPal's real seller response due date (expected field `seller_response_due_date`, gate item 5 confirms it) measured against the seller's buffer; cases are created close enough to recording day that two fall inside the buffer, or the buffer is widened for the demo (it is a seller setting, so that is honest). Dates are never faked. The UI shows the tracker record as PayPal returns it; the word "delivered" appears only if PayPal's record says so.
+**Demo cases (Claude's call).** A: item not received, a tracking record exists, so the case opens at the claim stage with a PayPal hold shown; recommendation FIGHT via supporting info. B: item not as described, weak seller notes, `INQUIRY` stage, recommendation SETTLE with a partial refund under the cap. C: small amount, the seller's own notes admit the fault, recommendation ACCEPT (full refund). D: a fresh case with plenty of time, shown green. Red rows come from PayPal's real seller response due date (expected field `seller_response_due_date`, gate item 5 confirms it) measured against the seller's buffer; cases are created close enough to recording day that two fall inside the buffer, or the buffer is widened for the demo (it is a seller setting, so that is honest). Dates are never faked. The UI shows the tracker record as PayPal returns it; the word "delivered" appears only if PayPal's record says so.
 
 **Demo data.** All demo disputes are created from real sandbox purchases by a sandbox buyer opening disputes by hand in the sandbox Resolution Center (PayPal's documented route). One dispute per transaction, and a new dispute takes a few minutes before actions appear. Day one creates roughly two spike cases, four demo cases and two spares, each its own purchase. Sandbox-only `adjudicate` may be used afterwards to show a resolved state if needed.
 
 ## 6. The 3-minute video (decided)
 
 1. 0:00 to 0:25: the grid, four cases sorted by deadline, two red. One line on who it is for.
-2. 0:25 to 1:15: **Case A**, item not received, but a tracking record is on file. Settle explains PayPal's ask, flags the missing proof, drafts evidence from the tracking record. The seller edits one line and approves. PayPal's returned state is shown.
+2. 0:25 to 1:15: **Case A**, item not received, but a tracking record is on file, and PayPal is holding the money for the claim. Settle explains PayPal's ask, flags the missing proof, drafts the defence from the tracking record. The seller edits one line and approves. PayPal's returned state is shown.
 3. 1:15 to 2:20: **Case B**, item not as described, weak evidence. Settle recommends a partial offer under the cap and shows why (evidence gap, deadline, amount). The seller approves; the make-offer call goes out. This is the heart of the demo.
 4. 2:20 to 2:45: side-by-side reasons for A versus B.
 5. 2:45 to 3:00: the grid with both cases moved; PayPal and Claude named on screen.
