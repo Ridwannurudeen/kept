@@ -1,6 +1,6 @@
 # Settle: design
 
-Date: 2026-11-04. Owner: Ridwan Nurudeen. Status: final design, waiting on the spike gate (section 8).
+Date: 2026-11-04. Owner: Ridwan Nurudeen. Status: approved by Ridwan 2026-11-04, waiting on the spike gate (section 8).
 
 ## 1. What it is and why
 
