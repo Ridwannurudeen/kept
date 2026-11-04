@@ -101,11 +101,13 @@ A one-hour throwaway spike (`spike/spike.py`) must pass first:
 
 Items 3 and 4 each consume a case, so the spike needs two disputes. Results are written into this section before planning starts:
 
-- 1 scopes:
-- 2 dispute visible after:
-- 3 make-offer:
-- 4 provide-evidence, stage, evidence type accepted:
-- 5 due date field, capture id field, accept-claim listed at INQUIRY:
+Results, 2026-11-04, US sandbox business account and app (the first, Lesotho, accounts could not take card payments or complete buyer approvals):
+- 1 scopes: PASS. `disputes/read-seller`, `disputes/update-seller` and more.
+- 2 dispute visible after: PASS. Readable by id at once; in the list within about 3 minutes; seller actions listed about 5 minutes after filing (state `UNDER_PAYPAL_REVIEW` until then). List items omit `seller_transaction_id`, so the join needs one `get_dispute` per case.
+- 3 make-offer: PASS, full loop. `PP-R-CWP-10196411` (INQUIRY): `REFUND` 5.00 on a 20.00 claim returned 200; the buyer accepted in the Resolution Center; PayPal shows `RESOLVED`, `RESOLVED_BUYER_FAVOUR`, `amount_refunded` 5.00.
+- 4 provide-evidence: NOT RUN; `provide_evidence` was listed at INQUIRY on case 1, which was used for the offer instead. Defend path proven instead: on `PP-R-LKL-10196413` the buyer saw the seller's UPS tracking before filing and the only route offered was "Report Issue to PayPal", which opened the case straight at `CHARGEBACK` (a PayPal claim). There PayPal lists `accept_claim` and `provide_supporting_info`, not `provide_evidence`; `POST .../provide-supporting-info` (multipart, `input` part `{"notes": ...}`) returned 200 and the notes show on the dispute as `SUBMITTED_BY_SELLER`. Consequence: Case A (tracking on file) will always open at the claim stage, so its FIGHT action is supporting info.
+- 5 due date field, capture id field, accept-claim listed at INQUIRY: PASS. `seller_response_due_date` (filing + 20 days), `seller_transaction_id` equals the capture id, `accept_claim` listed at INQUIRY.
+- Also seen: a claim-stage case carries `fund_movements` with a `HOLD_PLACED` debit (18.81 of 20.00) on the seller, so the dispute API does expose the hold PayPal places for that dispute.
 
 If 2 fails, the idea is not demoable: stop and choose a new direction with Ridwan before any planning. If 3 or 4 fails, the plan reshapes around what does pass, and Ridwan is told before planning.
 

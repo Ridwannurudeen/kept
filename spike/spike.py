@@ -1,6 +1,6 @@
 """THROWAWAY SPIKE: checks the PayPal sandbox can carry the Settle demo.
 
-Stdlib only. Reads PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET from spike/.env.
+Stdlib only. Reads PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET from spike/.env, or from the environment if there is no .env.
 
     python spike.py token                     # OAuth works, print granted scopes
     python spike.py order                     # create a $20 order, print the buyer approve link
@@ -14,6 +14,7 @@ Stdlib only. Reads PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET from spike/.env.
 
 import base64
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
@@ -24,8 +25,11 @@ API = "https://api-m.sandbox.paypal.com"
 
 
 def load_env():
+    env_file = Path(__file__).parent / ".env"
+    if not env_file.exists():
+        return os.environ
     env = {}
-    for line in (Path(__file__).parent / ".env").read_text(encoding="utf-8").splitlines():
+    for line in env_file.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             key, value = line.split("=", 1)
