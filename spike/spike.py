@@ -1,4 +1,4 @@
-"""THROWAWAY SPIKE: checks the PayPal sandbox can carry the Dispute Defense demo.
+"""THROWAWAY SPIKE: checks the PayPal sandbox can carry the Settle demo.
 
 Stdlib only. Reads PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET from spike/.env.
 
@@ -9,6 +9,7 @@ Stdlib only. Reads PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET from spike/.env.
     python spike.py disputes                  # list disputes (spike 1 pass check)
     python spike.py dispute DISPUTE_ID        # dispute details + allowed actions
     python spike.py evidence DISPUTE_ID       # file PROOF_OF_FULFILLMENT (spike 2)
+    python spike.py offer DISPUTE_ID AMOUNT   # partial REFUND offer, INQUIRY stage only (spike 2)
 """
 
 import base64
@@ -78,7 +79,16 @@ def show(obj):
 
 def main(argv):
     cmd, args = argv[0], argv[1:]
-    if cmd not in ("token", "order", "capture", "track", "disputes", "dispute", "evidence"):
+    if cmd not in (
+        "token",
+        "order",
+        "capture",
+        "track",
+        "disputes",
+        "dispute",
+        "evidence",
+        "offer",
+    ):
         print(__doc__)
         return
     if cmd == "token":
@@ -174,6 +184,19 @@ def main(argv):
                 tok,
                 headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
                 raw=body,
+            )
+        )
+    elif cmd == "offer":
+        show(
+            call(
+                "POST",
+                f"/v1/customer/disputes/{args[0]}/make-offer",
+                tok,
+                {
+                    "note": "Sorry about this. We can refund part of the price and you keep the item.",
+                    "offer_amount": {"currency_code": "USD", "value": args[1]},
+                    "offer_type": "REFUND",
+                },
             )
         )
 
