@@ -1,0 +1,184 @@
+{
+  "dispute_id": "PP-R-CWP-10196411",
+  "create_time": "2026-11-04T18:22:34.555Z",
+  "update_time": "2026-11-04T18:31:33.577Z",
+  "disputed_transactions": [
+    {
+      "buyer_transaction_id": "1WU327708M217505J",
+      "seller_transaction_id": "7FH08202AN770703L",
+      "create_time": "2026-11-04T18:17:01.000Z",
+      "transaction_status": "PARTIALLY_REFUNDED",
+      "gross_amount": {
+        "currency_code": "USD",
+        "value": "20.00"
+      },
+      "buyer": {
+        "email": "redacted@example.com",
+        "payer_id": "REDACTED",
+        "name": "REDACTED"
+      },
+      "seller": {
+        "email": "redacted@example.com",
+        "merchant_id": "REDACTED",
+        "name": "REDACTED"
+      },
+      "items": [
+        {
+          "item_name": "Spike test item",
+          "item_description": "Spike test item",
+          "item_quantity": "1",
+          "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+          "item_type": "DIGITAL_DOWNLOAD"
+        }
+      ],
+      "seller_protection_eligible": true,
+      "seller_protection_type": "EXPANDED_SELLER_PROTECTION"
+    }
+  ],
+  "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+  "status": "RESOLVED",
+  "dispute_amount": {
+    "currency_code": "USD",
+    "value": "5.00"
+  },
+  "dispute_state": "RESOLVED",
+  "dispute_outcome": {
+    "outcome_code": "RESOLVED_BUYER_FAVOUR",
+    "outcome_reason": "INQUIRY_OFFER_PARTIAL_REFUND",
+    "amount_refunded": {
+      "currency_code": "USD",
+      "value": "5.00"
+    }
+  },
+  "money_movements": [
+    {
+      "affected_party": "SELLER",
+      "amount": {
+        "currency_code": "USD",
+        "value": "5.00"
+      },
+      "initiated_time": "2026-11-04T18:29:42.284Z",
+      "type": "DEBIT",
+      "reason": "DISPUTE_SETTLEMENT"
+    },
+    {
+      "affected_party": "BUYER",
+      "amount": {
+        "currency_code": "USD",
+        "value": "5.00"
+      },
+      "initiated_time": "2026-11-04T18:29:42.284Z",
+      "type": "CREDIT",
+      "reason": "DISPUTE_SETTLEMENT"
+    }
+  ],
+  "fund_movements": [
+    {
+      "party": "RECEIVER",
+      "amount": {
+        "currency_code": "USD",
+        "value": "18.81"
+      },
+      "initiated_time": "2026-11-04T18:25:34.000Z",
+      "type": "DEBIT",
+      "reason": "HOLD_PLACED"
+    },
+    {
+      "party": "SELLER",
+      "amount": {
+        "currency_code": "USD",
+        "value": "5.00"
+      },
+      "initiated_time": "2026-11-04T18:29:42.284Z",
+      "type": "DEBIT",
+      "reason": "DISPUTE_SETTLEMENT"
+    },
+    {
+      "party": "BUYER",
+      "amount": {
+        "currency_code": "USD",
+        "value": "5.00"
+      },
+      "initiated_time": "2026-11-04T18:29:42.284Z",
+      "type": "CREDIT",
+      "reason": "DISPUTE_SETTLEMENT"
+    }
+  ],
+  "dispute_life_cycle_stage": "INQUIRY",
+  "dispute_channel": "INTERNAL",
+  "messages": [
+    {
+      "posted_by": "BUYER",
+      "time_posted": "2026-11-04T18:22:34.555Z",
+      "content": "nil"
+    },
+    {
+      "posted_by": "SELLER",
+      "time_posted": "2026-11-04T18:26:30.844Z",
+      "content": "Sorry about this. We can refund part of the price and you keep the item."
+    }
+  ],
+  "extensions": {
+    "buyer_contacted_time": "2026-11-04T18:22:33.764Z"
+  },
+  "evidences": [
+    {
+      "evidence_type": "CREATE",
+      "notes": "nil",
+      "source": "SUBMITTED_BY_BUYER",
+      "date": "2026-11-04T18:22:34.555Z",
+      "dispute_life_cycle_stage": "INQUIRY"
+    }
+  ],
+  "offer": {
+    "buyer_requested_amount": {
+      "currency_code": "USD",
+      "value": "5.00"
+    },
+    "seller_offered_amount": {
+      "currency_code": "USD",
+      "value": "5.00"
+    },
+    "offer_type": "REFUND",
+    "history": [
+      {
+        "offer_time": "2026-11-04T18:26:30.844Z",
+        "actor": "SELLER",
+        "event_type": "PROPOSED",
+        "offer_type": "REFUND",
+        "offer_amount": {
+          "currency_code": "USD",
+          "value": "5.00"
+        }
+      },
+      {
+        "offer_time": "2026-11-04T18:29:42.395Z",
+        "actor": "BUYER",
+        "event_type": "ACCEPTED"
+      }
+    ]
+  },
+  "refund_details": {
+    "allowed_refund_amount": {
+      "currency_code": "USD",
+      "value": "5.00"
+    },
+    "transactions": [
+      {
+        "id": "1VG06146J3261762J",
+        "gross_amount": {
+          "currency_code": "USD",
+          "value": "5.00"
+        },
+        "create_time": "2026-11-04T18:29:42.000Z"
+      }
+    ]
+  },
+  "links": [
+    {
+      "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-CWP-10196411",
+      "rel": "self",
+      "method": "GET"
+    }
+  ]
+}

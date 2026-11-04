@@ -1,0 +1,178 @@
+{
+  "id": "92U413849D170012F",
+  "intent": "CAPTURE",
+  "status": "COMPLETED",
+  "payment_source": {
+    "paypal": {
+      "email_address": "redacted@example.com",
+      "account_id": "REDACTED",
+      "account_status": "VERIFIED",
+      "name": {
+        "given_name": "REDACTED",
+        "surname": "REDACTED"
+      },
+      "address": {
+        "country_code": "US"
+      }
+    }
+  },
+  "purchase_units": [
+    {
+      "reference_id": "default",
+      "amount": {
+        "currency_code": "USD",
+        "value": "20.00",
+        "breakdown": {}
+      },
+      "payee": {
+        "email_address": "redacted@example.com",
+        "merchant_id": "REDACTED"
+      },
+      "description": "Spike test item",
+      "shipping": {
+        "name": {
+          "full_name": "REDACTED"
+        },
+        "address": {
+          "address_line_1": "REDACTED",
+          "admin_area_2": "San Jose",
+          "admin_area_1": "CA",
+          "postal_code": "95131",
+          "country_code": "US"
+        },
+        "trackers": [
+          {
+            "id": "1VS093774J460400T-1Z999AA10123456784",
+            "status": "SHIPPED",
+            "items": [],
+            "links": [
+              {
+                "href": "https://api.sandbox.paypal.com/v2/checkout/orders/92U413849D170012F",
+                "rel": "up",
+                "method": "GET"
+              },
+              {
+                "href": "https://api.sandbox.paypal.com/v2/checkout/orders/92U413849D170012F/trackers/1VS093774J460400T-1Z999AA10123456784",
+                "rel": "update",
+                "method": "PATCH"
+              }
+            ],
+            "notify_payer": false
+          }
+        ]
+      },
+      "payments": {
+        "captures": [
+          {
+            "id": "1VS093774J460400T",
+            "status": "PENDING",
+            "status_details": {
+              "reason": "BUYER_COMPLAINT"
+            },
+            "amount": {
+              "currency_code": "USD",
+              "value": "20.00"
+            },
+            "final_capture": true,
+            "seller_protection": {
+              "status": "ELIGIBLE",
+              "dispute_categories": [
+                "ITEM_NOT_RECEIVED",
+                "UNAUTHORIZED_TRANSACTION"
+              ]
+            },
+            "links": [
+              {
+                "href": "https://api.sandbox.paypal.com/v2/payments/captures/1VS093774J460400T",
+                "rel": "self",
+                "method": "GET"
+              },
+              {
+                "href": "https://api.sandbox.paypal.com/v2/payments/captures/1VS093774J460400T/refund",
+                "rel": "refund",
+                "method": "POST"
+              },
+              {
+                "href": "https://api.sandbox.paypal.com/v2/checkout/orders/92U413849D170012F",
+                "rel": "up",
+                "method": "GET"
+              }
+            ],
+            "create_time": "2026-11-04T18:15:53Z",
+            "update_time": "2026-11-04T18:35:03Z"
+          }
+        ],
+        "refunds": [
+          {
+            "id": "4XN01433H71162000",
+            "amount": {
+              "currency_code": "USD",
+              "value": "18.81"
+            },
+            "seller_payable_breakdown": {
+              "gross_amount": {
+                "currency_code": "USD",
+                "value": "18.81"
+              },
+              "paypal_fee": {
+                "currency_code": "USD",
+                "value": "0.00"
+              },
+              "platform_fees": [
+                {
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "0.00"
+                  }
+                }
+              ],
+              "net_amount": {
+                "currency_code": "USD",
+                "value": "18.81"
+              },
+              "total_refunded_amount": {
+                "currency_code": "USD",
+                "value": "0.00"
+              }
+            },
+            "status": "PENDING",
+            "links": [
+              {
+                "href": "https://api.sandbox.paypal.com/v2/payments/refunds/4XN01433H71162000",
+                "rel": "self",
+                "method": "GET"
+              },
+              {
+                "href": "https://api.sandbox.paypal.com/v2/payments/captures/1VS093774J460400T",
+                "rel": "up",
+                "method": "GET"
+              }
+            ],
+            "create_time": "2026-11-04T10:35:03-08:00",
+            "update_time": "2026-11-04T10:35:03-08:00"
+          }
+        ]
+      }
+    }
+  ],
+  "payer": {
+    "name": {
+      "given_name": "REDACTED",
+      "surname": "REDACTED"
+    },
+    "email_address": "redacted@example.com",
+    "payer_id": "REDACTED",
+    "address": {
+      "country_code": "US"
+    }
+  },
+  "create_time": "2026-11-04T18:15:53Z",
+  "update_time": "2026-11-04T18:35:03Z",
+  "links": [
+    {
+      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/92U413849D170012F",
+      "rel": "self",
+      "method": "GET"
+    }
+  ]
+}

@@ -1,0 +1,218 @@
+{
+  "id": "205118069H056835L",
+  "intent": "CAPTURE",
+  "status": "COMPLETED",
+  "payment_source": {
+    "paypal": {
+      "email_address": "redacted@example.com",
+      "account_id": "REDACTED",
+      "account_status": "VERIFIED",
+      "name": {
+        "given_name": "REDACTED",
+        "surname": "REDACTED"
+      },
+      "address": {
+        "country_code": "US"
+      }
+    }
+  },
+  "purchase_units": [
+    {
+      "reference_id": "default",
+      "amount": {
+        "currency_code": "USD",
+        "value": "20.00",
+        "breakdown": {}
+      },
+      "payee": {
+        "email_address": "redacted@example.com",
+        "merchant_id": "REDACTED"
+      },
+      "description": "Spike test item",
+      "shipping": {
+        "name": {
+          "full_name": "REDACTED"
+        },
+        "address": {
+          "address_line_1": "REDACTED",
+          "admin_area_2": "San Jose",
+          "admin_area_1": "CA",
+          "postal_code": "95131",
+          "country_code": "US"
+        }
+      },
+      "payments": {
+        "captures": [
+          {
+            "id": "7FH08202AN770703L",
+            "status": "PARTIALLY_REFUNDED",
+            "amount": {
+              "currency_code": "USD",
+              "value": "20.00"
+            },
+            "final_capture": true,
+            "seller_protection": {
+              "status": "ELIGIBLE",
+              "dispute_categories": [
+                "ITEM_NOT_RECEIVED",
+                "UNAUTHORIZED_TRANSACTION"
+              ]
+            },
+            "seller_receivable_breakdown": {
+              "gross_amount": {
+                "currency_code": "USD",
+                "value": "20.00"
+              },
+              "paypal_fee": {
+                "currency_code": "USD",
+                "value": "1.19"
+              },
+              "net_amount": {
+                "currency_code": "USD",
+                "value": "18.81"
+              }
+            },
+            "links": [
+              {
+                "href": "https://api.sandbox.paypal.com/v2/payments/captures/7FH08202AN770703L",
+                "rel": "self",
+                "method": "GET"
+              },
+              {
+                "href": "https://api.sandbox.paypal.com/v2/payments/captures/7FH08202AN770703L/refund",
+                "rel": "refund",
+                "method": "POST"
+              },
+              {
+                "href": "https://api.sandbox.paypal.com/v2/checkout/orders/205118069H056835L",
+                "rel": "up",
+                "method": "GET"
+              }
+            ],
+            "create_time": "2026-11-04T18:17:01Z",
+            "update_time": "2026-11-04T18:31:42Z"
+          }
+        ],
+        "refunds": [
+          {
+            "id": "19A03828DN412271T",
+            "amount": {
+              "currency_code": "USD",
+              "value": "18.81"
+            },
+            "seller_payable_breakdown": {
+              "gross_amount": {
+                "currency_code": "USD",
+                "value": "18.81"
+              },
+              "paypal_fee": {
+                "currency_code": "USD",
+                "value": "0.00"
+              },
+              "platform_fees": [
+                {
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "0.00"
+                  }
+                }
+              ],
+              "net_amount": {
+                "currency_code": "USD",
+                "value": "18.81"
+              },
+              "total_refunded_amount": {
+                "currency_code": "USD",
+                "value": "5.00"
+              }
+            },
+            "status": "FAILED",
+            "links": [
+              {
+                "href": "https://api.sandbox.paypal.com/v2/payments/refunds/19A03828DN412271T",
+                "rel": "self",
+                "method": "GET"
+              },
+              {
+                "href": "https://api.sandbox.paypal.com/v2/payments/captures/7FH08202AN770703L",
+                "rel": "up",
+                "method": "GET"
+              }
+            ],
+            "create_time": "2026-11-04T10:25:33-08:00",
+            "update_time": "2026-11-04T10:29:41-08:00"
+          },
+          {
+            "id": "1VG06146J3261762J",
+            "amount": {
+              "currency_code": "USD",
+              "value": "5.00"
+            },
+            "note_to_payer": "5.0 USD; 2026-11-04 Credit has been processed and claim is now closed. Please refer Dispute ID PP-R-CWP-10196411. Thank you.",
+            "seller_payable_breakdown": {
+              "gross_amount": {
+                "currency_code": "USD",
+                "value": "5.00"
+              },
+              "paypal_fee": {
+                "currency_code": "USD",
+                "value": "0.00"
+              },
+              "platform_fees": [
+                {
+                  "amount": {
+                    "currency_code": "USD",
+                    "value": "0.00"
+                  }
+                }
+              ],
+              "net_amount": {
+                "currency_code": "USD",
+                "value": "5.00"
+              },
+              "total_refunded_amount": {
+                "currency_code": "USD",
+                "value": "5.00"
+              }
+            },
+            "status": "COMPLETED",
+            "links": [
+              {
+                "href": "https://api.sandbox.paypal.com/v2/payments/refunds/1VG06146J3261762J",
+                "rel": "self",
+                "method": "GET"
+              },
+              {
+                "href": "https://api.sandbox.paypal.com/v2/payments/captures/7FH08202AN770703L",
+                "rel": "up",
+                "method": "GET"
+              }
+            ],
+            "create_time": "2026-11-04T10:29:41-08:00",
+            "update_time": "2026-11-04T10:29:41-08:00"
+          }
+        ]
+      }
+    }
+  ],
+  "payer": {
+    "name": {
+      "given_name": "REDACTED",
+      "surname": "REDACTED"
+    },
+    "email_address": "redacted@example.com",
+    "payer_id": "REDACTED",
+    "address": {
+      "country_code": "US"
+    }
+  },
+  "create_time": "2026-11-04T18:17:01Z",
+  "update_time": "2026-11-04T18:31:42Z",
+  "links": [
+    {
+      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/205118069H056835L",
+      "rel": "self",
+      "method": "GET"
+    }
+  ]
+}

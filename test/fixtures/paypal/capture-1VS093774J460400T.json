@@ -1,0 +1,47 @@
+{
+  "id": "1VS093774J460400T",
+  "amount": {
+    "currency_code": "USD",
+    "value": "20.00"
+  },
+  "final_capture": true,
+  "seller_protection": {
+    "status": "ELIGIBLE",
+    "dispute_categories": [
+      "ITEM_NOT_RECEIVED",
+      "UNAUTHORIZED_TRANSACTION"
+    ]
+  },
+  "status": "PENDING",
+  "status_details": {
+    "reason": "BUYER_COMPLAINT"
+  },
+  "supplementary_data": {
+    "related_ids": {
+      "order_id": "92U413849D170012F"
+    }
+  },
+  "payee": {
+    "email_address": "redacted@example.com",
+    "merchant_id": "REDACTED"
+  },
+  "create_time": "2026-11-04T18:15:53Z",
+  "update_time": "2026-11-04T18:35:03Z",
+  "links": [
+    {
+      "href": "https://api.sandbox.paypal.com/v2/payments/captures/1VS093774J460400T",
+      "rel": "self",
+      "method": "GET"
+    },
+    {
+      "href": "https://api.sandbox.paypal.com/v2/payments/captures/1VS093774J460400T/refund",
+      "rel": "refund",
+      "method": "POST"
+    },
+    {
+      "href": "https://api.sandbox.paypal.com/v2/checkout/orders/92U413849D170012F",
+      "rel": "up",
+      "method": "GET"
+    }
+  ]
+}
