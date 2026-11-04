@@ -79,10 +79,12 @@ seed/
   plan.json              case definitions (key, item, amount, tracked, notes, attachments, expected reason)
   seed.ts                CLI: order | capture | track [--force] | status
   cases.json             seeded ids (committed; no secrets)
+  snapshot.json          committed decisions + action/call log restored at boot (Render keeps no disk)
   attachments/<key>/     small demo files named in plan.json
 scripts/
   record-fixtures.ts     dumps redacted disputes/orders/captures into test/fixtures/paypal/
   smoke-model.ts         one live generateText through the provider wrapper
+  snapshot.ts            writes seed/snapshot.json from the live state file
 public/
   index.html  app.js  styles.css
 test/
@@ -162,6 +164,10 @@ test('get_dispute takes dispute_id', () => {
 test('points at the sandbox', () => { expect(toolkit.client.getBaseUrl()).toBe('https://api.sandbox.paypal.com'); });
 test('every tool has an execute function', () => {
   for (const t of Object.values(toolkit.getTools())) expect(typeof t.execute).toBe('function');
+});
+test('list_disputes accepts an empty argument object', () => {
+  // Verified 2026-11-04: the defaulted disputed_transaction_id parses to null, which the toolkit drops from the query string, so the model's bare list call reaches PayPal.
+  expect((toolkit.getTools().list_disputes.parameters as z.AnyZodObject).safeParse({}).success).toBe(true);
 });
 ```
 
@@ -555,12 +561,12 @@ git commit -m "Validate AI decisions against the policy and PayPal's listed acti
 ### Task 8: Store and logs (TDD)
 
 **Files:**
-- Create: `src/store.ts`, `src/log.ts`, `test/store.test.ts`, `test/log.test.ts`
+- Create: `src/store.ts`, `src/log.ts`, `scripts/snapshot.ts`, `test/store.test.ts`, `test/log.test.ts`
 
 **Interfaces:**
 - Consumes: `Policy`, `defaultPolicy` (Task 5); `CaseRecord` (Task 3); `Decision` (Task 7); `CallRecord` (Task 2); `ActionKind` (Task 6).
 - Produces in `src/log.ts`: `type ActionEntry = { id: string; at: string; disputeId: string; caseKey: string | null; action: ActionKind; recommended: Decision | null; submitted: { note: string; offerAmount: string | null }; sellerEdited: boolean; paypal: { ok: boolean; status: number | null; requestId: string | null; debugId: string | null; durationMs: number; message: string | null }; after: { status: string; stage: string; outcome: string | null } | null }`; `type CallEntry = CallRecord & { id: string }`; `const MAX_CALLS = 500`; `appendAction(list: ActionEntry[], e: ActionEntry): ActionEntry[]`; `appendCall(list: CallEntry[], c: CallEntry): CallEntry[]` (drops the oldest beyond 500); `hasSentAction(list: ActionEntry[], disputeId: string): boolean` (true when any entry for the dispute has `paypal.ok === true`).
-- Produces in `src/store.ts`: `type StoredDecision = { decision: Decision; validation: Validation; at: string; model: string; steps: number; toolCalls: string[] }`; `type State = { version: 1; startedAt: string; policy: Policy; cases: Record<string, CaseRecord>; decisions: Record<string, StoredDecision>; actions: ActionEntry[]; calls: CallEntry[]; attachments: Record<string, { name: string; type: string; size: number; at: string }[]> }`; `class Store { static open(opts: { dataDir: string; seedPath: string; now?: () => Date }): Promise<Store>; get(): State; update(fn: (s: State) => void): Promise<State>; reset(): Promise<State> }`. `open` creates `<dataDir>/state.json` from the seed (`cases` from `seed/cases.json`, `policy` = `defaultPolicy`, empty lists, `startedAt` now) when missing or when the file fails to parse (then it renames the bad file to `state.json.corrupt-<ts>`). Writes are `state.json.tmp` + `rename` (atomic). `update` serialises concurrent calls (a promise chain).
+- Produces in `src/store.ts`: `type StoredDecision = { decision: Decision; validation: Validation; at: string; model: string; steps: number; toolCalls: string[] }`; `type Snapshot = { snapshotAt: string; decisions: Record<string, StoredDecision>; actions: ActionEntry[]; calls: CallEntry[] }`; `type State = { version: 1; startedAt: string; restoredFrom: string | null; policy: Policy; cases: Record<string, CaseRecord>; decisions: Record<string, StoredDecision>; actions: ActionEntry[]; calls: CallEntry[]; attachments: Record<string, { name: string; type: string; size: number; at: string }[]> }`; `class Store { static open(opts: { dataDir: string; seedPath: string; snapshotPath?: string; now?: () => Date }): Promise<Store>; get(): State; update(fn: (s: State) => void): Promise<State>; reset(): Promise<State>; snapshot(): Snapshot }`. `open` creates `<dataDir>/state.json` from the seed (`cases` from `seed/cases.json`, `policy` = `defaultPolicy`, `startedAt` now) when missing or when the file fails to parse (then it renames the bad file to `state.json.corrupt-<ts>`); when `snapshotPath` (default `./seed/snapshot.json`) exists, the fresh state takes `decisions`, `actions` and `calls` from it and sets `restoredFrom = snapshotAt`, otherwise the lists start empty and `restoredFrom` is null. This is what survives Render's free tier: the disk is wiped on every spin-down, so the hosted site always boots from seed + the committed snapshot (secret-free: decisions, log entries, call records). Writes are `state.json.tmp` + `rename` (atomic). `update` serialises concurrent calls (a promise chain). `scripts/snapshot.ts` (`npm run snapshot`) reads the live state file and writes `seed/snapshot.json` from `store.snapshot()`.
 
 - [ ] **Step 1: Write the failing tests using a temp dir per test and a copy of `seed/cases.json`**
 
@@ -571,6 +577,9 @@ test('persists updates atomically and reloads them', async () => { /* update pol
 test('quarantines a corrupt file and restarts from seed', async () => { /* write "{not json" -> open -> fresh state; a state.json.corrupt-* file exists */ });
 test('serialises concurrent updates', async () => { /* 20 parallel update(s => s.actions.push(...)) -> 20 entries */ });
 test('reset returns to the seed and a new startedAt', async () => {});
+test('seeds decisions, actions and calls from snapshot.json when present and records restoredFrom', async () => { /* snapshot with one decision and one action -> state has them; restoredFrom equals snapshotAt; policy still default */ });
+test('starts with empty lists and restoredFrom null when there is no snapshot', async () => {});
+test('snapshot() returns only decisions, actions, calls and a timestamp', async () => {});
 // test/log.test.ts
 test('appendCall keeps at most 500 entries, newest last', () => {});
 test('hasSentAction is true only for entries PayPal accepted', () => { /* ok:false entry -> false; ok:true -> true */ });
@@ -581,8 +590,8 @@ test('hasSentAction is true only for entries PayPal accepted', () => { /* ok:fal
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/store.ts src/log.ts test/store.test.ts test/log.test.ts
-git commit -m "Add the JSON state store and the action and call logs"
+git add src/store.ts src/log.ts scripts/snapshot.ts test/store.test.ts test/log.test.ts
+git commit -m "Add the JSON state store, the logs and the committed snapshot"
 ```
 
 ---
@@ -669,7 +678,7 @@ git commit -m "Serve the case API behind the demo passcode"
 **Interfaces:**
 - Consumes: `GET /api/cases`, `GET /healthz`.
 - Produces: `window.settle` namespace in `app.js` with `api(path, init)` (adds the passcode header from `sessionStorage['settle.passcode']`, prompts via a modal `<dialog>` on 401 and retries once), `loadCases({ refresh })`, `renderGrid(rows)`, `openCase(id)` (Task 14 fills the panel), `announce(text)` (writes to an `aria-live="polite"` region).
-- Grid: `agGrid.createGrid(el, options)` from `/vendor/ag-grid-community.min.js`; columns in order: Case (`caseKey` + short dispute id, pinned left), Item, Buyer reason (`reasonLabel`, `agTextColumnFilter`), Amount (`USD 36.00`, `agNumberColumnFilter` on cents, right-aligned), Stage (`stageLabel`), Status (custom cell renderer: headline text with a state chip `Open` / `Offer pending` / `Under review` / `Resolved`), Seller response due (custom renderer: absolute `Tue 25 Nov` + relative `in 15 days` + `Due soon` chip when `deadline.state === 'due_soon'`; sorts by `dueAt`, `agDateColumnFilter`), Hold (custom renderer: `USD 45.12` with a tooltip `PayPal is holding this amount for the case`, blank when null), Recommendation (custom renderer: badge FIGHT / SETTLE / ACCEPT with the top reason as `tooltipValueGetter`, or a `Decide` button that runs decide in place and updates the row with `api.applyTransaction({ update })`), Action (`Sent make_offer USD 9.00` from the log, blank otherwise). Default sort `dueAt` ascending, resolved rows last (`sortRows` order from the server; every column `sortable`, `resizable`, `filter: true`). `rowClassRules: { 'row-due-soon': p => p.data.deadline.state === 'due_soon', 'row-resolved': p => !p.data.open }` (colour is never the only signal: the chips carry the text). `getRowId: p => p.data.disputeId`; rows update in place after decide and approve with `applyTransaction` rather than a full reload; `rowSelection: { mode: 'singleRow' }` and `onRowClicked`/Enter open the case; a quick filter input above the grid wired to `api.setGridOption('quickFilterText', ...)`; `overlayNoRowsTemplate` = `No open disputes. Refresh, or seed a new set (docs/seeding.md).`; `overlayLoadingTemplate` while fetching; `domLayout: 'autoHeight'` under 20 rows; `enableCellTextSelection: true`; `tooltipShowDelay: 300`; `autoSizeStrategy: { type: 'fitGridWidth' }`; keyboard navigation is AG Grid's own. All features above are AG Grid Community (no Enterprise module is loaded; the status bar and master/detail are Enterprise and are not used). Header: product name, one-line tagline from the spec ("A dispute desk for small PayPal sellers"), a Refresh button, a Policy button (Task 15). Footer: `Demo state resets to the seed when the server restarts (Render free tier keeps no disk). Started {startedAt}. Sandbox only.`
+- Grid: `agGrid.createGrid(el, options)` from `/vendor/ag-grid-community.min.js`; columns in order: Case (`caseKey` + short dispute id, pinned left), Item, Buyer reason (`reasonLabel`, `agTextColumnFilter`), Amount (`USD 36.00`, `agNumberColumnFilter` on cents, right-aligned), Stage (`stageLabel`), Status (custom cell renderer: headline text with a state chip `Open` / `Offer pending` / `Under review` / `Resolved`), Seller response due (custom renderer: absolute `Tue 25 Nov` + relative `in 15 days` + `Due soon` chip when `deadline.state === 'due_soon'`; sorts by `dueAt`, `agDateColumnFilter`), Hold (custom renderer: `USD 45.12` with a tooltip `PayPal is holding this amount for the case`, blank when null), Recommendation (custom renderer: badge FIGHT / SETTLE / ACCEPT with the top reason as `tooltipValueGetter`, or a `Decide` button that runs decide in place and updates the row with `api.applyTransaction({ update })`), Action (`Sent make_offer USD 9.00` from the log, blank otherwise). Default sort `dueAt` ascending, resolved rows last (`sortRows` order from the server; every column `sortable`, `resizable`, `filter: true`). `rowClassRules: { 'row-due-soon': p => p.data.deadline.state === 'due_soon', 'row-resolved': p => !p.data.open }` (colour is never the only signal: the chips carry the text). `getRowId: p => p.data.disputeId`; rows update in place after decide and approve with `applyTransaction` rather than a full reload; `rowSelection: { mode: 'singleRow' }` and `onRowClicked`/Enter open the case; a quick filter input above the grid wired to `api.setGridOption('quickFilterText', ...)`; `overlayNoRowsTemplate` = `No open disputes. Refresh, or seed a new set (docs/seeding.md).`; `overlayLoadingTemplate` while fetching; `domLayout: 'autoHeight'` under 20 rows; `enableCellTextSelection: true`; `tooltipShowDelay: 300`; `autoSizeStrategy: { type: 'fitGridWidth' }`; keyboard navigation is AG Grid's own. All features above are AG Grid Community (no Enterprise module is loaded; the status bar and master/detail are Enterprise and are not used). Theming: AG Grid 36 styles itself through the Theming API in the UMD bundle (`agGrid.themeQuartz` is in the served file); pass `theme: agGrid.themeQuartz.withParams({ accentColor, fontFamily })` and load no `ag-theme-*.css` (the legacy class approach needs `theme: 'legacy'` and is not used). Header: product name, one-line tagline from the spec ("A dispute desk for small PayPal sellers"), a Refresh button, a Policy button (Task 15). Footer: `Demo state resets to the seed when the server restarts (Render free tier keeps no disk); decisions and the action log are restored from the snapshot recorded {restoredFrom}. Started {startedAt}. Sandbox only.` (the snapshot clause only when `restoredFrom` is set).
 
 - [ ] **Step 1: Write the three files.** Layout: CSS grid, `main` = grid (full width) and `aside#panel` (hidden until a case opens); at `min-width: 960px` the panel sits right at 420 px, below that it stacks under the grid. Minimum supported width 360 px with the grid scrolling horizontally. Calm, plain styling: system font stack, neutral greys, one accent for buttons, red `#b42318` for due-soon rows with 4.5:1 text contrast on their background.
 
@@ -946,7 +955,7 @@ Expected: all pass; paste the accept outcome and the accepted evidence type into
 
 - [ ] **Step 1: `render.yaml`**: `services: [{ type: web, name: settle, runtime: node, plan: free, buildCommand: npm ci && npm run build, startCommand: npm start, healthCheckPath: /healthz, envVars: [{ key: NODE_VERSION, value: "24" }, { key: PAYPAL_CLIENT_ID, sync: false }, { key: PAYPAL_CLIENT_SECRET, sync: false }, { key: ANTHROPIC_API_KEY, sync: false }, { key: SETTLE_PASSCODE, sync: false }, { key: SETTLE_DATA_DIR, value: /tmp/settle-data }] }]`. `dist/` must contain `public/` references resolved relative to `process.cwd()` (static dir `path.resolve('public')`, vendor dir `path.resolve('node_modules/ag-grid-community/dist')`), and `seed/cases.json` read from the repo path, so the build output needs no copy step.
 
-- [ ] **Step 2: Local production rehearsal**: `npm run build && SETTLE_DATA_DIR=/tmp/x npm start`; `curl localhost:3000/healthz` → `{ ok: true ... }`; the page loads with `/vendor/ag-grid-community.min.js` 200.
+- [ ] **Step 2: Local production rehearsal**: `npm run snapshot` first (so the deploy carries the decisions and the DEV1 action already recorded), commit `seed/snapshot.json`; then `npm run build && SETTLE_DATA_DIR=/tmp/x npm start`; `curl localhost:3000/healthz` → `{ ok: true ... }`; the page loads with `/vendor/ag-grid-community.min.js` 200 and the footer names the snapshot time; delete `/tmp/x` and start again: the decisions and the DEV1 log entry are still there (this is the Render restart case).
 
 - [ ] **Step 3: STOP: Render needs a GitHub repo.** Ask Ridwan to (a) create the private GitHub repo and add the remote, (b) create the Render Blueprint from it, (c) paste the four secret env vars in the Render dashboard. Push only after his yes: `git push -u origin build/v1` (and `main`).
 
@@ -985,7 +994,9 @@ Expected: all pass; paste the accept outcome and the accepted evidence type into
 
 - [ ] **Step 4: Record** per the order; after beat 2 and 3 confirm `PayPal now reports` lines are in frame; export; watch once end to end with the sound on; check the on-screen PayPal and Claude mentions in beat 5.
 
-- [ ] **Step 5: Commit** `git commit -m "Add the demo video shot list"` (the MP4 itself is not committed; keep it in Downloads/settle-video).
+- [ ] **Step 5: Snapshot the real actions**: the hosted approvals live only in Render's `/tmp`; fetch them before the service sleeps: `curl -H "x-settle-passcode: ..." https://<service>.onrender.com/api/log?kind=actions` and `?kind=calls` plus each case's detail, merge into `seed/snapshot.json` with `npm run snapshot -- --from-url https://<service>.onrender.com` (the script accepts a base URL and the passcode from `SETTLE_PASSCODE` as an alternative to the local state file), commit, and push after Ridwan's yes so the hosted log shows the video's A and B actions for the judges.
+
+- [ ] **Step 6: Commit** `git commit -m "Add the demo video shot list and snapshot the recorded actions"` (the MP4 itself is not committed; keep it in Downloads/settle-video).
 
 ---
 
@@ -1015,7 +1026,7 @@ Expected: all pass; paste the accept outcome and the accepted evidence type into
 
 - [ ] **Step 2: Seeding session 3 (Ridwan, ~30 minutes, Nov 28 or 29 WAT evening)**: Task 4 steps 1 to 5 for the six keys (track A3 before its dispute; none of the others tracked); `npm run seed -- status` until all six list their actions; commit `seed/cases.json`; `git merge --ff-only` to main; push after Ridwan's yes; Render redeploys from main (the seed file is read at boot, so the hosted state resets to the new set on its own).
 
-- [ ] **Step 3: Hosted-site check (Nov 30)**: open the URL with the passcode; grid shows the six new cases plus the resolved November cases below them (resolved rows muted, sorted last); run decide on A3, B3, C3, D3 so judges land on populated recommendations; leave the policy at the shipped default 48 h (nothing is red on Dec 1 because every due date is ≥ 19 days out, which is honest; the README's "known limits" says so); run `SETTLE_E2E=1 npm run test:e2e` read-only (no spend ids) → green; `curl /healthz` → ok.
+- [ ] **Step 3: Hosted-site check (Nov 30)**: open the URL with the passcode; grid shows the six new cases plus the resolved November cases below them (resolved rows muted, sorted last); run decide on A3, B3, C3, D3 so judges land on populated recommendations, then `npm run snapshot -- --from-url ...`, commit `seed/snapshot.json`, push after Ridwan's yes (otherwise the first Render spin-down drops those decisions); leave the policy at the shipped default 48 h (nothing is red on Dec 1 because every due date is ≥ 19 days out, which is honest; the README's "known limits" says so); run `SETTLE_E2E=1 npm run test:e2e` read-only (no spend ids) → green; `curl /healthz` → ok; after the redeploy, confirm the footer names the new snapshot time and the November actions are still in the log.
 
 - [ ] **Step 4: Resolved-only sanity**: with `SETTLE_FAKE_PAYPAL=1` locally and all fixtures set to `RESOLVED`, confirm the page still shows each case's recommendation, reasons, compare view and action log (the state judges may meet on Dec 15). Fix anything that renders empty.
 
