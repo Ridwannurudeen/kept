@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Settle</title>
+    <meta name="description" content="A dispute desk for small PayPal sellers." />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/vendor/ag-grid-community.min.js" defer></script>
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <h1 class="brand-name">Settle</h1>
+        <p class="brand-tagline">A dispute desk for small PayPal sellers</p>
+      </div>
+      <div class="topbar-actions">
+        <button type="button" class="button" id="policy-button" disabled>Policy</button>
+        <button type="button" class="button button-primary" id="refresh-button">Refresh</button>
+      </div>
+    </header>
+
+    <section class="summary" aria-label="Outcomes">
+      <dl class="summary-strip" id="summary-strip"></dl>
+    </section>
+
+    <div class="layout" id="layout">
+      <main class="workspace" id="workspace">
+        <div class="toolbar">
+          <div class="search">
+            <label class="search-label" for="quick-filter">Search cases</label>
+            <input
+              type="search"
+              id="quick-filter"
+              class="search-input"
+              placeholder="Case, item, reason, amount"
+              autocomplete="off"
+            />
+          </div>
+          <p class="fetch-status" id="fetch-status"></p>
+        </div>
+        <div class="grid-frame" id="grid-frame">
+          <div class="settle-grid" id="grid" aria-label="Disputes"></div>
+        </div>
+      </main>
+      <aside class="panel" id="panel" aria-labelledby="panel-title" hidden>
+        <div class="panel-head">
+          <h2 class="panel-title" id="panel-title"></h2>
+          <button type="button" class="button button-quiet" id="panel-close">Close</button>
+        </div>
+        <p class="panel-headline" id="panel-headline"></p>
+      </aside>
+    </div>
+
+    <footer class="footer" id="footer"></footer>
+
+    <div class="visually-hidden" aria-live="polite" id="announcer"></div>
+
+    <dialog class="dialog" id="passcode-dialog" aria-labelledby="passcode-title">
+      <form method="dialog" class="dialog-form" id="passcode-form">
+        <h2 class="dialog-title" id="passcode-title">Enter the demo passcode</h2>
+        <p class="dialog-text">Settle keeps the case list behind a passcode. You only need to enter it once per tab.</p>
+        <label class="field-label" for="passcode-input">Passcode</label>
+        <input type="password" id="passcode-input" class="field-input" autocomplete="current-password" required />
+        <p class="dialog-error" id="passcode-error" hidden>That passcode did not work. Try again.</p>
+        <div class="dialog-actions">
+          <button type="submit" class="button button-primary" value="ok">Continue</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>
