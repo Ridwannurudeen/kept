@@ -1,0 +1,43 @@
+import { checkOffer, deadlineStatus, defaultPolicy, offerCap, parsePolicy } from '../src/policy.js';
+
+test('cap is the lowest of percent, absolute and disputed, floored to cents', () => {
+  expect(offerCap('36.00', defaultPolicy)).toBe('10.80');
+  expect(offerCap('36.01', { ...defaultPolicy, maxOfferPercent: 33 })).toBe('11.88');
+  expect(offerCap('500.00', defaultPolicy)).toBe('50.00');
+  expect(offerCap('12.00', { ...defaultPolicy, maxOfferPercent: 100, maxOfferAbsolute: '999.00' })).toBe('12.00');
+});
+test('refuses above the percent cap and names it', () => {
+  expect(checkOffer('12.00', '36.00', defaultPolicy)).toEqual({ ok: false, cap: '10.80', limit: 'percent', message: 'Offer 12.00 is above the policy cap of 10.80 (30% of 36.00)' });
+});
+test('refuses above the absolute cap', () => {
+  expect(checkOffer('60.00', '500.00', defaultPolicy)).toMatchObject({ ok: false, limit: 'absolute', message: 'Offer 60.00 is above the absolute cap of 50.00' });
+});
+test('refuses above the disputed amount even when caps allow it', () => {
+  expect(checkOffer('40.00', '36.00', { ...defaultPolicy, maxOfferPercent: 100, maxOfferAbsolute: '999.00' })).toMatchObject({ ok: false, limit: 'disputed' });
+});
+test('refuses zero, negative and malformed offers', () => {
+  expect(checkOffer('0.00', '36.00', defaultPolicy)).toMatchObject({ ok: false, limit: 'zero' });
+  expect(checkOffer('-1.00', '36.00', defaultPolicy)).toMatchObject({ ok: false, limit: 'format' });
+  expect(checkOffer('9', '36.00', defaultPolicy)).toMatchObject({ ok: false, limit: 'format' });
+  expect(checkOffer('9.001', '36.00', defaultPolicy)).toMatchObject({ ok: false, limit: 'format' });
+});
+test('accepts an offer exactly at the cap', () => {
+  expect(checkOffer('10.80', '36.00', defaultPolicy)).toEqual({ ok: true, cap: '10.80' });
+});
+test('never clamps: the returned cap is informational and the offer is unchanged', () => {
+  const r = checkOffer('12.00', '36.00', defaultPolicy); expect(r.ok).toBe(false); expect('offer' in r).toBe(false);
+});
+test('deadline inside the buffer is due_soon, outside is ok, missing is unknown, past is passed', () => {
+  const now = new Date('2026-11-10T12:00:00Z');
+  expect(deadlineStatus('2026-11-11T12:00:00Z', now, defaultPolicy)).toEqual({ state: 'due_soon', hoursLeft: 24 });
+  expect(deadlineStatus('2026-11-25T12:00:00Z', now, defaultPolicy)).toEqual({ state: 'ok', hoursLeft: 360 });
+  expect(deadlineStatus('2026-11-25T12:00:00Z', now, { ...defaultPolicy, deadlineBufferHours: 400 })).toEqual({ state: 'due_soon', hoursLeft: 360 });
+  expect(deadlineStatus(undefined, now, defaultPolicy)).toEqual({ state: 'unknown', hoursLeft: null });
+  expect(deadlineStatus('2026-11-09T12:00:00Z', now, defaultPolicy)).toEqual({ state: 'passed', hoursLeft: -24 });
+});
+test('parsePolicy rejects out-of-range and malformed settings', () => {
+  expect(() => parsePolicy({ maxOfferPercent: 101, maxOfferAbsolute: '50.00', deadlineBufferHours: 48 })).toThrow();
+  expect(() => parsePolicy({ maxOfferPercent: 30, maxOfferAbsolute: '50', deadlineBufferHours: 48 })).toThrow();
+  expect(() => parsePolicy({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: -1 })).toThrow();
+  expect(parsePolicy({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 400 })).toEqual({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 400 });
+});
