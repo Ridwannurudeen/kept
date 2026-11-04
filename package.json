@@ -16,7 +16,9 @@
     "seed": "tsx seed/seed.ts",
     "fixtures": "tsx scripts/record-fixtures.ts",
     "smoke:model": "tsx scripts/smoke-model.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "snapshot": "tsx scripts/snapshot.ts",
+    "snapshot:check": "tsx scripts/snapshot.ts --check"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "1.2.12",
