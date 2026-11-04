@@ -1,0 +1,3 @@
+Carrier: UPS
+Tracking number: 1Z999AA10123456784
+Shipment date: 2026-10-28.
