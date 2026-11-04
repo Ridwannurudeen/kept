@@ -17,6 +17,7 @@ export type CaseRow = {
   stage: string;
   stageLabel: string;
   status: string;
+  updatedAt: string;
   dueAt: string | null;
   deadline: DeadlineStatus;
   hold: Money | null;
@@ -55,8 +56,6 @@ export type OutcomeSummary = {
   mixedCurrencyExcluded: number;
 };
 
-const updateTimes = new WeakMap<CaseRow, number>();
-
 export function joinCases(disputes: Dispute[], records: Record<string, CaseRecord>): { dispute: Dispute; record: CaseRecord | null }[] {
   const byCapture = new Map(Object.values(records).flatMap((record) => record.captureId ? [[record.captureId, record] as const] : []));
   return disputes.map((dispute) => ({ dispute, record: byCapture.get(captureIdOf(dispute) ?? '') ?? null }));
@@ -68,7 +67,7 @@ function outcomeOf(d: Dispute): CaseRow['outcome'] {
   const amount = disputedAmount(d);
   const suppliedRefund = d.dispute_outcome?.amount_refunded;
   const refunded = suppliedRefund ?? (code === 'RESOLVED_SELLER_FAVOUR' ? { currency_code: amount.currency_code, value: '0.00' } : null);
-  const kept = refunded ? { currency_code: amount.currency_code, value: fromCents(toCents(amount.value) - toCents(refunded.value)) } : null;
+  const kept = refunded && refunded.currency_code === amount.currency_code ? { currency_code: amount.currency_code, value: fromCents(toCents(amount.value) - toCents(refunded.value)) } : null;
   const created = Date.parse(d.create_time);
   const updated = Date.parse(d.update_time);
   const daysToClose = Number.isFinite(created) && Number.isFinite(updated) ? Math.floor((updated - created) / 86_400_000) : null;
@@ -79,15 +78,17 @@ function staleReason(stored: StoredDecision, d: Dispute): string {
   if (stored.basis.stage !== d.dispute_life_cycle_stage) return `stage changed ${stageLabel({ ...d, dispute_life_cycle_stage: stored.basis.stage })} \u2192 ${stageLabel(d)}`;
   const links = (d.links ?? []).map((link) => link.rel);
   if (JSON.stringify([...new Set(stored.basis.links)].sort()) !== JSON.stringify([...new Set(links)].sort())) return "PayPal's listed actions changed";
+  if (stored.basis.status !== d.status) return `status changed ${stored.basis.status} → ${d.status}`;
+  if (stored.basis.amount !== disputedAmount(d).value) return `amount changed ${stored.basis.amount} → ${disputedAmount(d).value}`;
+  if (stored.basis.dueAt !== (d.seller_response_due_date ?? null)) return 'due date changed';
   return 'case details changed';
 }
 
-export function buildCaseRow(d: Dispute, record: CaseRecord | null, state: State, now: Date): CaseRow {
+function buildRow(d: Dispute, record: CaseRecord | null, state: State, now: Date, explanation: StateExplanation): CaseRow {
   const stored = state.decisions[d.dispute_id] ?? null;
   const stale = stored ? isDecisionStale(stored, d) : false;
   const open = isOpen(d);
   const amount = disputedAmount(d);
-  const explanation = explainState(d, now);
   const action = state.actions.filter((entry) => entry.disputeId === d.dispute_id && entry.paypal.ok).at(-1)?.action ?? null;
   const outcome = outcomeOf(d);
   const item = d.disputed_transactions?.[0]?.items?.[0] as { item_name?: string } | undefined;
@@ -101,9 +102,10 @@ export function buildCaseRow(d: Dispute, record: CaseRecord | null, state: State
     stage: d.dispute_life_cycle_stage,
     stageLabel: stageLabel(d),
     status: d.status,
+    updatedAt: d.update_time,
     dueAt: open ? d.seller_response_due_date ?? null : null,
     deadline: open ? deadlineStatus(d.seller_response_due_date, now, state.policy) : { state: 'unknown', hoursLeft: null },
-    hold: holdAmount(d),
+    hold: open ? holdAmount(d) : null,
     recommendation: stored?.decision.recommendation ?? null,
     recommendationStale: stale,
     staleReason: stale && stored ? staleReason(stored, d) : null,
@@ -112,16 +114,21 @@ export function buildCaseRow(d: Dispute, record: CaseRecord | null, state: State
     headline: explanation.headline,
     outcome,
   };
-  updateTimes.set(row, Date.parse(d.update_time));
   return row;
+}
+
+export function buildCaseRow(d: Dispute, record: CaseRecord | null, state: State, now: Date): CaseRow {
+  return buildRow(d, record, state, now, explainState(d, now));
 }
 
 export function buildCaseDetail(d: Dispute, record: CaseRecord | null, order: Order | null, capture: Capture | null, state: State, now: Date): CaseDetail {
   const actions = state.actions.filter((entry) => entry.disputeId === d.dispute_id);
   const allowed = [...allowedActions(d)];
   const policy = state.policy;
+  const explanation = explainState(d, now);
+  const row = buildRow(d, record, state, now, explanation);
   return {
-    ...buildCaseRow(d, record, state, now),
+    ...row,
     dispute: d,
     order,
     capture,
@@ -129,7 +136,7 @@ export function buildCaseDetail(d: Dispute, record: CaseRecord | null, order: Or
     attachments: state.attachments[d.dispute_id] ?? [],
     decision: state.decisions[d.dispute_id] ?? null,
     allowed,
-    explanation: explainState(d, now),
+    explanation,
     actions,
     sent: hasSentAction(actions, d.dispute_id),
     policy,
@@ -146,7 +153,7 @@ export function sortRows(rows: CaseRow[]): CaseRow[] {
       const dueOrder = Date.parse(a.dueAt) - Date.parse(b.dueAt);
       if (dueOrder !== 0) return dueOrder;
     }
-    if (!a.open) return (updateTimes.get(b) ?? 0) - (updateTimes.get(a) ?? 0);
+    if (!a.open) return Date.parse(b.updatedAt) - Date.parse(a.updatedAt);
     return 0;
   });
 }
@@ -162,16 +169,16 @@ export function summarize(rows: CaseRow[]): OutcomeSummary {
   const middle = Math.floor(days.length / 2);
   const medianDaysToClose = days.length === 0 ? null : days.length % 2 === 1 ? days[middle] : Math.floor((days[middle - 1] + days[middle]) / 2);
   const openRows = included.filter((row) => row.open);
-  const heldRows = included.filter((row) => row.hold !== null);
+  const heldRows = openRows.filter((row) => row.hold !== null);
   const openCents = openRows.reduce((sum, row) => sum + toCents(row.amount.value), 0);
   const holdCents = heldRows.reduce((sum, row) => sum + toCents(row.hold?.value ?? '0.00'), 0);
   return {
     resolved: resolved.length,
-    kept: resolved.length ? { currency_code: currency ?? '', value: fromCents(keptCents) } : null,
-    refunded: resolved.length ? { currency_code: currency ?? '', value: fromCents(refundedCents) } : null,
+    kept: resolved.length ? { currency_code: included[0]!.amount.currency_code, value: fromCents(keptCents) } : null,
+    refunded: resolved.length ? { currency_code: included[0]!.amount.currency_code, value: fromCents(refundedCents) } : null,
     medianDaysToClose,
-    openAtStake: openRows.length ? { currency_code: currency ?? '', value: fromCents(openCents) } : null,
-    heldByPayPal: heldRows.length ? { currency_code: currency ?? '', value: fromCents(holdCents) } : null,
+    openAtStake: openRows.length ? { currency_code: included[0]!.amount.currency_code, value: fromCents(openCents) } : null,
+    heldByPayPal: heldRows.length ? { currency_code: included[0]!.amount.currency_code, value: fromCents(holdCents) } : null,
     currency,
     mixedCurrencyExcluded,
   };

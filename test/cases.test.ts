@@ -59,6 +59,7 @@ test('sortRows puts open cases by due date first and resolved last', () => {
   const closed = buildCaseRow(resolved, null, state(), now);
   const laterClosed = buildCaseRow({ ...resolved, dispute_id: 'later-closed', update_time: '2026-11-06T00:00:00.000Z' }, null, state(), now);
   expect(sortRows([closed, noDueDate, late, laterClosed, early]).map((row) => row.disputeId)).toEqual(['early', 'late', 'no-due', 'later-closed', closed.disputeId]);
+  expect(sortRows(JSON.parse(JSON.stringify([closed, laterClosed])) as typeof closed[]).map((row) => row.disputeId)).toEqual(['later-closed', closed.disputeId]);
 });
 
 test('detail sent flag reflects an accepted action in the log and cap is null unless make_offer is allowed', () => {
@@ -100,12 +101,27 @@ test('resolved row without amount_refunded keeps kept null unless the seller won
   expect(buildCaseRow(sellerWon, null, state(), now).outcome).toMatchObject({ refunded: { currency_code: 'USD', value: '0.00' }, kept: { currency_code: 'USD', value: '20.00' } });
 });
 
+test('resolved outcome keeps null when refund currency differs from the disputed currency', () => {
+  const differentCurrency = { ...resolved, dispute_outcome: { ...resolved.dispute_outcome!, amount_refunded: { currency_code: 'EUR', value: '5.00' } } };
+  expect(buildCaseRow(differentCurrency, null, state(), now).outcome?.kept).toBeNull();
+});
+
+test('stale reason identifies status, amount and due date changes', () => {
+  const decision: Decision = { recommendation: 'SETTLE', plain_ask: 'offer a partial refund', evidence_have: [], evidence_missing: [], reasons: ['fair'], offer_amount: '5.00', draft_note: 'Sorry.' };
+  const statusChanged = { ...inquiry, status: 'RESOLVED' };
+  const amountChanged = { ...inquiry, dispute_amount: { currency_code: 'USD', value: '20.00' }, disputed_transactions: undefined };
+  const dueChanged = { ...inquiry, seller_response_due_date: '2026-11-12T00:00:00.000Z' };
+  expect(buildCaseRow(statusChanged, null, state({ decisions: { [inquiry.dispute_id]: stored(decision) } }), now).staleReason).toBe('status changed OPEN → RESOLVED');
+  expect(buildCaseRow(amountChanged, null, state({ decisions: { [inquiry.dispute_id]: stored(decision) } }), now).staleReason).toBe('amount changed 36.00 → 20.00');
+  expect(buildCaseRow(dueChanged, null, state({ decisions: { [inquiry.dispute_id]: stored(decision) } }), now).staleReason).toBe('due date changed');
+});
+
 test('summarize totals in cents, takes the median days, and sums open stake and holds', () => {
   const one = { ...buildCaseRow(resolved, null, state(), now), outcome: { code: 'R', refunded: { currency_code: 'USD', value: '0.01' }, kept: { currency_code: 'USD', value: '19.99' }, daysToClose: 2 } };
   const two = { ...one, disputeId: 'two', outcome: { code: 'R', refunded: { currency_code: 'USD', value: '0.00' }, kept: { currency_code: 'USD', value: '0.01' }, daysToClose: 3 } };
   const openRow = buildCaseRow(inquiry, null, state(), now);
   const summary = summarize([one, two, openRow]);
-  expect(summary).toMatchObject({ resolved: 2, kept: { currency_code: 'USD', value: '20.00' }, refunded: { currency_code: 'USD', value: '0.01' }, medianDaysToClose: 2, openAtStake: { currency_code: 'USD', value: '36.00' }, heldByPayPal: { currency_code: 'USD', value: '71.87' }, currency: 'USD', mixedCurrencyExcluded: 0 });
+  expect(summary).toMatchObject({ resolved: 2, kept: { currency_code: 'USD', value: '20.00' }, refunded: { currency_code: 'USD', value: '0.01' }, medianDaysToClose: 2, openAtStake: { currency_code: 'USD', value: '36.00' }, heldByPayPal: { currency_code: 'USD', value: '34.25' }, currency: 'USD', mixedCurrencyExcluded: 0 });
 });
 
 test('summarize excludes a second currency and counts it', () => {
