@@ -37,6 +37,15 @@ export type CaseRecord = {
 
 type CasesFile = { cases: Record<string, CaseRecord> };
 
+export function notesWithShipment(notes: string, trackedAt: string, carrier: string, trackingNumber: string): string {
+  return `${notes}\nShipped on ${trackedAt.slice(0, 10)} via ${carrier}, tracking ${trackingNumber}.`;
+}
+
+export function assertNoExistingOrder(cases: Record<string, { orderId: string }>, key: string): void {
+  const existing = cases[key];
+  if (existing) throw new Error(`${key} already has order ${existing.orderId}; edit seed/cases.json to remove it first`);
+}
+
 export function buildOrderBody(plan: PlanCase): unknown {
   return {
     intent: 'CAPTURE',
@@ -127,11 +136,15 @@ function disputeCaptureId(dispute: Dispute): string | null {
 
 async function run(): Promise<void> {
   const [command, key, ...args] = process.argv.slice(2);
+  if (!((command === 'order' || command === 'capture' || command === 'track') && key) && !(command === 'status' && !key)) {
+    throw new Error('Usage: npm run seed -- order <KEY> | capture <KEY> | track <KEY> [--force --tracking-number <number> --carrier <carrier>] | status');
+  }
   const plan = await readPlan();
   const client = createClient();
   const file = await readCases();
 
   if (command === 'order' && key) {
+    assertNoExistingOrder(file.cases, key);
     const item = plan.find((entry) => entry.key === key);
     if (!item) throw new Error(`Unknown plan key ${key}`);
     const order = await client.createOrder(buildOrderBody(item), `settle-${key}-${Date.now()}`);
@@ -175,8 +188,8 @@ async function run(): Promise<void> {
     if (!item.tracked && !force) throw new Error(`${key} is not a tracked plan; pass --force to add tracking`);
     const trackingNumberIndex = args.indexOf('--tracking-number');
     const carrierIndex = args.indexOf('--carrier');
-    const trackingNumber = item.trackingNumber ?? (trackingNumberIndex >= 0 ? args[trackingNumberIndex + 1] : undefined);
-    const carrier = item.carrier ?? (carrierIndex >= 0 ? args[carrierIndex + 1] : undefined);
+    const trackingNumber = (trackingNumberIndex >= 0 ? args[trackingNumberIndex + 1] : undefined) ?? item.trackingNumber;
+    const carrier = (carrierIndex >= 0 ? args[carrierIndex + 1] : undefined) ?? item.carrier;
     if (!trackingNumber || !carrier) throw new Error(`Tracking number and carrier are required for ${key}`);
     const id = record.captureId;
     if (!id) throw new Error(`No capture id stored for ${key}`);
@@ -184,6 +197,7 @@ async function run(): Promise<void> {
     record.trackingNumber = trackingNumber;
     record.carrier = carrier;
     record.trackedAt = new Date().toISOString();
+    record.notes = notesWithShipment(item.notes, record.trackedAt, carrier, trackingNumber);
     await writeCases(file);
     console.log(`TRACKED ${key} ${trackingNumber}`);
     return;
@@ -191,7 +205,8 @@ async function run(): Promise<void> {
 
   if (command === 'status' && !key) {
     const listed = await client.listDisputes();
-    const disputes = await Promise.all(listed.map((entry) => client.getDispute(entry.dispute_id)));
+    const disputes: Dispute[] = [];
+    for (const entry of listed) disputes.push(await client.getDispute(entry.dispute_id));
     const matches = matchDisputes(file.cases, disputes.map((dispute) => ({ dispute_id: dispute.dispute_id, captureId: disputeCaptureId(dispute) })));
     for (const [caseKey, disputeId] of Object.entries(matches)) {
       const dispute = disputes.find((entry) => entry.dispute_id === disputeId);
