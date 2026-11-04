@@ -2,10 +2,13 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Request, Router } from 'express';
 import { ZodError } from 'zod';
+import type { DecideResult } from '../ai/decide.js';
+import { createDecideQueue } from '../ai/queue.js';
 import { buildCaseDetail, buildCaseRow, joinCases, sortRows, summarize } from '../cases.js';
 import { PayPalError } from '../paypal/errors.js';
-import { captureIdOf, disputedAmount } from '../paypal/dispute.js';
+import { allowedActions, captureIdOf, disputedAmount } from '../paypal/dispute.js';
 import { parsePolicy } from '../policy.js';
+import { basisOf } from '../store.js';
 import type { Dispute } from '../paypal/types.js';
 import type { CaseRecord } from '../../seed/seed.js';
 import type { Deps } from './app.js';
@@ -20,7 +23,26 @@ function cachedRows(cached: CachedCases, deps: Deps) {
   return sortRows(joinCases(cached.disputes, state.cases).map(({ dispute, record }) => buildCaseRow(dispute, record, state, deps.now())));
 }
 
+async function decideOne(disputeId: string, deps: Deps): Promise<DecideResult> {
+  const dispute = await deps.paypal.getDispute(disputeId);
+  const state = deps.store.get();
+  const record = Object.values(state.cases).find((entry) => entry.captureId && entry.captureId === captureIdOf(dispute)) ?? null;
+  const unavailable = (error: unknown) => { console.error(`[decide ${disputeId}]`, error); return null; };
+  const [order, capture] = await Promise.all([
+    record?.orderId ? deps.paypal.getOrder(record.orderId).catch(unavailable) : Promise.resolve(null),
+    record?.captureId ? deps.paypal.getCapture(record.captureId).catch(unavailable) : Promise.resolve(null),
+  ]);
+  const attachments = [...(record?.attachments ?? []), ...(state.attachments[disputeId] ?? []).map(({ name, type }) => ({ name, type }))];
+  const result = await deps.decide({ dispute, order, capture, record, attachments, policy: state.policy, allowed: [...allowedActions(dispute)], now: deps.now() });
+  if (result.ok) {
+    const { decision, validation, model, steps, toolCalls, durationMs } = result;
+    await deps.store.update((current) => { current.decisions[disputeId] = { decision, validation, at: deps.now().toISOString(), model, steps, toolCalls, durationMs, basis: basisOf(dispute) }; });
+  }
+  return result;
+}
+
 export function registerRoutes(router: Router, deps: Deps): void {
+  const queue = createDecideQueue((disputeId) => decideOne(disputeId, deps));
   router.get('/healthz', (_req, res) => res.json({ ok: true, startedAt: deps.store.get().startedAt, cases: Object.keys(deps.store.get().cases).length, mode: 'live' }));
 
   router.get('/api/cases', async (req, res, next) => {
@@ -114,7 +136,22 @@ export function registerRoutes(router: Router, deps: Deps): void {
   router.post('/api/reset', async (_req, res, next) => {
     try { await deps.store.reset(); caches.delete(deps.store); res.json({ ok: true }); } catch (error) { next(error); }
   });
-  router.post('/api/cases/:id/decide', (_req, _res, next) => next(new Error('Not wired yet')));
+  router.post('/api/cases/decide-all', async (_req, res, next) => {
+    try {
+      const listed = await deps.paypal.listDisputes();
+      const queued = listed.filter((entry) => entry.status !== 'RESOLVED').map((entry) => entry.dispute_id);
+      for (const id of queued) queue.enqueue(id).catch((error: unknown) => console.error(`[decide ${id}]`, error));
+      res.status(202).json({ queued });
+    } catch (error) { next(error); }
+  });
+  router.get('/api/decide/status', (_req, res) => res.json(queue.status()));
+  router.post('/api/cases/:id/decide', async (req, res, next) => {
+    try {
+      const result = await queue.enqueue(req.params.id);
+      if (result.ok) res.json({ ok: true, decision: result.decision, validation: result.validation, durationMs: result.durationMs });
+      else res.json({ ok: false, decision: null, validation: null, error: result.error, detail: result.detail, durationMs: result.durationMs });
+    } catch (error) { next(error); }
+  });
   router.post('/api/cases/:id/approve', (_req, _res, next) => next(new Error('Not wired yet')));
 }
 

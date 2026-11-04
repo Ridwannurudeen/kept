@@ -33,6 +33,7 @@ describe('HTTP app', () => {
     getCapture: ReturnType<typeof vi.fn>;
   };
   let app: ReturnType<typeof createApp>;
+  let decide: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), 'settle-http-'));
@@ -48,7 +49,8 @@ describe('HTTP app', () => {
       getCapture: vi.fn(async () => { throw new Error('capture unavailable'); }),
     };
     const config: Config = { paypalClientId: 'id', paypalClientSecret: 'secret', anthropicApiKey: 'key', passcode: 'pass', port: 3000, dataDir: join(dir, 'data'), seedPath };
-    app = createApp({ config, paypal: paypal as never, store, decide: async () => { throw new Error('Not wired yet'); }, act: (async () => { throw new Error('Not wired yet'); }) as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never });
+    decide = vi.fn(async () => { throw new Error('Not wired yet'); });
+    app = createApp({ config, paypal: paypal as never, store, decide: decide as never, act: (async () => { throw new Error('Not wired yet'); }) as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never });
   });
 
   afterEach(async () => { await rm(dir, { recursive: true, force: true }); });
@@ -147,6 +149,44 @@ describe('HTTP app', () => {
     paypal.listDisputes.mockRejectedValueOnce(new PayPalError('failed', 503, 'dbg-1', {}, '/list'));
     const { body } = await request(app).get('/api/cases').set('x-settle-passcode', 'pass').expect(502);
     expect(body).toMatchObject({ error: 'paypal', status: 503, debugId: 'dbg-1', message: 'failed' });
+  });
+
+  test('POST decide builds the input from PayPal and the record, stores the decision with its basis and returns it', async () => {
+    const decision = { recommendation: 'SETTLE', plain_ask: 'Offer a little.', evidence_have: [], evidence_missing: ['photos'], reasons: ['weak'], offer_amount: '3.00', draft_note: 'Sorry.' };
+    const validation = { ok: true, action: 'make_offer', cap: '3.00' };
+    decide.mockResolvedValueOnce({ ok: true, decision, validation, steps: 2, toolCalls: ['get_dispute', 'submit_decision'], model: 'claude-opus-5-5', durationMs: 42 });
+    paypal.getOrder.mockResolvedValueOnce({ id: 'ORDER-A', status: 'COMPLETED', purchase_units: [] });
+    paypal.getCapture.mockResolvedValueOnce({ id: 'CAP-a', status: 'COMPLETED', amount: { currency_code: 'USD', value: '10.00' } });
+    await store.update((state) => { state.attachments['d-early'] = [{ name: 'proof.txt', type: 'text/plain', size: 4, at: '2026-11-04T00:00:00.000Z' }]; state.cases.A!.attachments = [{ name: 'packing-slip.txt', type: 'text/plain' }]; });
+    const { body } = await request(app).post('/api/cases/d-early/decide').set('x-settle-passcode', 'pass').expect(200);
+    expect(body).toEqual({ ok: true, decision, validation, durationMs: 42 });
+    const input = decide.mock.calls[0]![0];
+    expect(paypal.getOrder).toHaveBeenCalledWith('ORDER-A');
+    expect(paypal.getCapture).toHaveBeenCalledWith('CAP-a');
+    expect(input).toMatchObject({ dispute: { dispute_id: 'd-early' }, order: { id: 'ORDER-A' }, capture: { id: 'CAP-a' }, record: { key: 'A' }, allowed: ['make_offer'], attachments: [{ name: 'packing-slip.txt', type: 'text/plain' }, { name: 'proof.txt', type: 'text/plain' }], now: new Date('2026-11-05T00:00:00.000Z') });
+    expect(store.get().decisions['d-early']).toEqual({ decision, validation, at: '2026-11-05T00:00:00.000Z', model: 'claude-opus-5-5', steps: 2, toolCalls: ['get_dispute', 'submit_decision'], durationMs: 42, basis: { stage: 'INQUIRY', status: 'OPEN', disputeState: null, links: ['make_offer'], amount: '10.00', dueAt: '2026-11-06T00:00:00.000Z' } });
+  });
+
+  test('POST decide returns 200 with ok false and stores nothing when the model gives no decision', async () => {
+    decide.mockResolvedValueOnce({ ok: false, error: 'no_decision', detail: 'none', steps: 2, toolCalls: [], durationMs: 5 });
+    const { body } = await request(app).post('/api/cases/d-late/decide').set('x-settle-passcode', 'pass').expect(200);
+    expect(body).toEqual({ ok: false, decision: null, validation: null, error: 'no_decision', detail: 'none', durationMs: 5 });
+    expect(store.get().decisions['d-late']).toBeUndefined();
+  });
+
+  test('POST decide-all queues every open case and GET decide/status reports them', async () => {
+    decide.mockImplementation(async (input: { dispute: Dispute }) => ({ ok: false, error: 'no_decision', detail: `none for ${input.dispute.dispute_id}`, steps: 1, toolCalls: [], durationMs: 1 }));
+    paypal.getOrder.mockResolvedValue({ id: 'ORDER-A', status: 'COMPLETED', purchase_units: [] });
+    paypal.getCapture.mockResolvedValue({ id: 'CAP-a', status: 'COMPLETED', amount: { currency_code: 'USD', value: '10.00' } });
+    const auth = { 'x-settle-passcode': 'pass' };
+    const { body } = await request(app).post('/api/cases/decide-all').set(auth).expect(202);
+    expect(body).toEqual({ queued: ['d-late', 'd-early'] });
+    await vi.waitFor(() => expect(decide).toHaveBeenCalledTimes(2));
+    await vi.waitFor(async () => {
+      const status = (await request(app).get('/api/decide/status').set(auth).expect(200)).body;
+      expect(Object.keys(status).sort()).toEqual(['d-early', 'd-late']);
+      expect(status['d-late']).toMatchObject({ state: 'failed', error: 'no_decision: none for d-late' });
+    });
   });
 
   test('unknown dispute id maps PayPal 404 to 404', async () => {

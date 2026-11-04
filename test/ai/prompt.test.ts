@@ -1,0 +1,24 @@
+import { buildUserPrompt } from '../../src/ai/prompt.js';
+import type { Order } from '../../src/paypal/types.js';
+import { fixture, inputFor, recordB } from './helpers.js';
+
+test('names the dispute id, the notes, the attachments, the caps and the allowed actions', () => {
+  const p = buildUserPrompt(inputFor('dispute-inquiry-open', recordB));
+  expect(p).toContain('PP-R-HND-00000001');
+  expect(p).toContain(recordB.notes); expect(p).toContain('max offer 30% or USD 50.00'); expect(p).toContain('make_offer');
+  expect(p).toContain('listing-photo-note.txt');
+  expect(p).toContain('2026-11-24T18:22:34.555Z');
+});
+test('says plainly when there are no notes and no attachments', () => {
+  const p = buildUserPrompt(inputFor('dispute-chargeback-fresh', null));
+  expect(p).toContain('Seller notes: none recorded for this case.'); expect(p).toContain('Attachments: none');
+});
+test('never includes buyer email or full address', () => {
+  const order = fixture<Order>('order-205118069H056835L');
+  const shipping = order.purchase_units[0]!.shipping!;
+  shipping.name = { full_name: 'Sam Buyer' };
+  shipping.address = { ...shipping.address, address_line_1: '1 Main St', postal_code: '95131' };
+  const p = buildUserPrompt(inputFor('dispute-inquiry-open', recordB, order));
+  expect(p).toContain('San Jose');
+  for (const leak of ['@', 'address_line_1', '1 Main St', 'Sam Buyer', 'REDACTED', '95131', 'payer_id', 'email']) expect(p).not.toContain(leak);
+});
