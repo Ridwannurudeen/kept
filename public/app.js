@@ -70,7 +70,7 @@
 
   function statusChip(row) {
     if (!row.open) return { text: "Resolved", cls: "chip-resolved" };
-    if (row.status === "WAITING_FOR_BUYER_RESPONSE")
+    if (row.headline.startsWith("Your offer of"))
       return { text: "Offer pending", cls: "chip-offer" };
     if (row.status === "UNDER_REVIEW")
       return { text: "Under review", cls: "chip-review" };
@@ -396,9 +396,13 @@
 
   function dueComparator(a, b, nodeA, nodeB, isDescending) {
     if (a === null && b === null) {
-      return (
-        Date.parse(nodeB.data.updatedAt) - Date.parse(nodeA.data.updatedAt)
-      );
+      const order =
+        nodeA.data.open !== nodeB.data.open
+          ? nodeA.data.open
+            ? -1
+            : 1
+          : Date.parse(nodeB.data.updatedAt) - Date.parse(nodeA.data.updatedAt);
+      return isDescending ? -order : order;
     }
     if (a === null) return isDescending ? -1 : 1;
     if (b === null) return isDescending ? 1 : -1;
