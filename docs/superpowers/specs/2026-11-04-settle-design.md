@@ -21,6 +21,7 @@ How it was chosen: three research passes, a Fable strategy review and a Codex co
 3. The seller can edit the draft, then approve. Approval sends the real sandbox API call and the page shows the case state PayPal returns.
 4. A side-by-side "why" view explains why one case was fought and another settled.
 5. Every money action is checked against the seller's policy before it can be approved (section 5).
+6. An outcome counter (added 2026-11-04 at Ridwan's request) shows what the seller kept, using only PayPal's own numbers: for each resolved case, kept = disputed amount minus PayPal's `dispute_outcome.amount_refunded`, and days to close = `update_time` minus `create_time`. Totals (cases resolved, amount kept, amount refunded, median days to close) sit in a summary strip above the grid and a pinned total row in it, beside the open amount at stake and PayPal's reported holds. It never claims a counterfactual ("saved versus fighting", "would have lost"); it reports what PayPal says happened.
 
 ## 3. Non-goals
 
@@ -78,7 +79,7 @@ How it was chosen: three research passes, a Fable strategy review and a Codex co
 2. 0:25 to 1:15: **Case A**, item not received, but a tracking record is on file, and PayPal is holding the money for the claim. Settle explains PayPal's ask, flags the missing proof, drafts the defence from the tracking record. The seller edits one line and approves. PayPal's returned state is shown.
 3. 1:15 to 2:20: **Case B**, item not as described, weak evidence. Settle recommends a partial offer under the cap and shows why (evidence gap, deadline, amount). The seller approves; the make-offer call goes out. This is the heart of the demo.
 4. 2:20 to 2:45: side-by-side reasons for A versus B.
-5. 2:45 to 3:00: the grid with both cases moved; PayPal and Claude named on screen.
+5. 2:45 to 3:00: the grid with both cases moved and the outcome counter showing what the seller kept on resolved cases (Case B counts only after the sandbox buyer really accepts the offer between takes); PayPal and Claude named on screen.
 
 Recording order: beats 1 and 4 first from the prepared state, then the two approve beats last, one case per take, spares ready for a retake. Beat 5 is shot after both approvals land. English, no copyrighted music.
 
