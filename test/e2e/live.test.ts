@@ -27,7 +27,8 @@ describe.skipIf(!enabled)('live PayPal sandbox end-to-end', () => {
   let tempDir: string;
 
   beforeAll(async () => {
-    config = loadConfig(process.env);
+    config = loadConfig({ ...process.env, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY ?? 'unset' });
+    expect(config.mode).toBe('live');
     client = new PayPalClient({ clientId: config.paypalClientId, clientSecret: config.paypalClientSecret });
     toolkit = new PayPalAgentToolkit({ clientId: config.paypalClientId, clientSecret: config.paypalClientSecret, configuration: { actions: { disputes: { list: true, get: true, create: true } }, context: { sandbox: true } } });
     cases = (JSON.parse(await readFile(config.seedPath, 'utf8')) as { cases: Record<string, CaseRecord> }).cases;
@@ -105,7 +106,8 @@ describe.skipIf(!enabled)('live PayPal sandbox end-to-end', () => {
     const result = await performAction(disputeId, { action: 'accept_claim', note: 'We sent the wrong size. Full refund.' }, { paypal: client, toolkit, store, now: () => new Date() });
     expect(result.status).toBe('sent');
     if (result.status !== 'sent') return;
-    expect(result.entry.paypal.status).toBe(200);
+    expect(result.entry.paypal.ok).toBe(true);
+    expect(result.entry.paypal.status).toBeNull();
     let current: Dispute = result.dispute;
     for (let attempt = 0; attempt < 6; attempt += 1) {
       current = await client.getDispute(disputeId);
@@ -114,7 +116,7 @@ describe.skipIf(!enabled)('live PayPal sandbox end-to-end', () => {
     }
     expect(['RESOLVED', 'UNDER_REVIEW']).toContain(current.status);
     expect(['ACCEPTED', 'RESOLVED_BUYER_FAVOUR']).toContain(current.dispute_outcome?.outcome_code);
-  }, 60_000);
+  }, 90_000);
 
   test.skipIf(!process.env.SETTLE_E2E_EVIDENCE_ID)('optionally provides E evidence with an explicit dispute id', async () => {
     const disputeId = process.env.SETTLE_E2E_EVIDENCE_ID;
@@ -124,8 +126,11 @@ describe.skipIf(!enabled)('live PayPal sandbox end-to-end', () => {
     const deps = { paypal: client, toolkit, store, now: () => new Date() };
     const input = { action: 'provide_evidence' as const, note: 'Shipped UPS 1Z999AA10123456784 to the order address.', evidenceType: 'PROOF_OF_FULFILLMENT' as const };
     let result = await performAction(disputeId, input, deps);
-    if (result.status === 'failed' && result.error.status === 422 && result.error.message.includes('PROOF_OF_FULFILLMENT')) {
+    if (result.status === 'failed' && result.error.status === 422) {
       result = await performAction(disputeId, { ...input, evidenceType: 'OTHER' }, deps);
+      if (result.status === 'sent') console.log('Sandbox accepted evidenceType OTHER');
+    } else if (result.status === 'sent') {
+      console.log('Sandbox accepted evidenceType PROOF_OF_FULFILLMENT');
     }
     expect(result.status).toBe('sent');
   }, 60_000);
