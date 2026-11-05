@@ -12,7 +12,7 @@ Know when to settle a PayPal dispute, then do it in a click
 
 ## Inspiration
 
-I sell online, and I have been on the seller's side of PayPal disputes. I waited 48 to 72 hours for answers from support and had funds held for 14 to 21 days while a case ran its course. Much of that time was my own: working out what PayPal was asking for, which evidence counted, and whether the case was worth fighting at all. Settle does not change PayPal's policies or timelines. It removes the seller's own delay and guesswork once a dispute lands, so the seller answers PayPal quickly and with the right move.
+I sell online, and these are my own experiences as a seller in PayPal disputes: I waited 48 to 72 hours for answers from support and had funds held for 14 to 21 days while a case ran its course. Much of that time was my own: working out what PayPal was asking for, which evidence counted, and whether the case was worth fighting at all. Settle does not change PayPal's policies or timelines. It removes the seller's own delay and guesswork once a dispute lands, so the seller answers PayPal quickly and with the right move.
 
 ## What it does
 
@@ -24,7 +24,7 @@ Settle is a dispute desk for small PayPal sellers. It lists every open dispute f
 
 Each recommendation comes with its reasons, the evidence the seller has, the evidence missing, and a drafted note. The seller edits the draft and approves. Only then does Settle send the one PayPal call that matches the action, read the dispute again, and show the state PayPal returns. A side by side view explains why one case was fought and another settled.
 
-The settle branch is the core idea. A tool that contests every case does not help a seller who is likely to lose one. Settle can say "don't fight this one": an early, capped offer closes a case the seller would likely lose, before it escalates.
+The settle branch is the core idea. A tool that contests every case does not help a seller who is likely to lose one. Settle can say "don't fight this one": an early, capped offer can close the case if the buyer accepts, before it escalates to a PayPal claim.
 
 An outcome counter reports, from PayPal's own numbers only, what the seller kept after each resolved case (the disputed amount minus PayPal's `dispute_outcome.amount_refunded`), what was refunded, and the days to close. It never claims a result that did not happen.
 
@@ -47,7 +47,7 @@ PayPal REST APIs, all in `src/paypal/client.ts`:
 
 PayPal Agent Toolkit: `@paypal/agent-toolkit` 1.11.0, its `ai-sdk` export, constructed in `src/index.ts`. The model is given only `list_disputes` and `get_dispute` (`modelToolset` in `src/ai/tools.ts`). `accept_dispute_claim` is the accept action, called only by app code in `src/actions.ts` after the seller approves.
 
-AI model: Claude Opus 5.5, model id `claude-opus-5-5`, set as `MODEL_ID` in `src/ai/provider.ts` with effort `high`, through `@ai-sdk/anthropic` 1.2.12 on the Vercel AI SDK (`ai` 4.3.19). The decision loop is `decideCase` in `src/ai/decide.ts`: one `generateText` call per case, at most 6 steps, ending in a `submit_decision` tool call. The prompts are in `src/ai/prompt.ts`. The decision schema and its validation against the seller's policy and PayPal's allowed actions are `DecisionSchema` and `validateDecision` in `src/decision.ts`; the policy is in `src/policy.ts`. Free text is never parsed as a decision.
+AI model: Claude Opus 5.5, model id `claude-opus-5-5`, set as `MODEL_ID` in `src/ai/provider.ts` with effort `high`, through `@ai-sdk/anthropic` 1.2.12 on the Vercel AI SDK (`ai` 4.3.19). The decision loop is `decideCase` in `src/ai/decide.ts`: one `generateText` call per case, up to 6 steps per call, with one retry if the model does not submit a decision. The prompts are in `src/ai/prompt.ts`. The decision schema and its validation against the seller's policy and PayPal's allowed actions are `DecisionSchema` and `validateDecision` in `src/decision.ts`; the policy is in `src/policy.ts`. Free text is never parsed as a decision.
 
 AG Grid in Settle: AG Grid Community 36 (`ag-grid-community` 36.3.0) renders the whole case desk in `public/app.js`. It uses custom cell renderers, text, number and date column filters, the quick filter, row class rules for due-soon and resolved rows, a pinned total row for the outcome counter, tooltips, in-place row updates with `applyTransaction` after each action, and the Quartz theme.
 

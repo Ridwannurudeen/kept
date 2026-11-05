@@ -1,6 +1,6 @@
 # Seeding sandbox cases
 
-Settle needs real sandbox disputes. PayPal only lets a sandbox buyer open one, by hand, in the sandbox Resolution Center, so seeding is part script and part browser. A session of five cases takes about 25 minutes.
+Settle needs real sandbox disputes. PayPal only lets a sandbox buyer open one, by hand, in the sandbox Resolution Center, so seeding is part script and part browser. Plan for roughly 25 minutes for five cases (an estimate, not a measured time).
 
 Rules:
 

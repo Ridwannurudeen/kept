@@ -82,7 +82,7 @@ After beat 3's offer on B lands, the owner logs in as the sandbox buyer and acce
 
 ### Replay fallback
 
-If the live sandbox misbehaves on recording day (a case not listing, a PayPal 5xx, the hold missing), the affected beat is recorded locally with `SETTLE_FAKE_PAYPAL=1`. The replay banner stays in frame for the whole beat, and the narration says "recorded sandbox data" for that beat. If beat 1 is replay, its second caption becomes `Replay of recorded sandbox data` instead of `PayPal sandbox, live`. Replay is never passed off as live. Beats 2 and 3 are live if at all possible (A2 and B2 are the retakes); beats 1, 4 and 5 may be replay without loss.
+If the live sandbox misbehaves on recording day (a case not listing, a PayPal 5xx, the hold missing), the affected beat is recorded locally with `SETTLE_FAKE_PAYPAL=1`. Any replay footage shows recorded sandbox outcomes, with the replay banner visible for the whole beat, and the narration says "recorded sandbox data" for that beat. If beat 1 is replay, its second caption becomes `Replay of recorded sandbox data` instead of `PayPal sandbox, live`. Replay is never passed off as live. Beats 2 and 3 are live if at all possible (A2 and B2 are the retakes); beats 1, 4 and 5 may be replay without loss. In beat 5, B can be shown as resolved only after real buyer acceptance in the live take, or as a recorded sandbox outcome with the replay banner visible. Never imply a live buyer action in replay footage.
 
 ## 7. Narration script
 
@@ -96,16 +96,16 @@ Beat 2
 Case A. The buyer says the item never arrived, but I shipped it with UPS tracking. Because tracking was on file, PayPal opened this straight as a claim, and the dispute shows the amount PayPal is holding for it. Settle tells me what PayPal wants from me now, lists the evidence I have and what is missing, and drafts my defence from the tracking record. Claude wrote the recommendation; it can read the dispute, but it cannot send anything. I change one line and approve. Settle sends provide supporting info to PayPal, then reads the dispute again. This is the state PayPal returns.
 
 Beat 3
-Case B is where Settle is different. The buyer says the runner is the wrong colour, and my notes are thin: no photos before shipping. Settle recommends settling early with a partial refund. It shows why: the evidence gap, the deadline, and the amount. The offer sits within my cap of ten dollars eighty, and if I typed more than the cap, Settle would refuse it, not quietly lower it. I approve. Settle sends make offer to PayPal, and this is what PayPal reports back. An early offer closes a case I would likely lose, before it escalates.
+Case B is where Settle is different. The buyer says the runner is the wrong colour, and my notes are thin: no photos before shipping. Settle recommends settling early with a partial refund. It shows why: the evidence gap, the deadline, and the amount. The offer sits within my cap of ten dollars eighty, and if I typed more than the cap, Settle would refuse it, not quietly lower it. I approve. Settle sends make offer to PayPal, and this is what PayPal reports back. An early, capped offer can close the case if the buyer accepts, before it escalates to a PayPal claim.
 
 Beat 4
 Side by side, the reasons are clear. Case A has a shipment record that answers the buyer's claim. Case B has nothing that answers the colour complaint, so a capped offer is the better move.
 
 Beat 5
-After the buyer accepted the offer in PayPal, case B shows resolved. The counter uses only PayPal's own numbers: what I kept after resolution, what was refunded, and how long it took to close. Settle is built on the PayPal Disputes API and the PayPal Agent Toolkit, with Claude Opus 5.5 writing the recommendations.
+After the buyer accepts the offer in live PayPal, case B shows resolved. In replay, this is a recorded sandbox outcome under the replay banner. The counter uses only PayPal's own numbers: what I kept after resolution, what was refunded, and how long it took to close. Settle is built on the PayPal Disputes API and the PayPal Agent Toolkit, with Claude Opus 5.5 writing the recommendations.
 ```
 
-Word count: 348 spoken words, 358 with the beat labels (limit 420). Recount after any change with `awk '/^```$/{f=!f;next} f' docs/video.md | grep -v "^Beat [0-9]$" | wc -w`.
+Word count: 367 spoken words, 377 with the beat labels (limit 420). Recount after any change with `awk '/^```$/{f=!f;next} f' docs/video.md | grep -v "^Beat [0-9]$" | wc -w`.
 
 Never say: that PayPal support is slow, "beat the buyer", that funds were released, or that money was "saved" versus fighting.
 

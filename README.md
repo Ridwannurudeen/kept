@@ -25,7 +25,7 @@ Everything runs against the PayPal sandbox (`https://api-m.sandbox.paypal.com`).
 
 PayPal Agent Toolkit: `@paypal/agent-toolkit` 1.11.0, `ai-sdk` export. It is constructed in `src/index.ts` with the same sandbox client id and secret. The model gets only `list_disputes` and `get_dispute` (`modelToolset` in `src/ai/tools.ts`). `accept_dispute_claim` is used by app code only, in `src/actions.ts`.
 
-AI model: Claude Opus 5.5, model id `claude-opus-5-5`, set as `MODEL_ID` in `src/ai/provider.ts`, through `@ai-sdk/anthropic` 1.2.12 on the Vercel AI SDK (`ai` 4.3.19). Effort is set to `high` in the same file. The decision loop is `decideCase` in `src/ai/decide.ts`: one `generateText` call per case, `toolChoice: 'auto'`, at most 6 steps, one retry if the model does not call `submit_decision`. The system and user prompts are in `src/ai/prompt.ts`. The model's tools are in `src/ai/tools.ts`.
+AI model: Claude Opus 5.5, model id `claude-opus-5-5`, set as `MODEL_ID` in `src/ai/provider.ts`, through `@ai-sdk/anthropic` 1.2.12 on the Vercel AI SDK (`ai` 4.3.19). Effort is set to `high` in the same file. The decision loop is `decideCase` in `src/ai/decide.ts`: one `generateText` call per case, `toolChoice: 'auto'`, up to 6 steps per call, with one retry if the model does not submit a decision. The system and user prompts are in `src/ai/prompt.ts`. The model's tools are in `src/ai/tools.ts`.
 
 Other parts: AG Grid Community 36 (`ag-grid-community` 36.3.0) renders the case grid in `public/app.js` (custom cell renderers, text, number and date column filters, quick filter, row class rules for due-soon and resolved rows, a pinned total row, tooltips, in-place row updates with `applyTransaction`, the Quartz theme). Hosting is a Render blueprint in `render.yaml`.
 
@@ -41,6 +41,7 @@ Other parts: AG Grid Community 36 (`ag-grid-community` 36.3.0) renders the case 
 - The model holds only read tools (`list_disputes`, `get_dispute`) plus `submit_decision`, which records a decision and sends nothing. It has no tool that moves money.
 - Money actions (`make-offer`, `accept-claim`, `provide-supporting-info`, `provide-evidence`) are sent only from app code in `src/actions.ts`, and only after the seller approves.
 - The refund cap refuses, it never clamps. The seller sets a maximum offer as a percentage of the disputed amount, an absolute maximum, and a deadline buffer (`src/policy.ts`, default 30%, 50.00 and 48 hours). An offer above either cap or above the disputed amount is blocked and the UI names the limit it breaks.
+- Every PayPal call Settle makes is recorded in the call log shown at the bottom of the page.
 - The server re-checks every approve (`performAction` in `src/actions.ts`): it re-reads the dispute from PayPal, refuses an action PayPal does not list for the case, refuses a stale recommendation, refuses a second action on a case, re-runs the policy check on the submitted amount and note, and blocks a retry while an earlier outcome is unknown.
 
 ### Case states
@@ -116,7 +117,7 @@ The `test:e2e` script uses a POSIX `SETTLE_E2E=1` prefix; on PowerShell set `$en
 
 `render.yaml` is a Render blueprint: one free web service, Node 24, build `npm ci && npm run build`, start `npm start`, health check `/healthz`. Set the four variables in the Render dashboard (they are `sync: false`). `SETTLE_DATA_DIR` is `/tmp/settle-data`.
 
-`npm run snapshot` writes `seed/snapshot.json` from a running instance's decisions and action log (`--from-url <base>` reads a hosted one), and `npm run snapshot:check` checks it for personal data. When that file is present, a restarted server restores decisions and the action log from it.
+`npm run snapshot` writes `seed/snapshot.json` from a running instance's decisions and action log (`--from-url <base>` reads a hosted one), and `npm run snapshot:check` checks it for personal data. When that file is present, a restarted server restores decisions, the action log and the PayPal call log from it.
 
 ## Architecture
 
@@ -144,7 +145,7 @@ The `test:e2e` script uses a POSIX `SETTLE_E2E=1` prefix; on PowerShell set `$en
 
 - Sandbox only. There is no production mode and no multi-seller login beyond the demo passcode.
 - One action per case. A sandbox case acted on once is spent.
-- State resets on restart. Render's free tier sleeps when idle and keeps no disk, so notes, policy and the log go back to the seed; decisions and the action log come back from `seed/snapshot.json` when that file is present.
+- State resets on restart. Render's free tier sleeps when idle and keeps no disk, so notes, policy and the log go back to the seed; decisions, the action log and the PayPal call log come back from `seed/snapshot.json` when that file is present.
 - The recommendation needs a model key. Without `ANTHROPIC_API_KEY` (replay mode) a case shows no new recommendation.
 - No file upload to PayPal. Seller attachments stay inside Settle; the defence is sent as a notes text.
 - No escalation or appeal flow, no buyer messaging.
