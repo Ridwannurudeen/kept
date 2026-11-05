@@ -6,7 +6,7 @@ Rules from the hackathon: under 3 minutes, public on YouTube, English, no third-
 
 ## 1. Directed brief
 
-- GOAL: a judge sees Kept read four real sandbox disputes, fight one with a drafted defence, settle one with a capped offer, explain why the two differ, and report what PayPal says the seller kept. Opening caption: `Kept: a dispute desk for small PayPal sellers`. Closing: PayPal and Claude named on screen.
+- GOAL: a judge sees what PayPal is holding across the seller's open disputes and what PayPal says the seller kept on resolved ones, both from PayPal's own fields; then sees Kept settle one case with a capped offer, fight another with a drafted defence, and, after the sandbox buyer accepts the offer, the resolved case move from held to kept. Opening caption: `Kept: what PayPal is holding, and what you kept`. Closing: PayPal and Claude named on screen.
 - AUDIENCE: hackathon judges, some watching with the sound off, some through an automated first pass.
 - OUTPUT: 1920 x 1080, 30 fps, H.264 MP4. Target length 2:50. Hard stop 2:58 (5,340 frames). Never 3:00 or longer.
 - LOOK: the app as it is (AG Grid Quartz theme), browser at 125 % zoom, fullscreen with F11 so no browser chrome or Windows taskbar shows. No overlays except captions.
@@ -18,17 +18,18 @@ Rules from the hackathon: under 3 minutes, public on YouTube, English, no third-
 
 ## 2. Beats
 
-Timestamps are tightened from spec section 6 so the export ends by 2:52 and stays under 2:59.
+The story follows the approved reframe (design spec section 0): held and kept money first, the fight, settle or accept call as the mechanism. Timestamps keep the export under 2:58.
 
 | Beat | Time | What is on screen | Captions |
 | --- | --- | --- | --- |
-| 1 | 0:00 to 0:25 | The grid: four cases sorted by PayPal's seller response deadline, A and B red (inside the 400 h buffer), C and D green, the outcome strip above. | `Kept: a dispute desk for small PayPal sellers` (0:01 to 0:07), then `PayPal sandbox, live` (0:08 to 0:12) |
-| 2 | 0:25 to 1:10 | Case A panel: item not received, tracking on file, PayPal claim stage, the hold PayPal reports, `provide_supporting_info` listed, evidence on hand and missing, the drafted defence. The seller edits one line, clicks Approve, confirms. The result line `PayPal now reports: ...` appears and holds. | `Case A: PayPal opened a claim and is holding funds for it` (0:27 to 0:33), `Sending provide-supporting-info to PayPal` (on the confirm click), `PayPal's returned state` (while the result line holds) |
-| 3 | 1:10 to 2:05 | Case B panel: not as described, inquiry stage, weak notes, recommendation SETTLE, the cap `USD 10.80` with the draft offer under it, the reasons (evidence gap, deadline, amount). The seller clicks Approve, confirms. The result line appears and holds. | `Case B: settle early, with an offer under the seller's cap` (1:12 to 1:19), `Sending make-offer to PayPal` (on the confirm click), `PayPal's returned state` (while the result line holds) |
-| 4 | 2:05 to 2:22 | Compare view, `Why Kept chose: case A side by side`, A against B. | `Why one case is fought and the other settled` (2:06 to 2:12) |
-| 5 | 2:22 to 2:52 | The grid again: A and B moved on, B `RESOLVED`, the strip's Kept figure and the pinned total row in frame. | `Kept after resolution, from PayPal's dispute outcome` (2:24 to 2:31), then `Built on PayPal Disputes API + PayPal Agent Toolkit, Claude Opus 5.5` (2:38 to 2:52) |
+| 1 | 0:00 to 0:20 | The headline strip: Held now and Kept, with refunded, resolved and open at stake beside them, and the fee rule line under it. | `Kept: what PayPal is holding, and what you kept` (0:01 to 0:07), then `PayPal sandbox, live` (0:08 to 0:12), then `Both totals come from PayPal's API` (0:13 to 0:19) |
+| 2 | 0:20 to 0:45 | The grid: cases sorted by PayPal's seller response deadline, A and B red (inside the 400 h buffer), the Held, Kept and Seller Protection columns, Claude's recommendation per row. | `Held, kept and Seller Protection per case` (0:22 to 0:28) |
+| 3 | 0:45 to 1:40 | Case B panel: not as described, inquiry stage, `Seller Protection on this payment: Eligible, not this reason`, weak notes, recommendation SETTLE, the cap `USD 10.80`. The seller types an amount over the cap and the approve button names the limit; then types the draft offer back, clicks Approve, confirms. The result line `PayPal now reports: ...` appears and holds. | `Case B: not covered for this reason, so settle early under the cap` (0:47 to 0:54), `The cap refuses, it never lowers the amount` (on the over-cap edit), `Sending make-offer to PayPal` (on the confirm click), `PayPal's returned state` (while the result line holds) |
+| 4 | 1:40 to 2:08 | Case A panel: item not received, PayPal claim stage, `Seller Protection on this payment: Eligible, covers this reason`, PayPal's hold, tracking on file, the drafted defence. The seller clicks Approve, confirms. The result line appears and holds; the status card reads `PayPal is reviewing your supporting information` and shows what was sent (PayPal's `supporting_info` entry with source `SUBMITTED_BY_SELLER`). | `Case A: covered for this reason, so fight with the tracking record` (1:42 to 1:49), `Sending provide-supporting-info to PayPal` (on the confirm click), `PayPal's returned state` (while the result line holds) |
+| 5 | 2:08 to 2:40 | Refresh. B reads `RESOLVED` with PayPal's `amount_refunded`; the Kept figure and the pinned total row include B; Held now shows what PayPal still holds on open cases. The PayPal calls log is opened for a moment. | `Case B resolved: PayPal's refunded amount, and what the seller kept` (2:10 to 2:17), `Every figure is PayPal's own` (2:24 to 2:29) |
+| 6 | 2:40 to 2:52 | The grid, still. | `Built on PayPal Disputes API + PayPal Agent Toolkit, Claude Opus 5.5` (2:40 to 2:52) |
 
-Event timing inside beats 2 and 3, per approve:
+Event timing inside beats 3 and 4, per approve:
 
 | Step | Duration |
 | --- | --- |
@@ -42,12 +43,13 @@ Event timing inside beats 2 and 3, per approve:
 ## 3. Prepared state (morning of recording, on the hosted site)
 
 1. Open `[HOSTED URL]`, enter the passcode before the recorder starts, wait for the first load.
-2. Refresh. Run Decide on A, B, C and D so beats 1 and 4 need no waiting.
+2. Refresh. Run Decide on every open case so beats 2 to 4 need no waiting.
 3. Open the policy dialog and set the deadline buffer to 400 hours (a seller setting; dates are never faked).
 4. Check A and B rows are red and C and D green.
-5. Check A's panel shows PayPal's hold and `provide_supporting_info`.
-6. Check B's panel shows the cap `USD 10.80` and a draft offer under it. Write the offer amount here: `[B OFFER AMOUNT]`.
-7. Note the strip's Kept figure before B resolves: `[KEPT BEFORE B]`. If it is not zero (an earlier resolved sandbox case), the narration never says B is the first resolved case.
+5. Check A's panel shows PayPal's hold, `provide_supporting_info`, and a Seller Protection line that covers this reason.
+6. Check B's panel shows the cap `USD 10.80`, a draft offer under it, and a Seller Protection line that does not cover this reason. Write the offer amount here: `[B OFFER AMOUNT]`.
+7. Note the strip's Kept and Held now figures before B resolves: `[KEPT BEFORE B]`, `[HELD BEFORE B]`. If Kept is not zero (an earlier resolved sandbox case), the narration never says B is the first resolved case.
+8. Note whether B shows a hold in the Held column. If it does not, Held now will not change when B resolves, and the narration says only what PayPal still holds.
 
 ## 4. Screen setup
 
@@ -60,29 +62,29 @@ Event timing inside beats 2 and 3, per approve:
 
 ## 5. Recording order
 
-1. Beat 1 and beat 4, from the prepared state. No case is spent.
-2. Beat 2 on case A. One take.
-3. Beat 3 on case B. One take.
-4. Between takes, the beat 5 outcome step (below).
+1. Beats 1, 2 and 6, from the prepared state. No case is spent.
+2. Beat 3 on case B. One take.
+3. Between takes, the beat 5 outcome step (below).
+4. Beat 4 on case A. One take.
 5. Beat 5, after both approvals have landed and B shows `RESOLVED`.
 
 Narration is recorded separately after the picture is locked, read against the cut.
 
 ### Beat 5 outcome step
 
-After beat 3's offer on B lands, the owner logs in as the sandbox buyer and accepts the offer in the sandbox Resolution Center (a real buyer action, the same one the spike used). Refresh Kept until B shows `RESOLVED` and the strip's Kept figure includes it. Expected Kept for B: 36.00 minus the refunded offer amount, `[KEPT FIGURE]`. Then shoot beat 5 with the strip and the pinned total row in frame. It is narrated as what PayPal reports was kept after resolution, never as money saved versus fighting.
+After beat 3's offer on B lands, the owner logs in as the sandbox buyer and accepts the offer in the sandbox Resolution Center (a real buyer action, the same one the 2026-11-04 spike used: a 5.00 offer on a 20.00 inquiry, accepted, RESOLVED, 15.00 kept). Refresh Kept until B shows `RESOLVED` and the strip's Kept figure includes it. Expected Kept for B: 36.00 minus the refunded offer amount, `[KEPT FIGURE]`. Also read B's `fund_movements` after resolution and write here whether PayPal lists the hold ending: `[B HOLD AFTER RESOLUTION]`. Then shoot beat 5 with the strip and the pinned total row in frame. It is narrated as what PayPal reports was kept after resolution, never as a gain versus fighting, and Held now is described only as what PayPal still holds on open cases.
 
 ## 6. Retake rules
 
 - Rehearse every beat first, locally, with `KEPT_FAKE_PAYPAL=1`. Never rehearse on the hosted site: each sandbox case can be acted on once.
-- A2 and B2 are the only spares. If beat 2 fails on A, retake on A2. If beat 3 fails on B, retake on B2. There is no third take of an approve beat.
+- A2 and B2 are the only spares. If beat 4 fails on A, retake on A2. If beat 3 fails on B, retake on B2. There is no third take of an approve beat.
 - A take fails if: the click and its result are not in one continuous shot, the `PayPal now reports` line is missing or not readable, a caption would cover the field being talked about, or anything from the BANNED list is on screen.
 - Waits: if PayPal takes over 3 s to answer, cut the wait with a hard cut, keeping the click before it and the result after it in frame. Never speed up footage.
-- Beats 1, 4 and 5 can be retaken as often as needed; they spend nothing.
+- Beats 1, 2, 5 and 6 can be retaken as often as needed; they spend nothing.
 
 ### Replay fallback
 
-If the live sandbox misbehaves on recording day (a case not listing, a PayPal 5xx, the hold missing), the affected beat is recorded locally with `KEPT_FAKE_PAYPAL=1`. Any replay footage shows recorded sandbox outcomes, with the replay banner visible for the whole beat, and the narration says "recorded sandbox data" for that beat. If beat 1 is replay, its second caption becomes `Replay of recorded sandbox data` instead of `PayPal sandbox, live`. Replay is never passed off as live. Beats 2 and 3 are live if at all possible (A2 and B2 are the retakes); beats 1, 4 and 5 may be replay without loss. In beat 5, B can be shown as resolved only after real buyer acceptance in the live take, or as a recorded sandbox outcome with the replay banner visible. Never imply a live buyer action in replay footage.
+If the live sandbox misbehaves on recording day (a case not listing, a PayPal 5xx, the hold missing), the affected beat is recorded locally with `KEPT_FAKE_PAYPAL=1`. Any replay footage shows recorded sandbox outcomes, with the replay banner visible for the whole beat, and the narration says "recorded sandbox data" for that beat. If beat 1 is replay, its second caption becomes `Replay of recorded sandbox data` instead of `PayPal sandbox, live`. Replay is never passed off as live. Beats 3 and 4 are live if at all possible (A2 and B2 are the retakes); beats 1, 2 and 6 may be replay without loss. In beat 5, B can be shown as resolved only after real buyer acceptance in the live take, or as a recorded sandbox outcome with the replay banner visible. Never imply a live buyer action in replay footage.
 
 ## 7. Narration script
 
@@ -90,22 +92,25 @@ Plain English, the owner's own voice, read at a normal pace. 140 to 150 words a 
 
 ```
 Beat 1
-This is Kept, a dispute desk for small PayPal sellers. When a buyer opens a dispute, Kept reads it from PayPal, says in plain words what PayPal is asking for, and recommends one move: fight, settle, or accept. Here are four real sandbox cases, sorted by PayPal's response deadline. The two red ones are inside my deadline buffer.
+I sell online. In PayPal disputes I have waited 48 to 72 hours for answers and had funds held for 14 to 21 days. So Kept starts with two numbers. This is what PayPal is holding across my open disputes, and this is what PayPal says I kept on the resolved ones. Both come from PayPal's API, not from a guess.
 
 Beat 2
-Case A. The buyer says the item never arrived, but I shipped it with UPS tracking. Because tracking was on file, PayPal opened this straight as a claim, and the dispute shows the amount PayPal is holding for it. Kept tells me what PayPal wants from me now, lists the evidence I have and what is missing, and drafts my defence from the tracking record. Claude wrote the recommendation; it can read the dispute, but it cannot send anything. I change one line and approve. Kept sends provide supporting info to PayPal, then reads the dispute again. This is the state PayPal returns.
+Every open dispute is here, sorted by PayPal's response deadline. The red rows are inside my deadline buffer. Each row shows PayPal's hold, what I kept, whether the payment's Seller Protection covers the buyer's reason, and Claude's call: fight, settle, or accept.
 
 Beat 3
-Case B is where Kept is different. The buyer says the runner is the wrong colour, and my notes are thin: no photos before shipping. Kept recommends settling early with a partial refund. It shows why: the evidence gap, the deadline, and the amount. The offer sits within my cap of ten dollars eighty, and if I typed more than the cap, Kept would refuse it, not quietly lower it. I approve. Kept sends make offer to PayPal, and this is what PayPal reports back. An early, capped offer can close the case if the buyer accepts, before it escalates to a PayPal claim.
+Case B. The buyer says the runner is the wrong colour, and my notes are thin: no photos before shipping. Seller Protection on this payment lists item not received and unauthorised payments, not this reason. So Claude recommends settling early with a partial refund, and shows why. My cap is ten dollars eighty. If I type more, Kept refuses it; it never quietly lowers my number. I approve. Kept sends make offer to PayPal and reads the case again. Claude can read the dispute, but it cannot send anything.
 
 Beat 4
-Side by side, the reasons are clear. Case A has a shipment record that answers the buyer's claim. Case B has nothing that answers the colour complaint, so a capped offer is the better move.
+Case A. The buyer says the item never arrived, but I shipped it with UPS tracking. This payment is covered for that reason, and PayPal is holding funds on the claim. Claude drafts my defence from the tracking record. I approve, Kept sends supporting information, and PayPal now shows it is reviewing what I sent.
 
 Beat 5
-After the buyer accepts the offer in live PayPal, case B shows resolved. In replay, this is a recorded sandbox outcome under the replay banner. The counter uses only PayPal's own numbers: what I kept after resolution, what was refunded, and how long it took to close. Kept is built on the PayPal Disputes API and the PayPal Agent Toolkit, with Claude Opus 5.5 writing the recommendations.
+Between takes, the sandbox buyer accepted my offer on B. I refresh. B now reads resolved, with PayPal's refunded amount, and the kept total includes what I kept on B. Held now counts only open cases, so it shows what PayPal still holds. In replay, this is a recorded sandbox outcome under the replay banner. Every figure here is PayPal's own, and the call log lists each request.
+
+Beat 6
+Kept is built on the PayPal Disputes API and the PayPal Agent Toolkit, with Claude Opus 5.5 writing the recommendations.
 ```
 
-Word count: 367 spoken words, 377 with the beat labels (limit 420). Recount after any change with `awk '/^```$/{f=!f;next} f' docs/video.md | grep -v "^Beat [0-9]$" | wc -w`.
+Word count: 335 spoken words, 347 with the beat labels (limit 420). Recount after any change with `awk '/^```$/{f=!f;next} f' docs/video.md | grep -v "^Beat [0-9]$" | wc -w`.
 
 Never say: that PayPal support is slow, "beat the buyer", that funds were released, or that money was "saved" versus fighting.
 
@@ -131,15 +136,15 @@ Never say: that PayPal support is slow, "beat the buyer", that funds were releas
 - Stills: grab one frame per beat (`ffmpeg -ss <t> -i kept-demo.mp4 -frames:v 1 beat<n>.png`) and check each: is the main text readable, is the PayPal result visible, does a caption crop or cover anything.
 - Gate, all must pass before upload:
   1. Watched once end to end at normal speed with the sound on.
-  2. After beats 2 and 3, the `PayPal now reports` line is in frame and readable.
-  3. Beat 5 shows the PayPal and Claude caption and B as `RESOLVED`.
+  2. After beats 3 and 4, the `PayPal now reports` line is in frame and readable.
+  3. Beat 5 shows B as `RESOLVED` and beat 6 shows the PayPal and Claude caption.
   4. Any replay beat shows the banner and says "recorded sandbox data".
   5. No banned word or phrase in narration or captions.
   6. Length under 2:59, loudness about -14 LUFS.
 
 ## 11. Upload
 
-1. Upload to YouTube as unlisted first, for review. Title `Kept: a dispute desk for small PayPal sellers`. Language English. Not made for kids. Description: one line on what Kept is, the repo link `[REPO URL]`.
+1. Upload to YouTube as unlisted first, for review. Title `Kept: what PayPal is holding, and what you kept`. Language English. Not made for kids. Description: one line on what Kept is, the repo link `[REPO URL]`.
 2. Ridwan watches the unlisted video.
 3. Public only after Ridwan's explicit yes (Task 24 checklist). Video link: `[VIDEO URL]`.
 

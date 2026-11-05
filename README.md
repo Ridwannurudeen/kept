@@ -1,17 +1,21 @@
 # Kept
 
-Kept is a dispute desk for small PayPal sellers. It reads each open dispute, says in plain words what PayPal is asking for, and recommends one of three moves: fight (file evidence), settle (make a capped partial refund offer) or accept (refund in full), then drafts the paperwork. Its headline is the settle branch: where dispute tools contest everything, Kept can tell a seller "don't fight this one", because a capped early offer saves the seller a case they would lose and saves PayPal an escalation. Nothing that touches money is sent until the seller approves it.
+Kept shows a small PayPal seller two numbers taken from PayPal's own API: what PayPal is holding from them across their open disputes, and what PayPal says they kept on the resolved ones. **Held now** is the sum of each open dispute's `fund_movements` entries with reason `HOLD_PLACED`. **Kept** is the disputed amount minus PayPal's `dispute_outcome.amount_refunded` on each resolved dispute.
+
+Under those numbers, Claude reads each open dispute, says in plain words what PayPal is asking for, checks the payment's Seller Protection against the buyer's reason, and recommends one move: fight (send evidence or supporting info), settle (a partial refund offer under the seller's cap) or accept (refund in full), then drafts the note. Nothing that touches money is sent until the seller approves it.
+
+The loop is proven live in the PayPal sandbox. In the 2026-11-04 spike, a 5.00 partial refund offer went out on a 20.00 inquiry (`PP-R-CWP-10196411`), the sandbox buyer accepted it, PayPal moved the case to `RESOLVED` with `amount_refunded` 5.00, and the seller kept 15.00 of 20.00. Kept reads that result from PayPal; it does not predict it. Similar dispute assistants we looked at draft replies or estimate an expected value, often on mock data. What Kept adds is factual: the approved action is sent to the real sandbox and read back, and the held and kept totals are PayPal's reported figures, not estimates.
 
 Hosted demo: link added at submission.
 
 ![Kept case board](docs/img/grid.png)
-The case board with the outcome strip and the pinned total row (replay of recorded and derived sandbox data)
+The case board: Held now and Kept from PayPal's figures, the Held, Kept and Seller Protection columns, and the pinned total row (replay of recorded and derived sandbox data)
 
 ![Case B panel](docs/img/panel.png)
-Case B before Kept has run (replay of recorded and derived sandbox data)
+Case B before Claude has run: not as described, and the payment's Seller Protection does not list this reason (replay of recorded and derived sandbox data)
 
 ![Case A panel](docs/img/claim.png)
-Case A, a PayPal claim: PayPal's hold and the send supporting information action (replay of recorded and derived sandbox data)
+Case A, a PayPal claim: PayPal's hold, Seller Protection that lists this reason, and the send supporting information action (replay of recorded and derived sandbox data)
 
 ## PayPal APIs and AI model used, and where
 
@@ -30,7 +34,7 @@ Everything runs against the PayPal sandbox (`https://api-m.sandbox.paypal.com`).
 | Capture order | `POST /v2/checkout/orders/{id}/capture` | `seed/seed.ts` through `src/paypal/client.ts` (`captureOrder`) |
 | Add tracking | `POST /v2/checkout/orders/{id}/track` | `seed/seed.ts` through `src/paypal/client.ts` (`addTracking`) |
 | Read order | `GET /v2/checkout/orders/{id}` | `src/http/routes.ts` through `src/paypal/client.ts` (`getOrder`) |
-| Read capture | `GET /v2/payments/captures/{id}` | `src/http/routes.ts` through `src/paypal/client.ts` (`getCapture`) |
+| Read capture | `GET /v2/payments/captures/{id}` | `src/http/routes.ts` through `src/paypal/client.ts` (`getCapture`): for the case list's Seller Protection column (up to 4 at a time, cached with the disputes), the case panel and each decision |
 
 PayPal Agent Toolkit: `@paypal/agent-toolkit` 1.11.0, `ai-sdk` export. It is constructed in `src/index.ts` with the same sandbox client id and secret. The model gets only `list_disputes` and `get_dispute` (`modelToolset` in `src/ai/tools.ts`). `accept_dispute_claim` is used by app code only, in `src/actions.ts`.
 
@@ -40,10 +44,12 @@ Other parts: AG Grid Community 36 (`ag-grid-community` 36.3.0) renders the case 
 
 ## How it works
 
-1. Kept lists the seller's disputes from PayPal and joins each one to its order and capture by the capture id (`disputed_transactions[].seller_transaction_id`).
-2. For each case the model reads the dispute through the toolkit read tools, gets the order, capture, seller notes and attachment names in the prompt, and returns a structured decision through `submit_decision`: FIGHT, SETTLE or ACCEPT, an offer amount if SETTLE, reasons, evidence on hand, evidence missing, and a drafted note. The schema is `DecisionSchema` in `src/decision.ts`; free text is never parsed as a decision.
+1. Kept lists the seller's disputes from PayPal and joins each one to its order and capture by the capture id (`disputed_transactions[].seller_transaction_id`). It totals Held now and Kept from PayPal's fields (`summarize` in `src/cases.ts`) and compares the capture's `seller_protection.status` and `dispute_categories` with the dispute reason (`MERCHANDISE_OR_SERVICE_NOT_RECEIVED` maps to `ITEM_NOT_RECEIVED`, `UNAUTHORISED` to `UNAUTHORIZED_TRANSACTION`; any other reason is outside the categories).
+2. For each case the model reads the dispute through the toolkit read tools, gets the order, the capture with its Seller Protection, the seller notes and attachment names in the prompt, is asked to weigh Seller Protection against the reason, and returns a structured decision through `submit_decision`: FIGHT, SETTLE or ACCEPT, an offer amount if SETTLE, reasons, evidence on hand, evidence missing, and a drafted note. The schema is `DecisionSchema` in `src/decision.ts`; free text is never parsed as a decision.
 3. App code validates the decision against the seller's policy and against the actions PayPal lists on the dispute (`validateDecision` in `src/decision.ts`), then shows it in the case panel.
 4. The seller edits the draft and approves. App code sends the one PayPal call that matches the action, re-reads the dispute, and shows the state PayPal returns. Every action is logged with what the model recommended, what the seller changed, and PayPal's response.
+
+Under the headline figures the board shows PayPal's published fee rule as text: with a dispute ratio of 1.5% or more and over 100 sales in 3 months, each dispute costs $30 instead of $15. Kept computes no ratio, because it only sees the seller's disputes, not all their sales.
 
 ### Safety design
 
@@ -153,6 +159,7 @@ The `test:e2e` script uses a POSIX `KEPT_E2E=1` prefix; on PowerShell set `$env:
 ## Known limits
 
 - Sandbox only. There is no production mode and no multi-seller login beyond the demo passcode.
+- Held now covers only the holds PayPal reports inside each open dispute. It is not an account balance, reserve or limitation view, and Kept makes no claim about when PayPal ends a hold.
 - One action per case. A sandbox case acted on once is spent.
 - State resets on restart. Render's free tier sleeps when idle and keeps no disk, so notes, policy and the log go back to the seed; decisions, the action log and the PayPal call log come back from `seed/snapshot.json` when that file is present.
 - The recommendation needs a model key. Without `ANTHROPIC_API_KEY` (replay mode) a case shows no new recommendation.
