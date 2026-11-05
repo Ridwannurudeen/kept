@@ -34,6 +34,7 @@ describe('HTTP app', () => {
   };
   let app: ReturnType<typeof createApp>;
   let decide: ReturnType<typeof vi.fn>;
+  let act: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), 'settle-http-'));
@@ -50,7 +51,8 @@ describe('HTTP app', () => {
     };
     const config: Config = { paypalClientId: 'id', paypalClientSecret: 'secret', anthropicApiKey: 'key', passcode: 'pass', port: 3000, dataDir: join(dir, 'data'), seedPath };
     decide = vi.fn(async () => { throw new Error('Not wired yet'); });
-    app = createApp({ config, paypal: paypal as never, store, decide: decide as never, act: (async () => { throw new Error('Not wired yet'); }) as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never });
+    act = vi.fn();
+    app = createApp({ config, paypal: paypal as never, store, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never });
   });
 
   afterEach(async () => { await rm(dir, { recursive: true, force: true }); });
@@ -200,5 +202,26 @@ describe('HTTP app', () => {
   test('unknown dispute id maps PayPal 404 to 404', async () => {
     paypal.getDispute.mockRejectedValueOnce(new PayPalError('missing', 404, null, {}, '/dispute'));
     await request(app).get('/api/cases/missing').set('x-settle-passcode', 'pass').expect(404);
+  });
+
+  test('POST approve returns sent entry, dispute and rebuilt detail', async () => {
+    const current = disputes[1]!;
+    const entry = { id: 'action-1', at: '2026-11-05T00:00:00.000Z', disputeId: current.dispute_id, caseKey: 'A', action: 'make_offer', recommended: null, submitted: { note: 'Sorry.', offerAmount: '2.00' }, sellerEdited: false, paypal: { ok: true, status: 200, requestId: null, debugId: null, durationMs: 1, message: null }, after: null };
+    act.mockResolvedValueOnce({ status: 'sent', entry, dispute: current });
+    const { body } = await request(app).post('/api/cases/d-early/approve').set('x-settle-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(200);
+    expect(body).toMatchObject({ entry, dispute: current, detail: { dispute: current, caseKey: 'A' } });
+    expect(act).toHaveBeenCalledWith('d-early', { action: 'make_offer', note: 'Sorry.', offerAmount: '2.00', evidenceType: undefined }, expect.any(Object));
+  });
+
+  test('POST approve returns 409 for a refused action', async () => {
+    act.mockResolvedValueOnce({ status: 'refused', blockers: ['This case already has a sent action'] });
+    await request(app).post('/api/cases/d-early/approve').set('x-settle-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(409, { blockers: ['This case already has a sent action'] });
+  });
+
+  test('POST approve returns 502 for a failed PayPal action', async () => {
+    const entry = { id: 'action-2', at: '2026-11-05T00:00:00.000Z', disputeId: 'd-early', caseKey: 'A', action: 'make_offer', recommended: null, submitted: { note: 'Sorry.', offerAmount: '2.00' }, sellerEdited: false, paypal: { ok: false, status: 422, requestId: null, debugId: 'dbg', durationMs: 1, message: 'failed' }, after: null };
+    const error = { status: 422, debugId: 'dbg', message: 'failed' };
+    act.mockResolvedValueOnce({ status: 'failed', entry, error });
+    await request(app).post('/api/cases/d-early/approve').set('x-settle-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(502, { entry, error });
   });
 });

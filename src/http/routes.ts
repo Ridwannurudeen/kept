@@ -12,6 +12,7 @@ import { basisOf } from '../store.js';
 import type { Dispute } from '../paypal/types.js';
 import type { CaseRecord } from '../../seed/seed.js';
 import type { Deps } from './app.js';
+import { ACTION_KINDS } from '../paypal/dispute.js';
 
 type CachedCases = { disputes: Dispute[]; fetchedAt: string; at: number };
 const caches = new WeakMap<object, CachedCases>();
@@ -154,7 +155,24 @@ export function registerRoutes(router: Router, deps: Deps): void {
       else res.json({ ok: false, decision: null, validation: null, error: result.error, detail: result.detail, durationMs: result.durationMs });
     } catch (error) { next(error); }
   });
-  router.post('/api/cases/:id/approve', (_req, _res, next) => next(new Error('Not wired yet')));
+  router.post('/api/cases/:id/approve', async (req, res, next) => {
+    try {
+      const body = req.body as { action?: unknown; note?: unknown; offerAmount?: unknown; evidenceType?: unknown };
+      if (typeof body?.action !== 'string' || !ACTION_KINDS.includes(body.action as (typeof ACTION_KINDS)[number]) || typeof body.note !== 'string' || (body.offerAmount !== undefined && body.offerAmount !== null && typeof body.offerAmount !== 'string') || (body.evidenceType !== undefined && body.evidenceType !== 'PROOF_OF_FULFILLMENT' && body.evidenceType !== 'OTHER')) {
+        throw new ZodError([{ code: 'custom', path: [], message: 'Invalid approval request' }]);
+      }
+      const outcome = await deps.act(req.params.id, { action: body.action as (typeof ACTION_KINDS)[number], note: body.note, offerAmount: body.offerAmount as string | null | undefined, evidenceType: body.evidenceType as 'PROOF_OF_FULFILLMENT' | 'OTHER' | undefined }, { paypal: deps.paypal, toolkit: deps.toolkit, store: deps.store, now: deps.now });
+      if (outcome.status === 'refused') { res.status(409).json({ blockers: outcome.blockers }); return; }
+      if (outcome.status === 'failed') { res.status(502).json({ entry: outcome.entry, error: outcome.error }); return; }
+      const state = deps.store.get();
+      const captureId = captureIdOf(outcome.dispute);
+      const record = Object.values(state.cases).find((entry) => entry.captureId && entry.captureId === captureId) ?? null;
+      const warnings: string[] = [];
+      const order = record ? await deps.paypal.getOrder(record.orderId).catch((error: unknown) => { warnings.push(error instanceof Error ? error.message : String(error)); return null; }) : null;
+      const capture = record?.captureId ? await deps.paypal.getCapture(record.captureId).catch((error: unknown) => { warnings.push(error instanceof Error ? error.message : String(error)); return null; }) : null;
+      res.json({ entry: outcome.entry, dispute: outcome.dispute, detail: { ...buildCaseDetail(outcome.dispute, record, order, capture, deps.store.get(), deps.now()), warnings } });
+    } catch (error) { next(error); }
+  });
 }
 
 export function errorResponse(error: unknown, _req: Request, res: import('express').Response): void {

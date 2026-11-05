@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import express, { type Express } from 'express';
 import type { PayPalAgentToolkit } from '@paypal/agent-toolkit/ai-sdk';
 import type { DecideInput, DecideResult } from '../ai/decide.js';
+import type { performAction } from '../actions.js';
 import type { Config } from '../config.js';
 import type { PayPalClient } from '../paypal/client.js';
 import type { Store } from '../store.js';
@@ -13,7 +14,7 @@ export type Deps = {
   paypal: PayPalClient;
   store: Store;
   decide: (input: DecideInput) => Promise<DecideResult>;
-  act: (...args: never[]) => Promise<never>;
+  act: typeof performAction;
   now: () => Date;
   toolkit: PayPalAgentToolkit;
 };
