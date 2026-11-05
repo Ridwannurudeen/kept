@@ -2,6 +2,19 @@
 
 Date: 2026-11-04. Owner: Ridwan Nurudeen. Status: approved by Ridwan 2026-11-04. Spike gate passed 2026-11-04 (section 8); Ridwan approved the two changes it caused (claim-stage fight via supporting info, showing PayPal's dispute hold) the same day.
 
+## 0. Reframe to "Kept" (approved by Ridwan 2026-11-05)
+
+Research on 2026-11-05 found about 95 hackathon repos building a seller-side AI dispute desk, one near-identical (Joshuamathewj2/rebuttal) and one already named "Settle". An account-health pivot was debated by Opus and Codex and rejected: account holds, reserves, limitations and early releases cannot be shown in the PayPal sandbox. Ridwan approved keeping the built engine under a new name and a new lead:
+
+- **Name:** Kept. Product-facing text, README, docs, package name and environment variables move from Settle/SETTLE_ to Kept/KEPT_.
+- **Lead:** "What PayPal is holding from you across open disputes, and what PayPal says you kept on resolved ones." The board's headline is two PayPal-reported totals: **Held now** (sum of `fund_movements` HOLD_PLACED on open cases) and **Kept** (disputed amount minus `dispute_outcome.amount_refunded` on resolved cases). FIGHT/SETTLE/ACCEPT is the mechanism, not the pitch.
+- **New:** Seller Protection per case, read from the capture's `seller_protection.status` and `dispute_categories` (present in our recorded sandbox captures), shown as a grid column and a panel line, compared with the dispute reason (an INR case on an ELIGIBLE capture needs proof of delivery; an SNAD case is outside the listed categories). The AI prompt gets one line asking the model to weigh it.
+- **New, text only:** PayPal's published fee rule (a dispute ratio of 1.5% or more with over 100 sales in 3 months raises the dispute fee from $15 to $30), labelled as PayPal's rule. No ratio is computed: the app has no honest denominator.
+- **Not built:** any account-wide hold, reserve, limitation or "released early" view or claim; Transaction Search; a computed risk score.
+- **Wow moment:** the sandbox buyer accepts case B's offer; after a refresh B reads RESOLVED, its hold leaves Held now, and Kept rises, all from PayPal's numbers (proven in the 2026-11-04 spike).
+
+Everything below this section still applies, with "Settle" read as "Kept".
+
 ## 1. What it is and why
 
 Settle is a dispute desk for small PayPal sellers. It reads each open dispute, says in plain words what PayPal is asking for, and recommends one of three moves: **fight** (file evidence), **settle** (make a capped partial refund offer), or **accept** (refund in full). It drafts the paperwork. Nothing that touches money is sent until the seller approves it.
