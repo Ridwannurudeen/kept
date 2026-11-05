@@ -45,7 +45,10 @@ export type CaseDetail = CaseRow & {
   unknownOutcome: UnknownOutcome | null;
   policy: Policy;
   cap: string | null;
+  timeline: TimelineEntry[];
 };
+
+export type TimelineEntry = { at: string | null; who: 'seller' | 'buyer' | 'paypal'; text: string };
 
 export type OutcomeSummary = {
   resolved: number;
@@ -87,6 +90,36 @@ function protectionOf(d: Dispute, capture: Capture | null): CaseRow['protection'
   const categories = protection.dispute_categories;
   const category = PROTECTION_CATEGORIES[d.reason];
   return { status: protection.status, covers: categories ? category !== undefined && categories.includes(category) : null };
+}
+
+function readable(code: string): string {
+  const words = code.toLowerCase().replaceAll('_', ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function timelineOf(d: Dispute): TimelineEntry[] {
+  const entries: TimelineEntry[] = [];
+  for (const event of d.offer?.history ?? []) {
+    const who = event.actor === 'SELLER' ? 'seller' : event.actor === 'BUYER' ? 'buyer' : 'paypal';
+    const parts = [event.event_type ? readable(event.event_type) : 'Offer event', event.offer_type ? event.offer_type.toLowerCase().replaceAll('_', ' ') : '', event.offer_amount ? `of ${event.offer_amount.currency_code} ${event.offer_amount.value}` : ''];
+    const actor = who === 'paypal' && event.actor ? ` (${event.actor.toLowerCase()})` : '';
+    entries.push({ at: event.offer_time ?? null, who, text: `${parts.filter(Boolean).join(' ')}${actor}` });
+  }
+  for (const adjudication of d.adjudications ?? []) {
+    const reason = adjudication.reason ? ` (${readable(adjudication.reason).toLowerCase()})` : '';
+    entries.push({ at: adjudication.adjudication_time ?? null, who: 'paypal', text: `Adjudication: ${adjudication.type ? readable(adjudication.type).toLowerCase() : 'type not reported'}${reason}` });
+  }
+  for (const movement of d.fund_movements ?? []) {
+    entries.push({ at: movement.initiated_time ?? null, who: 'paypal', text: `${readable(movement.reason)}: ${movement.type.toLowerCase()} ${movement.amount.currency_code} ${movement.amount.value} (${movement.party.toLowerCase().replaceAll('_', ' ')})` });
+  }
+  if (d.dispute_outcome) {
+    const { outcome_code, outcome_reason, amount_refunded } = d.dispute_outcome;
+    const reason = outcome_reason ? ` (${readable(outcome_reason).toLowerCase()})` : '';
+    const refunded = amount_refunded ? `. Refunded ${amount_refunded.currency_code} ${amount_refunded.value}` : '';
+    entries.push({ at: d.update_time, who: 'paypal', text: `${readable(outcome_code)}${reason}${refunded}` });
+  }
+  const time = (entry: TimelineEntry) => entry.at === null ? Infinity : Date.parse(entry.at);
+  return entries.sort((a, b) => time(a) - time(b));
 }
 
 function staleReason(stored: StoredDecision, d: Dispute): string {
@@ -158,6 +191,7 @@ export function buildCaseDetail(d: Dispute, record: CaseRecord | null, order: Or
     unknownOutcome: state.unknownOutcomes[d.dispute_id] ?? null,
     policy,
     cap: allowed.includes('make_offer') ? offerCap(disputedAmount(d).value, policy) : null,
+    timeline: timelineOf(d),
   };
 }
 

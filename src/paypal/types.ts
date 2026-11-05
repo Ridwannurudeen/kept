@@ -1,5 +1,7 @@
 export type Money = { currency_code: string; value: string };
 
+export type OfferEvent = { offer_time?: string; actor?: string; event_type?: string; offer_type?: string; offer_amount?: Money; notes?: string; dispute_life_cycle_stage?: string };
+
 export type Link = { href: string; rel: string; method?: string };
 
 export type Dispute = {
@@ -15,8 +17,9 @@ export type Dispute = {
   buyer_response_due_date?: string;
   disputed_transactions?: { seller_transaction_id?: string; buyer_transaction_id?: string; gross_amount?: Money; items?: unknown[] }[];
   fund_movements?: { party: 'SELLER' | 'BUYER' | 'RECEIVER' | 'PAYMENT_PROCESSOR'; type: 'DEBIT' | 'CREDIT'; reason: string; amount: Money; initiated_time?: string }[];
-  dispute_outcome?: { outcome_code: string; amount_refunded?: Money };
-  offer?: { seller_offered_amount?: Money; buyer_requested_amount?: Money; offer_type?: string; history?: unknown[] };
+  dispute_outcome?: { outcome_code: string; outcome_reason?: string; amount_refunded?: Money };
+  adjudications?: { type?: string; adjudication_time?: string; reason?: string; dispute_life_cycle_stage?: string }[];
+  offer?: { seller_offered_amount?: Money; buyer_requested_amount?: Money; offer_type?: string; history?: OfferEvent[] };
   supporting_info?: { notes?: string; source?: string; provided_time?: string }[];
   evidences?: { evidence_type: string; notes?: string; source?: string; date?: string }[];
   allowed_response_options?: { accept_claim?: { accept_claim_types?: string[] }; make_offer?: { offer_types?: string[] } };

@@ -165,3 +165,33 @@ test('protection is null without a capture or without seller_protection, and cov
 test('detail carries the same protection as the row', () => {
   expect(buildCaseDetail(inquiry, null, null, eligibleCapture, state(), now).protection).toEqual({ status: 'ELIGIBLE', covers: true });
 });
+
+test('detail timeline lists only what PayPal reports on the resolved inquiry, oldest first', () => {
+  expect(buildCaseDetail(resolved, null, null, null, state(), now).timeline).toEqual([
+    { at: '2026-11-04T18:25:34.000Z', who: 'paypal', text: 'Hold placed: debit USD 18.81 (receiver)' },
+    { at: '2026-11-04T18:26:30.844Z', who: 'seller', text: 'Proposed refund of USD 5.00' },
+    { at: '2026-11-04T18:29:42.284Z', who: 'paypal', text: 'Dispute settlement: debit USD 5.00 (seller)' },
+    { at: '2026-11-04T18:29:42.284Z', who: 'paypal', text: 'Dispute settlement: credit USD 5.00 (buyer)' },
+    { at: '2026-11-04T18:29:42.395Z', who: 'buyer', text: 'Accepted' },
+    { at: '2026-11-04T18:31:33.577Z', who: 'paypal', text: 'Resolved buyer favour (inquiry offer partial refund). Refunded USD 5.00' },
+  ]);
+});
+
+test('timeline shows adjudications and unknown values as PayPal sent them, and puts undated movements last', () => {
+  const dispute: Dispute = {
+    ...resolved,
+    offer: undefined,
+    dispute_outcome: { outcome_code: 'SOMETHING_NEW' },
+    adjudications: [{ type: 'PAYOUT_TO_BUYER', adjudication_time: '2026-11-04T18:30:00.000Z', reason: 'NO_PROOF_OF_DELIVERY' }],
+    fund_movements: [{ party: 'SELLER', type: 'DEBIT', reason: 'NEW_REASON', amount: { currency_code: 'USD', value: '1.00' } }],
+  };
+  expect(buildCaseDetail(dispute, null, null, null, state(), now).timeline).toEqual([
+    { at: '2026-11-04T18:30:00.000Z', who: 'paypal', text: 'Adjudication: payout to buyer (no proof of delivery)' },
+    { at: '2026-11-04T18:31:33.577Z', who: 'paypal', text: 'Something new' },
+    { at: null, who: 'paypal', text: 'New reason: debit USD 1.00 (seller)' },
+  ]);
+});
+
+test('timeline of an open inquiry with no history is empty', () => {
+  expect(buildCaseDetail(inquiry, null, null, null, state(), now).timeline).toEqual([]);
+});
