@@ -12,5 +12,5 @@ export const recordB: CaseRecord = { key: 'B', orderId: '205118069H056835L', cap
 
 export function inputFor(name: string, record: CaseRecord | null, order: Order | null = null): DecideInput {
   const dispute = fixture(name);
-  return { dispute, order, capture: null, record, attachments: record?.attachments ?? [], policy: defaultPolicy, allowed: [...allowedActions(dispute)], now: new Date('2026-11-05T00:00:00.000Z') };
+  return { dispute, order, capture: null, record, attachments: record?.attachments ?? [], images: [], policy: defaultPolicy, allowed: [...allowedActions(dispute)], now: new Date('2026-11-05T00:00:00.000Z') };
 }

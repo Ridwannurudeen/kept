@@ -46,3 +46,9 @@ test('malformed disputed amounts become blockers for decisions and submissions',
   expect(validateDecision(base, ctx(inquiry, 'INQUIRY', 'bad'))).toMatchObject({ ok: false, blockers: ['Disputed amount is not a valid amount'] });
   expect(validateSubmission({ action: 'make_offer', note: 'ok', offerAmount: '9.00' }, ctx(inquiry, 'INQUIRY', 'bad'))).toMatchObject({ ok: false, blockers: ['Disputed amount is not a valid amount'] });
 });
+test('schema takes optional photo findings, at most 5 of at most 300 characters each', () => {
+  expect(DecisionSchema.safeParse(base).success).toBe(true);
+  expect(DecisionSchema.safeParse({ ...base, photo_findings: ['The photo shows a blue runner.'] }).success).toBe(true);
+  expect(DecisionSchema.safeParse({ ...base, photo_findings: Array(6).fill('a') }).success).toBe(false);
+  expect(DecisionSchema.safeParse({ ...base, photo_findings: ['a'.repeat(301)] }).success).toBe(false);
+});

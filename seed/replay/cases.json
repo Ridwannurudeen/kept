@@ -30,7 +30,7 @@
       "carrier": null,
       "trackedAt": null,
       "notes": "Sent as listed, no photos before shipping, buyer says the colour differs.",
-      "attachments": [{ "name": "listing-photo-note.txt", "type": "text/plain" }],
+      "attachments": [{ "name": "listing-photo-note.txt", "type": "text/plain" }, { "name": "listing-colour.jpg", "type": "image/jpeg" }],
       "disputeId": "PP-R-HND-00000001",
       "createdAt": "2026-11-04T18:17:01.000Z",
       "observed": null

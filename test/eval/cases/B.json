@@ -216,6 +216,10 @@
       {
         "name": "listing-photo-note.txt",
         "type": "text/plain"
+      },
+      {
+        "name": "listing-colour.jpg",
+        "type": "image/jpeg"
       }
     ],
     "disputeId": "PP-R-HND-00000001",
@@ -226,6 +230,10 @@
     {
       "name": "listing-photo-note.txt",
       "type": "text/plain"
+    },
+    {
+      "name": "listing-colour.jpg",
+      "type": "image/jpeg"
     }
   ],
   "policy": {

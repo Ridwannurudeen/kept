@@ -1,8 +1,8 @@
-import { mkdir, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
 import type { Request, Router } from 'express';
 import { ZodError } from 'zod';
-import type { DecideResult } from '../ai/decide.js';
+import type { CaseImage, DecideResult } from '../ai/decide.js';
 import { createDecideQueue } from '../ai/queue.js';
 import { buildCaseDetail, buildCaseRow, joinCases, sortRows, summarize } from '../cases.js';
 import { PayPalError } from '../paypal/errors.js';
@@ -39,6 +39,24 @@ async function fetchCaptures(disputes: Dispute[], deps: Deps): Promise<Map<strin
   return captures;
 }
 
+const MAX_IMAGES = 3;
+const JPEG_MAGIC = Buffer.from([0xff, 0xd8, 0xff]);
+const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+function imageTypeOf(bytes: Buffer): CaseImage['mimeType'] | null {
+  if (bytes.subarray(0, JPEG_MAGIC.length).equals(JPEG_MAGIC)) return 'image/jpeg';
+  if (bytes.subarray(0, PNG_MAGIC.length).equals(PNG_MAGIC)) return 'image/png';
+  return null;
+}
+
+const isImage = (file: { type: string }) => file.type === 'image/jpeg' || file.type === 'image/png';
+
+function caseImageFiles(disputeId: string, record: CaseRecord | null, deps: Deps): { name: string; path: string }[] {
+  const uploaded = (deps.store.get().attachments[disputeId] ?? []).filter(isImage).reverse().sort((a, b) => b.at.localeCompare(a.at)).map(({ name }) => ({ name, path: join(deps.config.dataDir, 'attachments', disputeId, name) }));
+  const seeded = record ? record.attachments.filter(isImage).reverse().map(({ name }) => ({ name, path: resolve(process.cwd(), 'seed/attachments', record.key, name) })) : [];
+  return [...uploaded, ...seeded].filter((file, index, all) => all.findIndex((other) => other.path === file.path) === index);
+}
+
 async function decideOne(disputeId: string, deps: Deps): Promise<DecideResult> {
   const dispute = await deps.paypal.getDispute(disputeId);
   const state = deps.store.get();
@@ -49,7 +67,14 @@ async function decideOne(disputeId: string, deps: Deps): Promise<DecideResult> {
     record?.captureId ? deps.paypal.getCapture(record.captureId).catch(unavailable) : Promise.resolve(null),
   ]);
   const attachments = [...(record?.attachments ?? []), ...(state.attachments[disputeId] ?? []).map(({ name, type }) => ({ name, type }))];
-  const result = await deps.decide({ dispute, order, capture, record, attachments, policy: state.policy, allowed: [...allowedActions(dispute)], now: deps.now() });
+  const images = (await Promise.all(caseImageFiles(disputeId, record, deps).slice(0, MAX_IMAGES).map(async ({ name, path }): Promise<CaseImage | null> => {
+    const data = await readFile(path).catch(unavailable);
+    if (!data) return null;
+    const mimeType = imageTypeOf(data);
+    if (!mimeType) return unavailable(new Error(`${name} is not a JPEG or PNG image`));
+    return { name, mimeType, data };
+  }))).filter((image) => image !== null);
+  const result = await deps.decide({ dispute, order, capture, record, attachments, images, policy: state.policy, allowed: [...allowedActions(dispute)], now: deps.now() });
   if (result.ok) {
     const { decision, validation, model, steps, toolCalls, durationMs } = result;
     await deps.store.update((current) => { current.decisions[disputeId] = { decision, validation, at: deps.now().toISOString(), model, steps, toolCalls, durationMs, basis: basisOf(dispute) }; });
@@ -146,6 +171,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
       if (!/^[A-Za-z0-9._-]{1,100}$/.test(name) || name === '.' || name === '..') { res.status(400).json({ error: 'attachment_name' }); return; }
       const body = req.body as Buffer;
       if (!Buffer.isBuffer(body) || body.length > 5 * 1024 * 1024) { res.status(413).json({ error: 'attachment_size' }); return; }
+      if (type.startsWith('image/') && imageTypeOf(body) !== type) { res.status(400).json({ error: 'attachment_image', message: 'Only real JPEG or PNG photos can be attached as images. This file is not one.' }); return; }
       await deps.paypal.getDispute(req.params.id);
       const dir = join(deps.config.dataDir, 'attachments', req.params.id);
       await mkdir(dir, { recursive: true });
@@ -154,6 +180,19 @@ export function registerRoutes(router: Router, deps: Deps): void {
       await deps.store.update((state) => { state.attachments[req.params.id] = [...(state.attachments[req.params.id] ?? []), attachment]; });
       res.json(attachment);
     } catch (error) { next(error); }
+  });
+
+  router.get('/api/cases/:id/attachments/:name', (req, res, next) => {
+    const { id, name } = req.params;
+    if (!/^[A-Za-z0-9_-]+$/.test(id) || !/^[A-Za-z0-9._-]{1,100}$/.test(name) || name === '.' || name === '..') { res.status(400).json({ error: 'attachment_name' }); return; }
+    const record = Object.values(deps.store.get().cases).find((entry) => entry.disputeId === id) ?? null;
+    const file = caseImageFiles(id, record, deps).find((entry) => entry.name === name);
+    if (!file) { res.status(404).json({ error: 'not_found' }); return; }
+    readFile(file.path).then((data) => {
+      const mimeType = imageTypeOf(data);
+      if (!mimeType) { res.status(404).json({ error: 'not_found' }); return; }
+      res.set({ 'Content-Type': mimeType, 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'private, no-store' }).send(data);
+    }, next);
   });
 
   router.get('/api/log', (req, res) => {

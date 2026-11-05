@@ -1,14 +1,19 @@
+import { readFileSync } from 'node:fs';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import request from 'supertest';
 import { beforeEach, afterEach, vi } from 'vitest';
 import { createApp } from '../../src/http/app.js';
+import type { CaseImage } from '../../src/ai/decide.js';
 import type { Config } from '../../src/config.js';
 import type { Dispute } from '../../src/paypal/types.js';
 import { PayPalError } from '../../src/paypal/errors.js';
 import { Store } from '../../src/store.js';
 import { FakePayPal } from '../../src/replay/fakePaypal.js';
+
+const jpeg = readFileSync(new URL('../../seed/attachments/B/listing-colour.jpg', import.meta.url));
+const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
 
 const dispute = (id: string, due: string, captureId = `CAP-${id}`): Dispute => ({
   dispute_id: id,
@@ -222,6 +227,53 @@ describe('HTTP app', () => {
     await request(app).post('/api/cases/d-early/attachments?name=..&type=text/plain').set(auth).send('body').expect(400);
     await request(app).post('/api/cases/d-early/attachments?name=proof.txt&type=text%2Fplain').set(auth).set('Content-Type', 'application/octet-stream').send('body').expect(200);
     expect(store.get().attachments['d-early']).toHaveLength(1);
+  });
+
+  test('image attachments must really be JPEG or PNG; text attachments still work', async () => {
+    const auth = { 'x-kept-passcode': 'pass' };
+    const fake = await request(app).post('/api/cases/d-early/attachments?name=photo.jpg&type=image%2Fjpeg').set(auth).set('Content-Type', 'image/jpeg').send(Buffer.from('not really a jpeg')).expect(400);
+    expect(fake.body).toMatchObject({ error: 'attachment_image', message: expect.stringContaining('JPEG or PNG') });
+    await request(app).post('/api/cases/d-early/attachments?name=photo.png&type=image%2Fpng').set(auth).set('Content-Type', 'image/png').send(jpeg).expect(400);
+    await request(app).post('/api/cases/d-early/attachments?name=photo.gif&type=image%2Fgif').set(auth).set('Content-Type', 'image/gif').send(Buffer.from('GIF89a')).expect(400);
+    expect(store.get().attachments['d-early']).toBeUndefined();
+    await request(app).post('/api/cases/d-early/attachments?name=photo.jpg&type=image%2Fjpeg').set(auth).set('Content-Type', 'image/jpeg').send(jpeg).expect(200);
+    await request(app).post('/api/cases/d-early/attachments?name=note.txt&type=text%2Fplain').set(auth).set('Content-Type', 'text/plain').send('plain words').expect(200);
+    expect(store.get().attachments['d-early']!.map(({ name, type }) => ({ name, type }))).toEqual([{ name: 'photo.jpg', type: 'image/jpeg' }, { name: 'note.txt', type: 'text/plain' }]);
+  });
+
+  test('POST decide sends up to 3 photos, uploads newest first then the seeded ones, and none for a text-only case', async () => {
+    const auth = { 'x-kept-passcode': 'pass' };
+    const sent = (index: number) => (decide.mock.calls[index]![0].images as CaseImage[]).map(({ name, mimeType }) => [name, mimeType]);
+    decide.mockResolvedValue({ ok: false, error: 'no_decision', detail: 'none', steps: 0, toolCalls: [], durationMs: 0 });
+    await request(app).post('/api/cases/d-late/decide').set(auth).expect(200);
+    expect(decide.mock.calls[0]![0].images).toEqual([]);
+    await store.update((state) => { state.cases.A!.key = 'B'; state.cases.A!.attachments = [{ name: 'listing-colour.jpg', type: 'image/jpeg' }, { name: 'listing-photo-note.txt', type: 'text/plain' }]; });
+    await request(app).post('/api/cases/d-early/attachments?name=one.jpg&type=image%2Fjpeg').set(auth).set('Content-Type', 'image/jpeg').send(jpeg).expect(200);
+    await request(app).post('/api/cases/d-early/decide').set(auth).expect(200);
+    expect(sent(1)).toEqual([['one.jpg', 'image/jpeg'], ['listing-colour.jpg', 'image/jpeg']]);
+    expect((decide.mock.calls[1]![0].images as CaseImage[])[1]!.data.equals(jpeg)).toBe(true);
+    await request(app).post('/api/cases/d-early/attachments?name=two.png&type=image%2Fpng').set(auth).set('Content-Type', 'application/octet-stream').send(png).expect(200);
+    await request(app).post('/api/cases/d-early/attachments?name=three.jpg&type=image%2Fjpeg').set(auth).set('Content-Type', 'application/octet-stream').send(jpeg).expect(200);
+    await request(app).post('/api/cases/d-early/decide').set(auth).expect(200);
+    expect(sent(2)).toEqual([['three.jpg', 'image/jpeg'], ['two.png', 'image/png'], ['one.jpg', 'image/jpeg']]);
+  });
+
+  test('photo thumbnails need the passcode, carry the image type and nosniff, and refuse traversal and non-images', async () => {
+    const auth = { 'x-kept-passcode': 'pass' };
+    await request(app).post('/api/cases/d-early/attachments?name=photo.jpg&type=image%2Fjpeg').set(auth).set('Content-Type', 'image/jpeg').send(jpeg).expect(200);
+    await request(app).post('/api/cases/d-early/attachments?name=note.txt&type=text%2Fplain').set(auth).set('Content-Type', 'text/plain').send('plain words').expect(200);
+    await request(app).get('/api/cases/d-early/attachments/photo.jpg').expect(401);
+    const res = await request(app).get('/api/cases/d-early/attachments/photo.jpg').set(auth).responseType('blob').expect(200);
+    expect(res.headers['content-type']).toBe('image/jpeg');
+    expect(res.headers['x-content-type-options']).toBe('nosniff');
+    expect((res.body as Buffer).equals(jpeg)).toBe(true);
+    await request(app).get('/api/cases/d-early/attachments/note.txt').set(auth).expect(404);
+    await request(app).get('/api/cases/d-early/attachments/missing.jpg').set(auth).expect(404);
+    await request(app).get('/api/cases/d-early/attachments/..%2F..%2Fstate.json').set(auth).expect(400);
+    await request(app).get('/api/cases/d-early/attachments/%2E%2E').set(auth).expect(400);
+    await request(app).get('/api/cases/..%2Fd-early/attachments/photo.jpg').set(auth).expect(400);
+    await store.update((state) => { state.cases.A!.key = 'B'; state.cases.A!.disputeId = 'd-early'; state.cases.A!.attachments = [{ name: 'listing-colour.jpg', type: 'image/jpeg' }]; });
+    await request(app).get('/api/cases/d-early/attachments/listing-colour.jpg').set(auth).expect(200).expect('Content-Type', 'image/jpeg');
   });
 
   test('attachment uploads reject payloads above 5 MB with 413', async () => {

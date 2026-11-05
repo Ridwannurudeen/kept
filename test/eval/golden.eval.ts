@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { PayPalAgentToolkit } from '@paypal/agent-toolkit/ai-sdk';
 import type { LanguageModelV1 } from 'ai';
-import { decideCase, type DecideInput, type DecideResult } from '../../src/ai/decide.js';
+import { decideCase, type CaseImage, type DecideInput, type DecideResult } from '../../src/ai/decide.js';
 import { createKeptModel, MODEL_ID } from '../../src/ai/provider.js';
 import { modelToolset, submitDecisionTool, type ModelTools } from '../../src/ai/tools.js';
 import { actionFor, type Decision } from '../../src/decision.js';
@@ -31,7 +31,8 @@ const expectations: Record<CaseKey, Expectation> = {
 
 function loadCase(key: CaseKey): DecideInput {
   const raw = JSON.parse(readFileSync(new URL(`./cases/${key}.json`, import.meta.url), 'utf8'));
-  const input: DecideInput = { dispute: raw.dispute, order: raw.order, capture: raw.capture, record: raw.record, attachments: raw.attachments, policy: raw.policy, allowed: raw.allowed, now: new Date(raw.now) };
+  const images = (raw.record?.attachments ?? []).filter((file: { type: string }) => file.type === 'image/jpeg' || file.type === 'image/png').map((file: { name: string; type: CaseImage['mimeType'] }) => ({ name: file.name, mimeType: file.type, data: readFileSync(new URL(`../../seed/attachments/${raw.record.key}/${file.name}`, import.meta.url)) }));
+  const input: DecideInput = { dispute: raw.dispute, order: raw.order, capture: raw.capture, record: raw.record, attachments: raw.attachments, images, policy: raw.policy, allowed: raw.allowed, now: new Date(raw.now) };
   const listed = [...allowedActions(input.dispute)];
   if (listed.join() !== input.allowed.join()) throw new Error(`Case ${key} allows ${input.allowed.join()} but its dispute lists ${listed.join()}`);
   return input;

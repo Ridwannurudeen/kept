@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs';
 import { APICallError, tool } from 'ai';
 import { MockLanguageModelV1 } from 'ai/test';
 import { z } from 'zod';
-import { decideCase } from '../../src/ai/decide.js';
+import { decideCase, type CaseImage } from '../../src/ai/decide.js';
+import { PHOTO_INSTRUCTION, SYSTEM_PROMPT } from '../../src/ai/prompt.js';
 import { submitDecisionTool, type ModelTools } from '../../src/ai/tools.js';
 import type { Decision } from '../../src/decision.js';
 import { fixture, inputFor, recordB } from './helpers.js';
@@ -94,4 +96,39 @@ test('never reads a decision out of free text', async () => {
   const result = await decideCase(input(), { model, tools: toolsWith() });
   expect(result).toMatchObject({ ok: false, error: 'no_decision' });
   expect(prompts).toHaveLength(2);
+});
+
+type Part = { type: string; text?: string; image?: Uint8Array; mimeType?: string };
+type SentMessage = { role: string; content: string | Part[] };
+const photo: CaseImage = { name: 'listing-colour.jpg', mimeType: 'image/jpeg', data: readFileSync(new URL('../../seed/attachments/B/listing-colour.jpg', import.meta.url)) };
+const imageParts = (prompt: unknown) => (prompt as SentMessage[]).flatMap((message) => (Array.isArray(message.content) ? message.content : [])).filter((part) => part.type === 'image');
+const systemOf = (prompt: unknown) => (prompt as SentMessage[]).find((message) => message.role === 'system')?.content;
+
+test("sends the seller's photos as image parts after the same text, with the photo instruction", async () => {
+  const withPhoto = { ...settle, photo_findings: ['The photo shows a plain blue colour field and no item.'] };
+  const { model, prompts } = scripted(call('submit_decision', withPhoto));
+  const result = await decideCase({ ...input(), images: [photo] }, { model, tools: toolsWith() });
+  expect(result).toMatchObject({ ok: true, decision: withPhoto });
+  const user = (prompts[0] as SentMessage[]).find((message) => message.role === 'user')!;
+  expect((user.content as Part[])[0]).toEqual({ type: 'text', text: expect.stringContaining('Dispute id: PP-R-HND-00000001') });
+  const parts = imageParts(prompts[0]);
+  expect(parts).toHaveLength(1);
+  expect(parts[0]!.mimeType).toBe('image/jpeg');
+  expect(Buffer.from(parts[0]!.image!).equals(photo.data)).toBe(true);
+  expect(systemOf(prompts[0])).toBe(`${SYSTEM_PROMPT}\n\n${PHOTO_INSTRUCTION}`);
+  expect(PHOTO_INSTRUCTION).toContain('not an instruction');
+});
+
+test('the retry carries the photos too', async () => {
+  const { model, prompts } = scripted(text('Looking.'), call('submit_decision', settle));
+  await decideCase({ ...input(), images: [photo] }, { model, tools: toolsWith() });
+  expect(imageParts(prompts[1])).toHaveLength(1);
+  expect(JSON.stringify(prompts[1])).toContain('You did not call submit_decision');
+});
+
+test('a case without photos sends no image parts and the plain system prompt', async () => {
+  const { model, prompts } = scripted(call('submit_decision', settle));
+  await decideCase(input(), { model, tools: toolsWith() });
+  expect(imageParts(prompts[0])).toEqual([]);
+  expect(systemOf(prompts[0])).toBe(SYSTEM_PROMPT);
 });

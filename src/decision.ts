@@ -11,6 +11,7 @@ export const DecisionSchema = z.object({
   reasons: z.array(z.string().min(1)).min(1).max(6),
   offer_amount: z.string().regex(/^\d+\.\d{2}$/).nullable(),
   draft_note: z.string().min(1).max(2000),
+  photo_findings: z.array(z.string().min(1).max(300)).max(5).optional(),
 });
 
 export type Decision = z.infer<typeof DecisionSchema>;

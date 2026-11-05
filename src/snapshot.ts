@@ -2,7 +2,7 @@ import type { Snapshot, SnapshotAction, SnapshotCall, State, StoredDecision, Unk
 
 export const SNAPSHOT_ALLOWLIST: Record<string, string[]> = {
   Snapshot: ['snapshotAt', 'decisions', 'actions', 'calls', 'unknownOutcomes'],
-  decision: ['recommendation', 'plain_ask', 'evidence_have', 'evidence_missing', 'reasons', 'offer_amount', 'draft_note'],
+  decision: ['recommendation', 'plain_ask', 'evidence_have', 'evidence_missing', 'reasons', 'offer_amount', 'draft_note', 'photo_findings'],
   validation: ['ok', 'action', 'cap', 'blockers'],
   StoredDecision: ['decision', 'validation', 'at', 'model', 'steps', 'toolCalls', 'durationMs', 'basis'],
   basis: ['stage', 'status', 'disputeState', 'links', 'amount', 'dueAt'],

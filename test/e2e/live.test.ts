@@ -82,7 +82,7 @@ describe.skipIf(!enabled)('live PayPal sandbox end-to-end', () => {
     ]);
     const model = createKeptModel(config.anthropicApiKey);
     const tools = { ...modelToolset(toolkit), submit_decision: submitDecisionTool() };
-    const result = await decideCase({ dispute, order, capture, record, attachments: record.attachments, policy: store.get().policy, allowed: [...allowedActions(dispute)], now: new Date() }, { model, tools });
+    const result = await decideCase({ dispute, order, capture, record, attachments: record.attachments, images: [], policy: store.get().policy, allowed: [...allowedActions(dispute)], now: new Date() }, { model, tools });
     expect(result.ok).toBe(true);
     if (result.ok) expect(['FIGHT', 'SETTLE', 'ACCEPT']).toContain(result.decision.recommendation);
   }, 60_000);

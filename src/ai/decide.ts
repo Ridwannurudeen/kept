@@ -4,10 +4,11 @@ import { disputedAmount, type ActionKind } from '../paypal/dispute.js';
 import type { Capture, Dispute, Order } from '../paypal/types.js';
 import type { Policy } from '../policy.js';
 import type { CaseRecord } from '../../seed/seed.js';
-import { buildUserPrompt, SYSTEM_PROMPT } from './prompt.js';
+import { buildUserPrompt, PHOTO_INSTRUCTION, SYSTEM_PROMPT } from './prompt.js';
 import type { ModelTools } from './tools.js';
 
-export type DecideInput = { dispute: Dispute; order: Order | null; capture: Capture | null; record: CaseRecord | null; attachments: { name: string; type: string }[]; policy: Policy; allowed: ActionKind[]; now: Date };
+export type DecideInput = { dispute: Dispute; order: Order | null; capture: Capture | null; record: CaseRecord | null; attachments: { name: string; type: string }[]; images: CaseImage[]; policy: Policy; allowed: ActionKind[]; now: Date };
+export type CaseImage = { name: string; mimeType: 'image/jpeg' | 'image/png'; data: Buffer };
 export type DecideResult =
   | { ok: true; decision: Decision; validation: Validation; steps: number; toolCalls: string[]; model: string; durationMs: number }
   | { ok: false; error: 'no_decision' | 'invalid_decision' | 'model_error'; detail: string; steps: number; toolCalls: string[]; durationMs: number };
@@ -29,10 +30,12 @@ export async function decideCase(input: DecideInput, deps: { model: LanguageMode
   const prompt = buildUserPrompt(input);
   try {
     for (const text of [prompt, `${prompt}\n\n${RETRY_SUFFIX}`]) {
+      const request = input.images.length
+        ? { system: `${SYSTEM_PROMPT}\n\n${PHOTO_INSTRUCTION}`, messages: [{ role: 'user' as const, content: [{ type: 'text' as const, text }, ...input.images.map((image) => ({ type: 'image' as const, image: image.data, mimeType: image.mimeType }))] }] }
+        : { system: SYSTEM_PROMPT, prompt: text };
       const result = await generateText({
         model: deps.model,
-        system: SYSTEM_PROMPT,
-        prompt: text,
+        ...request,
         tools: deps.tools,
         toolChoice: 'auto',
         maxSteps: deps.maxSteps ?? 6,
