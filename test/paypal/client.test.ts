@@ -68,6 +68,13 @@ test('sends Bearer auth and PayPal-Request-Id on writes', async () => {
   expect(JSON.parse(req.body)).toMatchObject({ offer_type: 'REFUND' });
 });
 
+test('exposes the write CallRecord to the action caller', async () => {
+  const calls: CallRecord[] = [];
+  const { client } = makeClient([tokenReply(), { status: 201, json: { links: [] }, headers: { 'paypal-debug-id': 'write-debug' } }]);
+  await client.makeOffer('PP-1', offer, (call) => calls.push(call));
+  expect(calls).toMatchObject([{ method: 'POST', status: 201, requestId: expect.stringMatching(/^[0-9a-f-]{36}$/), debugId: 'write-debug', durationMs: 0 }]);
+});
+
 test('retries a GET once with a new token after 401', async () => {
   const { client, requests } = makeClient([
     tokenReply('old'),

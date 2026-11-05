@@ -2,7 +2,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, vi } from 'vitest';
-import { performAction, type ActionDeps } from '../src/actions.js';
+import { performAction, resetActionGuards, type ActionDeps } from '../src/actions.js';
 import type { Dispute } from '../src/paypal/types.js';
 import { PayPalError } from '../src/paypal/errors.js';
 import { Store } from '../src/store.js';
@@ -30,6 +30,7 @@ describe('performAction', () => {
   const decision = { recommendation: 'SETTLE' as const, plain_ask: 'Offer some.', evidence_have: [], evidence_missing: [], reasons: ['weak evidence'], offer_amount: '9.00', draft_note: 'Original note.' };
 
   beforeEach(async () => {
+    resetActionGuards();
     dir = await mkdtemp(join(tmpdir(), 'settle-actions-'));
     const seedPath = join(dir, 'cases.json');
     await writeFile(seedPath, JSON.stringify({ cases: { B: { key: 'B', orderId: 'ORDER-B', captureId: 'CAP-B', amount: '36.00', currency: 'USD', itemName: 'Runner', trackingNumber: 'TRACK-B', carrier: 'UPS', trackedAt: null, notes: 'seed', attachments: [], disputeId: 'd-action', createdAt: '2026-11-01T00:00:00.000Z', observed: null } } }));
@@ -50,9 +51,18 @@ describe('performAction', () => {
 
   test('sends make_offer with REFUND and the seller amount, logs it, marks sellerEdited when the note changed', async () => {
     const result = await performAction('d-action', { action: 'make_offer', note: 'Changed note.', offerAmount: '5.00' }, deps);
-    expect(paypal.makeOffer).toHaveBeenCalledWith('d-action', { note: 'Changed note.', offer_amount: { currency_code: 'USD', value: '5.00' }, offer_type: 'REFUND' });
+    expect(paypal.makeOffer).toHaveBeenCalledWith('d-action', { note: 'Changed note.', offer_amount: { currency_code: 'USD', value: '5.00' }, offer_type: 'REFUND' }, expect.any(Function));
     expect(result).toMatchObject({ status: 'sent', entry: { action: 'make_offer', sellerEdited: true, paypal: { ok: true } } });
     expect(store.get().actions).toHaveLength(1);
+  });
+
+  test('logs the PayPal write CallRecord on success', async () => {
+    paypal.makeOffer.mockImplementationOnce(async (_id, _body, onCall) => {
+      onCall({ at: '', method: 'POST', path: '/offer', status: 201, durationMs: 12, requestId: 'request-1', debugId: 'debug-1' });
+      return {};
+    });
+    const result = await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps);
+    expect(result).toMatchObject({ status: 'sent', entry: { paypal: { status: 201, requestId: 'request-1', debugId: 'debug-1', durationMs: 12 } } });
   });
 
   test('refuses an offer above the cap before any PayPal call', async () => {
@@ -90,15 +100,15 @@ describe('performAction', () => {
     fresh = { ...fresh, dispute_life_cycle_stage: 'CHARGEBACK', links: [{ href: '', rel: 'provide_supporting_info' }] };
     await store.update((state) => { delete state.decisions['d-action']; });
     await performAction('d-action', { action: 'provide_supporting_info', note: 'Tracking details.' }, deps);
-    expect(paypal.provideSupportingInfo).toHaveBeenCalledWith('d-action', 'Tracking details.');
+    expect(paypal.provideSupportingInfo).toHaveBeenCalledWith('d-action', 'Tracking details.', expect.any(Function));
   });
 
   test('provide_evidence uses PROOF_OF_FULFILLMENT with tracking when the record has tracking, OTHER otherwise', async () => {
     await performAction('d-action', { action: 'provide_evidence', note: 'Shipped.' }, deps);
-    expect(paypal.provideEvidence).toHaveBeenCalledWith('d-action', { evidences: [{ evidence_type: 'PROOF_OF_FULFILLMENT', evidence_info: { tracking_info: [{ carrier_name: 'UPS', tracking_number: 'TRACK-B' }] }, notes: 'Shipped.' }] });
+    expect(paypal.provideEvidence).toHaveBeenCalledWith('d-action', { evidences: [{ evidence_type: 'PROOF_OF_FULFILLMENT', evidence_info: { tracking_info: [{ carrier_name: 'UPS', tracking_number: 'TRACK-B' }] }, notes: 'Shipped.' }] }, expect.any(Function));
     await store.update((state) => { state.actions = []; state.cases.B!.trackingNumber = null; });
     await performAction('d-action', { action: 'provide_evidence', note: 'Other proof.' }, deps);
-    expect(paypal.provideEvidence).toHaveBeenLastCalledWith('d-action', { evidences: [{ evidence_type: 'OTHER', evidence_info: undefined, notes: 'Other proof.' }] });
+    expect(paypal.provideEvidence).toHaveBeenLastCalledWith('d-action', { evidences: [{ evidence_type: 'OTHER', evidence_info: undefined, notes: 'Other proof.' }] }, expect.any(Function));
   });
 
   test('a PayPal 422 yields failed with the debugId and an entry with paypal.ok false; the case stays unsent', async () => {
@@ -127,6 +137,22 @@ describe('performAction', () => {
     expect(await performAction('d-action', { action: 'accept_claim', note: 'We accept.' }, deps)).toMatchObject({ status: 'failed', error: { status: null, message: 'denied' } });
   });
 
+  test('blocks toolkit no-response outcomes and remembers the lost action', async () => {
+    fresh = { ...fresh, dispute_id: 'd-toolkit-lost' };
+    execute.mockResolvedValueOnce(JSON.stringify({ ok: false, code: 'PAYPAL_API_NO_RESPONSE', message: 'lost' }));
+    expect(await performAction('d-toolkit-lost', { action: 'accept_claim', note: 'We accept.' }, deps)).toMatchObject({ status: 'failed', error: { status: null, message: 'No response from PayPal; the outcome is unknown. Check the case before retrying.' } });
+    expect(await performAction('d-toolkit-lost', { action: 'accept_claim', note: 'We accept.' }, deps)).toMatchObject({ status: 'sent' });
+  });
+
+  test('checks the lost action kind before allowing a different action', async () => {
+    fresh = { ...fresh, dispute_id: 'd-lost-action-kind' };
+    paypal.makeOffer.mockRejectedValueOnce(new PayPalError('network', 0, null, null, '/offer'));
+    await performAction('d-lost-action-kind', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps);
+    fresh = { ...fresh, links: fresh.links.filter((link) => link.rel !== 'make_offer') };
+    expect(await performAction('d-lost-action-kind', { action: 'accept_claim', note: 'We accept.' }, deps)).toEqual({ status: 'refused', blockers: ['PayPal may already have this action; refresh the case'] });
+    expect(execute).not.toHaveBeenCalled();
+  });
+
   test('only one concurrent action sends for a dispute', async () => {
     let resolveOffer: (() => void) | undefined;
     paypal.makeOffer.mockImplementationOnce(() => new Promise((resolve) => { resolveOffer = () => resolve({}); }));
@@ -144,7 +170,7 @@ describe('performAction', () => {
     vi.spyOn(store, 'update').mockRejectedValueOnce(new Error('disk failed'));
     await expect(performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps)).rejects.toThrow('PayPal accepted the action but Settle could not record it; do not retry, check PayPal');
     store.update = originalUpdate;
-    expect(await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps)).toEqual({ status: 'refused', blockers: ['PayPal accepted the action but Settle could not record it; do not retry, check PayPal'] });
+    expect(await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps)).toEqual({ status: 'refused', blockers: ['PayPal accepted the action but Settle could not record it; do not retry, check PayPal. Restart Settle after checking PayPal.'] });
     expect(paypal.makeOffer).toHaveBeenCalledTimes(1);
   });
 
@@ -167,6 +193,6 @@ describe('performAction', () => {
     fresh = { ...fresh, dispute_id: 'd-carrier' };
     await store.update((state) => { state.cases.B!.carrier = null; });
     await performAction('d-carrier', { action: 'provide_evidence', note: 'Shipped.' }, deps);
-    expect(paypal.provideEvidence).toHaveBeenCalledWith('d-carrier', { evidences: [{ evidence_type: 'OTHER', evidence_info: undefined, notes: 'Shipped.' }] });
+    expect(paypal.provideEvidence).toHaveBeenCalledWith('d-carrier', { evidences: [{ evidence_type: 'OTHER', evidence_info: undefined, notes: 'Shipped.' }] }, expect.any(Function));
   });
 });

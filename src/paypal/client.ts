@@ -87,12 +87,12 @@ export class PayPalClient {
     return (await this.request('POST', `/v2/checkout/orders/${encodeURIComponent(orderId)}/track`, { json: body })) as Order;
   }
 
-  async makeOffer(id: string, body: { note: string; offer_amount: Money; offer_type: 'REFUND' }): Promise<{ links?: Link[] }> {
-    return (await this.request('POST', `/v1/customer/disputes/${encodeURIComponent(id)}/make-offer`, { json: body })) as { links?: Link[] };
+  async makeOffer(id: string, body: { note: string; offer_amount: Money; offer_type: 'REFUND' }, onCall?: (call: CallRecord) => void): Promise<{ links?: Link[] }> {
+    return (await this.request('POST', `/v1/customer/disputes/${encodeURIComponent(id)}/make-offer`, { json: body }, onCall)) as { links?: Link[] };
   }
 
-  async provideSupportingInfo(id: string, notes: string): Promise<{ links?: Link[] }> {
-    return (await this.request('POST', `/v1/customer/disputes/${encodeURIComponent(id)}/provide-supporting-info`, { multipart: { notes } })) as {
+  async provideSupportingInfo(id: string, notes: string, onCall?: (call: CallRecord) => void): Promise<{ links?: Link[] }> {
+    return (await this.request('POST', `/v1/customer/disputes/${encodeURIComponent(id)}/provide-supporting-info`, { multipart: { notes } }, onCall)) as {
       links?: Link[];
     };
   }
@@ -100,11 +100,12 @@ export class PayPalClient {
   async provideEvidence(
     id: string,
     body: { evidences: { evidence_type: string; evidence_info?: { tracking_info: { carrier_name: string; tracking_number: string }[] }; notes: string }[] },
+    onCall?: (call: CallRecord) => void,
   ): Promise<{ links?: Link[] }> {
-    return (await this.request('POST', `/v1/customer/disputes/${encodeURIComponent(id)}/provide-evidence`, { multipart: body })) as { links?: Link[] };
+    return (await this.request('POST', `/v1/customer/disputes/${encodeURIComponent(id)}/provide-evidence`, { multipart: body }, onCall)) as { links?: Link[] };
   }
 
-  private async request(method: 'GET' | 'POST', path: string, write?: Write): Promise<unknown> {
+  private async request(method: 'GET' | 'POST', path: string, write?: Write, onCall?: (call: CallRecord) => void): Promise<unknown> {
     const requestId = method === 'POST' ? (write?.requestId ?? randomUUID()) : null;
     const headers: Record<string, string> = {};
     let body: string | Uint8Array<ArrayBuffer> | undefined;
@@ -118,7 +119,7 @@ export class PayPalClient {
       body = JSON.stringify(write.json);
     }
     const attempt = async () =>
-      this.send(method, path, { headers: { ...headers, Authorization: `Bearer ${await this.getAccessToken()}` }, body, requestId });
+      this.send(method, path, { headers: { ...headers, Authorization: `Bearer ${await this.getAccessToken()}` }, body, requestId }, onCall);
     try {
       return await attempt();
     } catch (err) {
@@ -129,10 +130,10 @@ export class PayPalClient {
     }
   }
 
-  private async send(method: string, path: string, req: Send): Promise<unknown> {
+  private async send(method: string, path: string, req: Send, onCall?: (call: CallRecord) => void): Promise<unknown> {
     const start = this.now();
-    const record = (status: number | null, debugId: string | null, error?: string) =>
-      this.onCall({
+    const record = (status: number | null, debugId: string | null, error?: string) => {
+      const call = {
         at: new Date(start).toISOString(),
         method,
         path,
@@ -141,7 +142,10 @@ export class PayPalClient {
         requestId: req.requestId,
         debugId,
         ...(error === undefined ? {} : { error }),
-      });
+      };
+      this.onCall(call);
+      onCall?.(call);
+    };
     let res: Response;
     let text: string;
     try {
