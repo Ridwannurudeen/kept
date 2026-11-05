@@ -644,7 +644,7 @@
 
   function staleNotice(detail) {
     const reason = detail.staleReason ? ` (${detail.staleReason})` : "";
-    return `This case changed since Kept looked at it${reason}. Run Kept again before approving.`;
+    return `This case changed since Kept looked at it${reason}. Decide again before approving.`;
   }
 
   function approveBlockers(detail, action, note, offer) {
@@ -766,8 +766,8 @@
       have.append(list(decision.evidence_have, "None listed"));
       missing.append(list(decision.evidence_missing, "Nothing missing"));
     } else {
-      have.append(el("p", "panel-muted", "Run Kept to see"));
-      missing.append(el("p", "panel-muted", "Run Kept to see"));
+      have.append(el("p", "panel-muted", "Decide to see"));
+      missing.append(el("p", "panel-muted", "Decide to see"));
     }
     columns.append(have, missing);
     wrap.append(columns);
@@ -1597,7 +1597,7 @@
 
   function compareEmpty(lines) {
     const box = el("div", "compare-empty");
-    box.append(el("p", "compare-empty-title", "Run Kept on both cases to compare"));
+    box.append(el("p", "compare-empty-title", "Decide both cases to compare"));
     for (const line of lines) box.append(el("p", "panel-muted", line));
     els.compareBody.replaceChildren(box);
   }
