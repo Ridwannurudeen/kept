@@ -13,6 +13,7 @@ Rules:
 - Judge what the seller has and what is missing only from the seller's notes and PayPal's records. If something is not in either, treat it as missing and say so in plain_ask or reasons.
 - Never claim a legal outcome, and never say how PayPal will rule.
 - Never promise that PayPal will release held funds.
+- Weigh the capture's seller_protection status and dispute_categories against the dispute reason, and say in reasons whether PayPal lists this reason for the payment; never say Seller Protection guarantees an outcome.
 - Only recommend actions PayPal lists for this case.
 - Call get_dispute with the dispute id first. Do not call list_disputes unless get_dispute fails.
 - End by calling submit_decision exactly once with your decision. Do not write the decision as text.`;
@@ -28,7 +29,7 @@ export function buildUserPrompt(input: DecideInput): string {
     shipping: address ? { city: address.admin_area_2 ?? null } : null,
     trackers: (unit.shipping?.trackers ?? []).map((tracker) => ({ id: tracker.id, status: tracker.status })),
   } : null;
-  const captureSummary = capture ? { status: capture.status, amount: capture.amount } : null;
+  const captureSummary = capture ? { status: capture.status, amount: capture.amount, seller_protection: capture.seller_protection ?? null } : null;
   const notes = record?.notes ? `Seller notes: ${record.notes}` : 'Seller notes: none recorded for this case.';
   const files = attachments.length ? `Attachments: ${attachments.map((file) => `${file.name} (${file.type})`).join(', ')}` : 'Attachments: none';
   const cap = allowed.includes('make_offer') ? `Largest offer the policy allows for this case: ${amount.currency_code} ${offerCap(amount.value, policy)}` : 'PayPal does not list make_offer for this case.';

@@ -1,5 +1,5 @@
-import { buildUserPrompt } from '../../src/ai/prompt.js';
-import type { Order } from '../../src/paypal/types.js';
+import { buildUserPrompt, SYSTEM_PROMPT } from '../../src/ai/prompt.js';
+import type { Capture, Order } from '../../src/paypal/types.js';
 import { fixture, inputFor, recordB } from './helpers.js';
 
 test('names the dispute id, the notes, the attachments, the caps and the allowed actions', () => {
@@ -21,4 +21,10 @@ test('never includes buyer email or full address', () => {
   const p = buildUserPrompt(inputFor('dispute-inquiry-open', recordB, order));
   expect(p).toContain('San Jose');
   for (const leak of ['@', 'address_line_1', '1 Main St', 'Sam Buyer', 'REDACTED', 'CA', '95131', 'payer_id', 'email']) expect(p).not.toContain(leak);
+});
+test('includes the capture Seller Protection status and categories, and the system prompt asks the model to weigh them', () => {
+  const capture = fixture<Capture>('capture-1VS093774J460400T');
+  const p = buildUserPrompt({ ...inputFor('dispute-inquiry-open', recordB), capture });
+  expect(p).toContain('"seller_protection":{"status":"ELIGIBLE","dispute_categories":["ITEM_NOT_RECEIVED","UNAUTHORIZED_TRANSACTION"]}');
+  expect(SYSTEM_PROMPT).toContain('seller_protection');
 });
