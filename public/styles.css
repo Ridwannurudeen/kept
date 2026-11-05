@@ -1359,6 +1359,16 @@ textarea {
 
 /* Touch */
 @media (pointer: coarse) {
+  .settle-grid .ag-header-cell-menu-button,
+  .settle-grid .ag-header-cell-filter-button,
+  .settle-grid .ag-floating-filter-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
   .button,
   .button-small,
   .search-input,
