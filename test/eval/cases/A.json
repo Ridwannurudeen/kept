@@ -1,0 +1,386 @@
+{
+  "_derived": [
+    "dispute: test/fixtures/paypal/dispute-chargeback-fresh.json (itself hand-derived from the recorded dispute-chargeback-supporting-info.json); item_name and item_description changed from 'Spike test item' to the plan's 'Ceramic pour-over set'.",
+    "amount kept at the recorded 20.00 (the plan says 48.00) so the recorded hold of 18.81 stays coherent; no seller_response_due_date because the recorded claim has none.",
+    "order and capture: the recorded test/fixtures/paypal/order-92U413849D170012F.json and capture-1VS093774J460400T.json, unchanged.",
+    "record: seed/replay/cases.json case A, whose notes carry the UPS tracking line written by notesWithShipment.",
+    "now: fixed at 2026-11-05T00:00:00.000Z, about 5 hours after the dispute's update_time."
+  ],
+  "dispute": {
+    "dispute_id": "PP-R-LKL-10196413",
+    "create_time": "2026-11-04T18:32:14.162Z",
+    "update_time": "2026-11-04T18:57:20.073Z",
+    "disputed_transactions": [
+      {
+        "buyer_transaction_id": "7D618412AG042300A",
+        "seller_transaction_id": "1VS093774J460400T",
+        "create_time": "2026-11-04T18:15:53.000Z",
+        "transaction_status": "HELD",
+        "gross_amount": {
+          "currency_code": "USD",
+          "value": "20.00"
+        },
+        "buyer": {
+          "email": "redacted@example.com",
+          "payer_id": "REDACTED",
+          "name": "REDACTED"
+        },
+        "seller": {
+          "email": "redacted@example.com",
+          "merchant_id": "REDACTED",
+          "name": "REDACTED"
+        },
+        "items": [
+          {
+            "item_name": "Ceramic pour-over set",
+            "item_description": "Ceramic pour-over set",
+            "item_quantity": "1",
+            "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+            "item_type": "SERVICE"
+          }
+        ],
+        "seller_protection_eligible": true,
+        "seller_protection_type": "EXPANDED_SELLER_PROTECTION"
+      }
+    ],
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+    "status": "UNDER_REVIEW",
+    "dispute_amount": {
+      "currency_code": "USD",
+      "value": "20.00"
+    },
+    "dispute_state": "UNDER_PAYPAL_REVIEW",
+    "fund_movements": [
+      {
+        "party": "RECEIVER",
+        "amount": {
+          "currency_code": "USD",
+          "value": "18.81"
+        },
+        "initiated_time": "2026-11-04T18:35:04.000Z",
+        "type": "DEBIT",
+        "reason": "HOLD_PLACED"
+      }
+    ],
+    "dispute_life_cycle_stage": "CHARGEBACK",
+    "dispute_channel": "INTERNAL",
+    "extensions": {
+      "buyer_contacted_time": "2026-11-04T18:32:13.363Z"
+    },
+    "evidences": [
+      {
+        "evidence_type": "CREATE",
+        "notes": "nil",
+        "source": "SUBMITTED_BY_BUYER",
+        "date": "2026-11-04T18:32:14.162Z",
+        "dispute_life_cycle_stage": "INQUIRY"
+      }
+    ],
+    "offer": {
+      "buyer_requested_amount": {
+        "currency_code": "USD",
+        "value": "20.00"
+      }
+    },
+    "refund_details": {
+      "allowed_refund_amount": {
+        "currency_code": "USD",
+        "value": "20.00"
+      }
+    },
+    "allowed_response_options": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      }
+    },
+    "links": [
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-LKL-10196413",
+        "rel": "self",
+        "method": "GET"
+      },
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-LKL-10196413/accept-claim",
+        "rel": "accept_claim",
+        "method": "POST"
+      },
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-LKL-10196413/provide-supporting-info",
+        "rel": "provide_supporting_info",
+        "method": "POST"
+      }
+    ]
+  },
+  "order": {
+    "id": "92U413849D170012F",
+    "intent": "CAPTURE",
+    "status": "COMPLETED",
+    "payment_source": {
+      "paypal": {
+        "email_address": "redacted@example.com",
+        "account_id": "REDACTED",
+        "account_status": "VERIFIED",
+        "name": {
+          "given_name": "REDACTED",
+          "surname": "REDACTED"
+        },
+        "address": {
+          "country_code": "US"
+        }
+      }
+    },
+    "purchase_units": [
+      {
+        "reference_id": "default",
+        "amount": {
+          "currency_code": "USD",
+          "value": "20.00",
+          "breakdown": {}
+        },
+        "payee": {
+          "email_address": "redacted@example.com",
+          "merchant_id": "REDACTED"
+        },
+        "description": "Spike test item",
+        "shipping": {
+          "name": {
+            "full_name": "REDACTED"
+          },
+          "address": {
+            "address_line_1": "REDACTED",
+            "admin_area_2": "San Jose",
+            "admin_area_1": "CA",
+            "postal_code": "95131",
+            "country_code": "US"
+          },
+          "trackers": [
+            {
+              "id": "1VS093774J460400T-1Z999AA10123456784",
+              "status": "SHIPPED",
+              "items": [],
+              "links": [
+                {
+                  "href": "https://api.sandbox.paypal.com/v2/checkout/orders/92U413849D170012F",
+                  "rel": "up",
+                  "method": "GET"
+                },
+                {
+                  "href": "https://api.sandbox.paypal.com/v2/checkout/orders/92U413849D170012F/trackers/1VS093774J460400T-1Z999AA10123456784",
+                  "rel": "update",
+                  "method": "PATCH"
+                }
+              ],
+              "notify_payer": false
+            }
+          ]
+        },
+        "payments": {
+          "captures": [
+            {
+              "id": "1VS093774J460400T",
+              "status": "PENDING",
+              "status_details": {
+                "reason": "BUYER_COMPLAINT"
+              },
+              "amount": {
+                "currency_code": "USD",
+                "value": "20.00"
+              },
+              "final_capture": true,
+              "seller_protection": {
+                "status": "ELIGIBLE",
+                "dispute_categories": [
+                  "ITEM_NOT_RECEIVED",
+                  "UNAUTHORIZED_TRANSACTION"
+                ]
+              },
+              "links": [
+                {
+                  "href": "https://api.sandbox.paypal.com/v2/payments/captures/1VS093774J460400T",
+                  "rel": "self",
+                  "method": "GET"
+                },
+                {
+                  "href": "https://api.sandbox.paypal.com/v2/payments/captures/1VS093774J460400T/refund",
+                  "rel": "refund",
+                  "method": "POST"
+                },
+                {
+                  "href": "https://api.sandbox.paypal.com/v2/checkout/orders/92U413849D170012F",
+                  "rel": "up",
+                  "method": "GET"
+                }
+              ],
+              "create_time": "2026-11-04T18:15:53Z",
+              "update_time": "2026-11-04T18:35:03Z"
+            }
+          ],
+          "refunds": [
+            {
+              "id": "4XN01433H71162000",
+              "amount": {
+                "currency_code": "USD",
+                "value": "18.81"
+              },
+              "seller_payable_breakdown": {
+                "gross_amount": {
+                  "currency_code": "USD",
+                  "value": "18.81"
+                },
+                "paypal_fee": {
+                  "currency_code": "USD",
+                  "value": "0.00"
+                },
+                "platform_fees": [
+                  {
+                    "amount": {
+                      "currency_code": "USD",
+                      "value": "0.00"
+                    }
+                  }
+                ],
+                "net_amount": {
+                  "currency_code": "USD",
+                  "value": "18.81"
+                },
+                "total_refunded_amount": {
+                  "currency_code": "USD",
+                  "value": "0.00"
+                }
+              },
+              "status": "PENDING",
+              "links": [
+                {
+                  "href": "https://api.sandbox.paypal.com/v2/payments/refunds/4XN01433H71162000",
+                  "rel": "self",
+                  "method": "GET"
+                },
+                {
+                  "href": "https://api.sandbox.paypal.com/v2/payments/captures/1VS093774J460400T",
+                  "rel": "up",
+                  "method": "GET"
+                }
+              ],
+              "create_time": "2026-11-04T10:35:03-08:00",
+              "update_time": "2026-11-04T10:35:03-08:00"
+            }
+          ]
+        }
+      }
+    ],
+    "payer": {
+      "name": {
+        "given_name": "REDACTED",
+        "surname": "REDACTED"
+      },
+      "email_address": "redacted@example.com",
+      "payer_id": "REDACTED",
+      "address": {
+        "country_code": "US"
+      }
+    },
+    "create_time": "2026-11-04T18:15:53Z",
+    "update_time": "2026-11-04T18:35:03Z",
+    "links": [
+      {
+        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/92U413849D170012F",
+        "rel": "self",
+        "method": "GET"
+      }
+    ]
+  },
+  "capture": {
+    "id": "1VS093774J460400T",
+    "amount": {
+      "currency_code": "USD",
+      "value": "20.00"
+    },
+    "final_capture": true,
+    "seller_protection": {
+      "status": "ELIGIBLE",
+      "dispute_categories": [
+        "ITEM_NOT_RECEIVED",
+        "UNAUTHORIZED_TRANSACTION"
+      ]
+    },
+    "status": "PENDING",
+    "status_details": {
+      "reason": "BUYER_COMPLAINT"
+    },
+    "supplementary_data": {
+      "related_ids": {
+        "order_id": "92U413849D170012F"
+      }
+    },
+    "payee": {
+      "email_address": "redacted@example.com",
+      "merchant_id": "REDACTED"
+    },
+    "create_time": "2026-11-04T18:15:53Z",
+    "update_time": "2026-11-04T18:35:03Z",
+    "links": [
+      {
+        "href": "https://api.sandbox.paypal.com/v2/payments/captures/1VS093774J460400T",
+        "rel": "self",
+        "method": "GET"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v2/payments/captures/1VS093774J460400T/refund",
+        "rel": "refund",
+        "method": "POST"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/92U413849D170012F",
+        "rel": "up",
+        "method": "GET"
+      }
+    ]
+  },
+  "record": {
+    "key": "A",
+    "orderId": "92U413849D170012F",
+    "captureId": "1VS093774J460400T",
+    "amount": "20.00",
+    "currency": "USD",
+    "itemName": "Ceramic pour-over set",
+    "trackingNumber": "1Z999AA10123456784",
+    "carrier": "UPS",
+    "trackedAt": "2026-11-04T18:15:53.000Z",
+    "notes": "Shipping address matches the order address.\nShipped on 2026-11-04 via UPS, tracking 1Z999AA10123456784.",
+    "attachments": [
+      {
+        "name": "packing-slip.txt",
+        "type": "text/plain"
+      },
+      {
+        "name": "ups-label.txt",
+        "type": "text/plain"
+      }
+    ],
+    "disputeId": "PP-R-LKL-10196413",
+    "createdAt": "2026-11-04T18:15:53.000Z",
+    "observed": null
+  },
+  "attachments": [
+    {
+      "name": "packing-slip.txt",
+      "type": "text/plain"
+    },
+    {
+      "name": "ups-label.txt",
+      "type": "text/plain"
+    }
+  ],
+  "policy": {
+    "maxOfferPercent": 30,
+    "maxOfferAbsolute": "50.00",
+    "deadlineBufferHours": 48
+  },
+  "allowed": [
+    "accept_claim",
+    "provide_supporting_info"
+  ],
+  "now": "2026-11-05T00:00:00.000Z"
+}
