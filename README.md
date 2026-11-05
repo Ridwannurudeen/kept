@@ -124,7 +124,7 @@ The `test:e2e` script uses a POSIX `SETTLE_E2E=1` prefix; on PowerShell set `$en
 
 ## Deploy
 
-`render.yaml` is a Render blueprint: one free web service, Node 24, build `npm ci && npm run build`, start `npm start`, health check `/healthz`. Set the four variables in the Render dashboard (they are `sync: false`). `SETTLE_DATA_DIR` is `/tmp/settle-data`.
+`render.yaml` is a Render blueprint: one free web service, Node 24, build `npm ci --include=dev && npm run build`, start `npm start`, health check `/healthz`. Set the four variables in the Render dashboard (they are `sync: false`). `SETTLE_DATA_DIR` is `/tmp/settle-data`.
 
 `npm run snapshot` writes `seed/snapshot.json` from a running instance's decisions and action log (`--from-url <base>` reads a hosted one), and `npm run snapshot:check` checks it for personal data. When that file is present, a restarted server restores decisions, the action log and the PayPal call log from it.
 
@@ -160,6 +160,8 @@ The `test:e2e` script uses a POSIX `SETTLE_E2E=1` prefix; on PowerShell set `$en
 - No escalation or appeal flow, no buyer messaging.
 - PayPal's seller response window is 20 days from filing, so late in the judging window the hosted grid is expected to show resolved or expired cases. Every case still shows its recommendation, reasons and log.
 - Cold start and decide latency on the hosted deploy: to be measured on the hosted deploy.
+- Commit `seed/snapshot.json` before judging; without it a restart forgets which cases were already acted on (Settle still re-checks PayPal before any action).
+- `npm audit --omit=dev` reports 13 advisories (12 high, 1 moderate), all in the dependency tree of the pinned `ai` 4, `zod` 3 and `@paypal/agent-toolkit` versions: zod (GHSA-mrhx-c7xc-m3w5), @ai-sdk/provider-utils (GHSA-866g-f22w-33x8), ai (GHSA-rwvc-j5jr-mgvh), jsondiffpatch (GHSA-33vc-wfww-vjfv, GHSA-j4fx-xxwh-2485), @langchain/core (GHSA-r399-636x-v7f6), langsmith (GHSA-fw9q-39r9-c252, GHSA-rr7j-v2q5-chgv, GHSA-3644-q5cj-c5c7), mathjs (GHSA-29qv-4j9f-fjw5, GHSA-jvff-x2qm-6286) and uuid (GHSA-w5hq-g745-h8pq, moderate); the other flagged packages (@ai-sdk/anthropic, @ai-sdk/react, @ai-sdk/ui-utils, openai) are flagged through these. Clearing them means moving off `ai` 4 and `zod` 3, which this submission does not do.
 
 ## License
 

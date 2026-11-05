@@ -88,7 +88,7 @@ test('row marks the recommendation stale with a reason when the dispute moved si
 
 test('resolved row reports refunded, kept and days to close from PayPal fields', () => {
   const outcome = buildCaseRow(resolved, null, state(), now).outcome;
-  expect(outcome).toEqual({ code: 'RESOLVED_BUYER_FAVOUR', refunded: { currency_code: 'USD', value: '5.00' }, kept: { currency_code: 'USD', value: '15.00' }, daysToClose: 0 });
+  expect(outcome).toEqual({ code: 'RESOLVED_BUYER_FAVOUR', refunded: { currency_code: 'USD', value: '5.00' }, refundedReported: true, kept: { currency_code: 'USD', value: '15.00' }, daysToClose: 0 });
 });
 
 test('open row has a null outcome', () => {
@@ -99,7 +99,7 @@ test('resolved row without amount_refunded keeps kept null unless the seller won
   const withoutRefund = { ...resolved, dispute_outcome: { outcome_code: 'RESOLVED_BUYER_FAVOUR' } };
   expect(buildCaseRow(withoutRefund, null, state(), now).outcome).toMatchObject({ refunded: null, kept: null });
   const sellerWon = { ...resolved, dispute_outcome: { outcome_code: 'RESOLVED_SELLER_FAVOUR' } };
-  expect(buildCaseRow(sellerWon, null, state(), now).outcome).toMatchObject({ refunded: { currency_code: 'USD', value: '0.00' }, kept: { currency_code: 'USD', value: '20.00' } });
+  expect(buildCaseRow(sellerWon, null, state(), now).outcome).toMatchObject({ refunded: { currency_code: 'USD', value: '0.00' }, refundedReported: false, kept: { currency_code: 'USD', value: '20.00' } });
 });
 
 test('resolved outcome keeps null when refund currency differs from the disputed currency', () => {

@@ -27,7 +27,7 @@ export type CaseRow = {
   actionTaken: ActionKind | null;
   open: boolean;
   headline: string;
-  outcome: { code: string; refunded: Money | null; kept: Money | null; daysToClose: number | null } | null;
+  outcome: { code: string; refunded: Money | null; refundedReported: boolean; kept: Money | null; daysToClose: number | null } | null;
 };
 
 export type CaseDetail = CaseRow & {
@@ -72,7 +72,7 @@ function outcomeOf(d: Dispute): CaseRow['outcome'] {
   const created = Date.parse(d.create_time);
   const updated = Date.parse(d.update_time);
   const daysToClose = Number.isFinite(created) && Number.isFinite(updated) ? Math.floor((updated - created) / 86_400_000) : null;
-  return { code, refunded, kept, daysToClose };
+  return { code, refunded, refundedReported: suppliedRefund !== undefined, kept, daysToClose };
 }
 
 function staleReason(stored: StoredDecision, d: Dispute): string {

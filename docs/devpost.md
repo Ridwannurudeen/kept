@@ -53,7 +53,7 @@ AG Grid in Settle: AG Grid Community 36 (`ag-grid-community` 36.3.0) renders the
 
 Server: TypeScript on Node 24 with Express (`src/http/app.ts`, `src/http/routes.ts`), a passcode check on every `/api` call, and one JSON state file.
 
-Render: hosted as one free web service from the blueprint in `render.yaml` (build `npm ci && npm run build`, health check `/healthz`).
+Render: hosted as one free web service from the blueprint in `render.yaml` (build `npm ci --include=dev && npm run build`, health check `/healthz`).
 
 ## Challenges we ran into
 

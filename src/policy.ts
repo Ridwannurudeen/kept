@@ -6,7 +6,7 @@ export const defaultPolicy: Policy = { maxOfferPercent: 30, maxOfferAbsolute: '5
 
 const policySchema = z.object({
   maxOfferPercent: z.number().int().min(0).max(100),
-  maxOfferAbsolute: z.string().regex(/^\d+\.\d{2}$/),
+  maxOfferAbsolute: z.string().regex(/^\d+\.\d{2}$/).refine((value) => Number(value) <= 1_000_000, 'At most 1000000.00'),
   deadlineBufferHours: z.number().int().min(0).max(2000),
 });
 

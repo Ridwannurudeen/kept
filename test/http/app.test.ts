@@ -148,6 +148,21 @@ describe('HTTP app', () => {
     expect(store.get().actions.at(-1)).toMatchObject({ disputeId: 'd-early', action: 'accept_claim', paypal: { ok: true, message: 'PayPal shows this action landed' } });
   });
 
+  test('POST /api/reset is 404 in live mode and resets in replay mode', async () => {
+    await request(app).post('/api/reset').set('x-settle-passcode', 'pass').expect(404);
+    const replay = createApp({ config: { ...config, mode: 'replay' }, paypal: paypal as never, store, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: '2026-11-04' });
+    await request(replay).post('/api/reset').set('x-settle-passcode', 'pass').expect(200, { ok: true });
+  });
+
+  test('a notes stub with no order id never asks PayPal for an order', async () => {
+    await request(app).put('/api/cases/d-late/notes').set('x-settle-passcode', 'pass').send({ notes: 'call buyer' }).expect(200);
+    await request(app).get('/api/cases/d-late').set('x-settle-passcode', 'pass').expect(200);
+    act.mockResolvedValueOnce({ status: 'sent', entry: { id: 'e' }, dispute: disputes[0] });
+    await request(app).post('/api/cases/d-late/approve').set('x-settle-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(200);
+    expect(paypal.getOrder).not.toHaveBeenCalled();
+    expect(paypal.getCapture).toHaveBeenCalledWith('CAP-d-late');
+  });
+
   test('PUT /api/policy validates and persists', async () => {
     const auth = { 'x-settle-passcode': 'pass' };
     await request(app).put('/api/policy').set(auth).send({ maxOfferPercent: 101, maxOfferAbsolute: '50.00', deadlineBufferHours: 48 }).expect(400);

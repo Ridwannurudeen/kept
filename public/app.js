@@ -60,6 +60,7 @@
   let panelDetail = null;
   let returnFocus = null;
   let approving = false;
+  let replay = false;
   let compareReturn = null;
   let calls = [];
   const isPending = (job) =>
@@ -249,7 +250,7 @@
           "Kept after resolution",
           money(summary.kept),
           "",
-          "dispute_amount minus dispute_outcome.amount_refunded, on resolved cases",
+          "disputed_transactions[0].gross_amount (or dispute_amount) minus dispute_outcome.amount_refunded, on resolved cases; a seller-favour close with no amount_refunded counts as 0.00 refunded",
         ),
         stat(
           "Refunded",
@@ -905,7 +906,8 @@
       const facts = el("dl", "result-facts");
       const fact = (label, value) =>
         facts.append(el("dt", "", label), el("dd", "", value));
-      if (entry.paypal.status === null)
+      if (replay) fact("PayPal status", "Simulated (replay)");
+      else if (entry.paypal.status === null)
         fact("PayPal status", "not reported by the toolkit");
       else fact("PayPal HTTP status", String(entry.paypal.status));
       fact("Links on the dispute now", String(dispute.links?.length ?? 0));
@@ -1265,7 +1267,11 @@
       if (explanation.detail)
         card.append(el("p", "panel-text", explanation.detail));
       const outcome = detail.outcome;
-      if (outcome?.refunded) fact("Refunded", money(outcome.refunded));
+      if (outcome?.refunded)
+        fact(
+          "Refunded",
+          outcome.refundedReported ? money(outcome.refunded) : "not reported",
+        );
       if (outcome?.kept) fact("Kept", money(outcome.kept));
       if (outcome?.daysToClose !== null && outcome?.daysToClose !== undefined)
         fact("Closed after", plural(outcome.daysToClose, "day"));
@@ -1865,7 +1871,9 @@
         p.node.rowPinned
           ? "Total kept after resolution"
           : p.data.outcome?.kept
-            ? "Disputed amount minus what PayPal refunded"
+            ? p.data.outcome.refundedReported
+              ? "disputed_transactions[0].gross_amount minus what PayPal refunded"
+              : "disputed_transactions[0].gross_amount; PayPal reported no refund, counted as 0.00"
             : null,
     }),
   ];
@@ -2010,6 +2018,7 @@
       ? `; decisions and the action log are restored from the snapshot recorded ${stampFormat.format(new Date(health.restoredFrom))}`
       : "";
     if (health.mode === "replay") {
+      replay = true;
       els.replayBanner.textContent = `Replay of recorded sandbox data from ${recordedFormat.format(new Date(health.recordedOn))}. Actions here are simulated.`;
       els.replayBanner.hidden = false;
       els.confirmText.textContent =

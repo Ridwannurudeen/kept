@@ -91,7 +91,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
       await reconcileUnknown(req.params.id, dispute, deps);
       const warnings: string[] = [];
       const record = Object.values(deps.store.get().cases).find((entry) => entry.captureId && entry.captureId === captureIdOf(dispute)) ?? null;
-      const orderPromise = record ? deps.paypal.getOrder(record.orderId).catch((error: unknown) => { warnings.push(error instanceof Error ? error.message : String(error)); return null; }) : Promise.resolve(null);
+      const orderPromise = record?.orderId ? deps.paypal.getOrder(record.orderId).catch((error: unknown) => { warnings.push(error instanceof Error ? error.message : String(error)); return null; }) : Promise.resolve(null);
       const capturePromise = record?.captureId ? deps.paypal.getCapture(record.captureId).catch((error: unknown) => { warnings.push(error instanceof Error ? error.message : String(error)); return null; }) : Promise.resolve(null);
       const [order, capture] = await Promise.all([orderPromise, capturePromise]);
       res.json({ ...buildCaseDetail(dispute, record, order, capture, deps.store.get(), deps.now()), warnings });
@@ -149,6 +149,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
     res.status(400).json({ error: 'kind' });
   });
   router.post('/api/reset', async (_req, res, next) => {
+    if (deps.config.mode !== 'replay') { res.status(404).json({ error: 'not_found' }); return; }
     try { await deps.store.reset(); generations.set(deps.store, (generations.get(deps.store) ?? 0) + 1); caches.delete(deps.store); res.json({ ok: true }); } catch (error) { next(error); }
   });
   router.post('/api/cases/decide-all', async (_req, res, next) => {
@@ -182,7 +183,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
       const captureId = captureIdOf(outcome.dispute);
       const record = Object.values(state.cases).find((entry) => entry.captureId && entry.captureId === captureId) ?? null;
       const warnings: string[] = [];
-      const order = record ? await deps.paypal.getOrder(record.orderId).catch((error: unknown) => { warnings.push(error instanceof Error ? error.message : String(error)); return null; }) : null;
+      const order = record?.orderId ? await deps.paypal.getOrder(record.orderId).catch((error: unknown) => { warnings.push(error instanceof Error ? error.message : String(error)); return null; }) : null;
       const capture = record?.captureId ? await deps.paypal.getCapture(record.captureId).catch((error: unknown) => { warnings.push(error instanceof Error ? error.message : String(error)); return null; }) : null;
       res.json({ entry: outcome.entry, dispute: outcome.dispute, detail: { ...buildCaseDetail(outcome.dispute, record, order, capture, deps.store.get(), deps.now()), warnings } });
     } catch (error) { next(error); }

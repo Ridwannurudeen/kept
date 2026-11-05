@@ -67,3 +67,11 @@ test('labels and action kinds are stable', () => {
   expect(isOpen(fixture('dispute-inquiry-open'))).toBe(true);
   expect(isOpen(fixture('dispute-inquiry-resolved'))).toBe(false);
 });
+
+test('explainState never prints undefined when PayPal omits amount_refunded', () => {
+  const d = { dispute_id: 'd', create_time: '', update_time: '', reason: '', status: 'RESOLVED', dispute_life_cycle_stage: 'INQUIRY', dispute_amount: { currency_code: 'USD', value: '5.00' }, dispute_outcome: { outcome_code: 'RESOLVED_BUYER_FAVOUR' } };
+  const explanation = explainState(d, new Date('2026-11-05T00:00:00.000Z'));
+  expect(explanation.headline).toBe("Closed in the buyer's favour");
+  expect(explanation.detail).not.toContain('undefined');
+  expect(explanation.detail).toBe('PayPal did not report the refunded amount.');
+});

@@ -50,7 +50,10 @@ export function explainState(d: Dispute, _now: Date): StateExplanation {
   const stage = d.dispute_life_cycle_stage;
   const outcome = d.dispute_outcome?.outcome_code;
   if (d.status === 'RESOLVED') {
-    if (outcome === 'RESOLVED_BUYER_FAVOUR') return { headline: "Closed in the buyer's favour", detail: `PayPal refunded ${d.dispute_outcome?.amount_refunded?.currency_code} ${d.dispute_outcome?.amount_refunded?.value} to the buyer.`, actionable: false, terminal: true };
+    if (outcome === 'RESOLVED_BUYER_FAVOUR') {
+      const refunded = d.dispute_outcome?.amount_refunded;
+      return { headline: "Closed in the buyer's favour", detail: refunded ? `PayPal refunded ${refunded.currency_code} ${refunded.value} to the buyer.` : 'PayPal did not report the refunded amount.', actionable: false, terminal: true };
+    }
     if (outcome === 'RESOLVED_SELLER_FAVOUR') return { headline: 'Closed in your favour', detail: '', actionable: false, terminal: true };
     if (outcome === 'ACCEPTED') return { headline: 'You accepted the claim', detail: '', actionable: false, terminal: true };
     if (outcome === 'CANCELED_BY_BUYER') return { headline: 'The buyer withdrew the case', detail: '', actionable: false, terminal: true };

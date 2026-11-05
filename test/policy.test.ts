@@ -1,3 +1,4 @@
+import { ZodError } from 'zod';
 import { checkOffer, deadlineStatus, defaultPolicy, offerCap, parseAmount, parsePolicy, toCents } from '../src/policy.js';
 
 test('PayPal disputed amounts accept zero or one decimal while seller offers stay strict', () => {
@@ -51,4 +52,11 @@ test('parsePolicy rejects out-of-range and malformed settings', () => {
   expect(() => parsePolicy({ maxOfferPercent: 30, maxOfferAbsolute: '50', deadlineBufferHours: 48 })).toThrow();
   expect(() => parsePolicy({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: -1 })).toThrow();
   expect(parsePolicy({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 400 })).toEqual({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 400 });
+});
+
+test('parsePolicy bounds maxOfferAbsolute at 1000000.00 so offerCap cannot throw', () => {
+  const base = { maxOfferPercent: 30, deadlineBufferHours: 48 };
+  expect(parsePolicy({ ...base, maxOfferAbsolute: '1000000.00' }).maxOfferAbsolute).toBe('1000000.00');
+  expect(() => parsePolicy({ ...base, maxOfferAbsolute: '1000000.01' })).toThrow(ZodError);
+  expect(() => parsePolicy({ ...base, maxOfferAbsolute: '99999999999999999999.00' })).toThrow(ZodError);
 });
