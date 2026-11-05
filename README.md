@@ -40,7 +40,13 @@ PayPal Agent Toolkit: `@paypal/agent-toolkit` 1.11.0, `ai-sdk` export. It is con
 
 AI model: Claude Opus 5.5, model id `claude-opus-5-5`, set as `MODEL_ID` in `src/ai/provider.ts`, through `@ai-sdk/anthropic` 1.2.12 on the Vercel AI SDK (`ai` 4.3.19). Effort is set to `high` in the same file. The decision loop is `decideCase` in `src/ai/decide.ts`: one `generateText` call per case, `toolChoice: 'auto'`, up to 6 steps per call, with one retry if the model does not submit a decision. The system and user prompts are in `src/ai/prompt.ts`. The model's tools are in `src/ai/tools.ts`.
 
-Other parts: AG Grid Community 36 (`ag-grid-community` 36.3.0) renders the case grid in `public/app.js` (custom cell renderers, text, number and date column filters, quick filter, row class rules for due-soon and resolved rows, a pinned total row, tooltips, in-place row updates with `applyTransaction`, the Quartz theme). Hosting is a Render blueprint in `render.yaml`.
+Other parts: AG Grid Community 36 (`ag-grid-community` 36.3.0) renders the case grid in `public/app.js` (custom cell renderers, text, number and date column filters, quick filter, row class rules for due-soon and resolved rows, a pinned total row, tooltips, in-place row updates with `applyTransaction`, the Quartz theme).
+
+### Live resolution and grid features
+
+While a live action awaits PayPal, Kept checks every 15 seconds. When PayPal reports a change, the case row flashes and the summary updates in place. The case panel's **What PayPal reports** timeline is built only from PayPal's offer history, dispute outcome and fund movements (`src/cases.ts`, `public/app.js`). Replay has a separate **Simulate the buyer accepting (replay)** control (`public/app.js`); its API route returns 404 in live mode (`src/http/routes.ts`). Replay actions remain simulated and are identified by the replay banner.
+
+The grid groups columns under **PayPal reports**, **Claude recommends** and **You approved**. Its inline offer editor refuses amounts over the policy cap, with undo and redo for edits. CSV export supports selected cases and guards against spreadsheet formula injection. The seller's grid view, including sort, filters and column layout, persists locally and **Reset view** restores the default (`public/app.js`). These are AG Grid Community features, with no Enterprise module loaded.
 
 ## How it works
 

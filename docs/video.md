@@ -26,7 +26,7 @@ The story follows the approved reframe (design spec section 0): held and kept mo
 | 2 | 0:20 to 0:45 | The grid: cases sorted by PayPal's seller response deadline, A and B red (inside the 400 h buffer), the Held, Kept and Seller Protection columns, Claude's recommendation per row. | `Held, kept and Seller Protection per case` (0:22 to 0:28) |
 | 3 | 0:45 to 1:40 | Case B panel: not as described, inquiry stage, `Seller Protection on this payment: Eligible, not this reason`, weak notes, recommendation SETTLE, the cap `USD 10.80`. The seller types an amount over the cap and the approve button names the limit; then types the draft offer back, clicks Approve, confirms. The result line `PayPal now reports: ...` appears and holds. | `Case B: not covered for this reason, so settle early under the cap` (0:47 to 0:54), `The cap refuses, it never lowers the amount` (on the over-cap edit), `Sending make-offer to PayPal` (on the confirm click), `PayPal's returned state` (while the result line holds) |
 | 4 | 1:40 to 2:08 | Case A panel: item not received, PayPal claim stage, `Seller Protection on this payment: Eligible, covers this reason`, PayPal's hold, tracking on file, the drafted defence. The seller clicks Approve, confirms. The result line appears and holds; the status card reads `PayPal is reviewing your supporting information` and shows what was sent (PayPal's `supporting_info` entry with source `SUBMITTED_BY_SELLER`). | `Case A: covered for this reason, so fight with the tracking record` (1:42 to 1:49), `Sending provide-supporting-info to PayPal` (on the confirm click), `PayPal's returned state` (while the result line holds) |
-| 5 | 2:08 to 2:40 | Refresh. B reads `RESOLVED` with PayPal's `amount_refunded`; the Kept figure and the pinned total row include B; Held now shows what PayPal still holds on open cases. The PayPal calls log is opened for a moment. | `Case B resolved: PayPal's refunded amount, and what the seller kept` (2:10 to 2:17), `Every figure is PayPal's own` (2:24 to 2:29) |
+| 5 | 2:08 to 2:40 | Live wow beat: off camera, the sandbox buyer accepts B's offer. Kept checks within one 15 second interval; B's row flashes, Kept rises, and the panel's **What PayPal reports** timeline appears. Held now reflects PayPal's holds on open cases. Replay fallback shows the **Simulate the buyer accepting (replay)** control and replay banner throughout, with narration identifying recorded sandbox data. | `Buyer accepts in the sandbox` (2:08 to 2:13), `One check: B flashes, Kept updates, PayPal's timeline appears` (2:14 to 2:22), `Every figure is PayPal's own` (2:24 to 2:29) |
 | 6 | 2:40 to 2:52 | The grid, still. | `Built on PayPal Disputes API + PayPal Agent Toolkit, Claude Opus 5.5` (2:40 to 2:52) |
 
 Event timing inside beats 3 and 4, per approve:
@@ -72,7 +72,7 @@ Narration is recorded separately after the picture is locked, read against the c
 
 ### Beat 5 outcome step
 
-After beat 3's offer on B lands, the owner logs in as the sandbox buyer and accepts the offer in the sandbox Resolution Center (a real buyer action, the same one the 2026-11-04 spike used: a 5.00 offer on a 20.00 inquiry, accepted, RESOLVED, 15.00 kept). Refresh Kept until B shows `RESOLVED` and the strip's Kept figure includes it. Expected Kept for B: 36.00 minus the refunded offer amount, `[KEPT FIGURE]`. Also read B's `fund_movements` after resolution and write here whether PayPal lists the hold ending: `[B HOLD AFTER RESOLUTION]`. Then shoot beat 5 with the strip and the pinned total row in frame. It is narrated as what PayPal reports was kept after resolution, never as a gain versus fighting, and Held now is described only as what PayPal still holds on open cases.
+After beat 3's offer on B lands, the owner logs in as the sandbox buyer and accepts the offer in the sandbox Resolution Center. This is a real buyer action, performed off camera. Kept checks PayPal every 15 seconds while an action awaits PayPal. Capture the first check that reports the change: B's row flashes, the Kept figure rises, and the panel timeline appears together. No manual refresh is needed. Expected Kept for B: 36.00 minus the refunded offer amount, `[KEPT FIGURE]`. Also read B's `fund_movements` after resolution and write here whether PayPal lists the hold ending: `[B HOLD AFTER RESOLUTION]`. Then shoot beat 5 with the strip and the pinned total row in frame. It is narrated as what PayPal reports was kept after resolution, never as a gain versus fighting, and Held now is described only as what PayPal still holds on open cases.
 
 ## 6. Retake rules
 
@@ -98,21 +98,21 @@ Beat 2
 Every open dispute is here, sorted by PayPal's response deadline. The red rows are inside my deadline buffer. Each row shows PayPal's hold, what I kept, whether the payment's Seller Protection covers the buyer's reason, and Claude's call: fight, settle, or accept.
 
 Beat 3
-Case B. The buyer says the runner is the wrong colour, and my notes are thin: no photos before shipping. Seller Protection on this payment lists item not received and unauthorised payments, not this reason. So Claude recommends settling early with a partial refund, and shows why. My cap is ten dollars eighty. If I type more, Kept refuses it; it never quietly lowers my number. I approve. Kept sends make offer to PayPal and reads the case again. Claude can read the dispute, but it cannot send anything.
+Case B. The buyer says the runner is the wrong colour, and my notes are thin. Seller Protection on this payment lists item not received and unauthorised payments, not this reason. So Claude recommends settling early with a partial refund, and shows why. My cap is ten dollars eighty. If I type more, Kept refuses it; it never quietly lowers my number. I approve. Kept sends make offer to PayPal and reads the case again. Claude can read the dispute, but it cannot send anything.
 
 Beat 4
 Case A. The buyer says the item never arrived, but I shipped it with UPS tracking. This payment is covered for that reason, and PayPal is holding funds on the claim. Claude drafts my defence from the tracking record. I approve, Kept sends supporting information, and PayPal now shows it is reviewing what I sent.
 
 Beat 5
-Between takes, the sandbox buyer accepted my offer on B. I refresh. B now reads resolved, with PayPal's refunded amount, and the kept total includes what I kept on B. Held now counts only open cases, so it shows what PayPal still holds. In replay, this is a recorded sandbox outcome under the replay banner. Every figure here is PayPal's own, and the call log lists each request.
+The sandbox buyer accepts my offer on B. Within one check, Kept updates itself: B flashes, Kept rises, and PayPal's timeline appears. I do not refresh. Held now counts only open cases, so it shows what PayPal still holds. For replay fallback, use the labelled **Simulate the buyer accepting (replay)** control and keep the replay banner visible. Narration must say this is recorded sandbox data, with no implication of a live buyer action. Every figure here is PayPal's own, and the call log lists each request.
 
 Beat 6
 Kept is built on the PayPal Disputes API and the PayPal Agent Toolkit, with Claude Opus 5.5 writing the recommendations.
 ```
 
-Word count: 335 spoken words, 347 with the beat labels (limit 420). Recount after any change with `awk '/^```$/{f=!f;next} f' docs/video.md | grep -v "^Beat [0-9]$" | wc -w`.
+Optional Case B photo narration, only when attached: "Claude describes my photo of the runner against the buyer's claim." Attach a clear JPEG or PNG demo listing photo for the sandbox case: any clear photo of a similar item that the owner took. This is not a real shipment record. Word count: recount spoken words including the optional line with `awk '/^```$/{f=!f;next} f' docs/video.md | grep -v "^Beat [0-9]$" | wc -w`. Keep narration at 420 words or fewer. The timings remain under 2:59.
 
-Never say: that PayPal support is slow, "beat the buyer", that funds were released, or that money was "saved" versus fighting.
+Never say: that PayPal support is slow, "beat the buyer", that PayPal released funds, or that an outcome is better than fighting.
 
 ## 8. Audio
 

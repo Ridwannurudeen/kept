@@ -32,11 +32,19 @@ The recommendation is the mechanism, not the pitch. Kept can say "don't fight th
 
 Every figure comes from PayPal's own fields. Kept never claims a result that did not happen, never computes a dispute ratio (it has no honest count of the seller's sales), and makes no claim about when PayPal ends a hold.
 
+While a live action awaits PayPal, Kept checks every 15 seconds. A reported change updates the row and totals in place, and the case panel shows a **What PayPal reports** timeline built only from PayPal's offer history, outcome and fund movements. In replay, the labelled **Simulate the buyer accepting (replay)** control simulates that event; it is not presented as live, and the control returns 404 in live mode.
+
+Claude can describe what the seller's own attached JPEG or PNG photo shows against the buyer's claim. The images stay in Kept, and photo notes are not kept in the committed snapshot.
+
 Safety is built in. The AI model holds only read tools and cannot move money. An offer above the seller's cap is refused, never quietly lowered. The server re-checks every approval against PayPal's current state before sending anything, and every action is logged with what the model recommended, what the seller changed, and PayPal's response.
 
 ## How we built it
 
 Everything runs against the PayPal sandbox (`https://api-m.sandbox.paypal.com`).
+
+The live resolution watcher checks every 15 seconds while an action awaits PayPal, then updates the case row and totals and renders a timeline from PayPal's offer history, outcome and fund movements. Replay exposes a labelled buyer-accept simulation control, while its API is unavailable in live mode. For a photo attachment, Claude receives the seller's own JPEG or PNG image and describes what it shows against the buyer's claim. Images remain in Kept, and photo notes are not included in the committed snapshot.
+
+AG Grid Community provides the grouped columns **PayPal reports**, **Claude recommends** and **You approved**, inline capped offer editing that refuses over-cap values, undo and redo, CSV export with a formula-injection guard, and a locally persisted view with **Reset view**. These features are implemented in `public/app.js`.
 
 PayPal REST APIs, all in `src/paypal/client.ts`:
 
@@ -106,7 +114,7 @@ paypal, paypal-disputes-api, paypal-agent-toolkit, claude, vercel-ai-sdk, typesc
 
 ## Prize categories to tick
 
-At most one Grand Prize or one Honorable Mention, plus one Sponsor Prize, can be won.
+Choose at most one Grand Prize or Honorable Mention, plus one Sponsor Prize.
 
 - Grand Prize
 - Best Use of PayPal + AI
