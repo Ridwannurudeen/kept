@@ -4,6 +4,7 @@
   const PASSCODE_KEY = "settle.passcode";
   const AUTO_HEIGHT_LIMIT = 20;
   const TOTAL_ID = "__total__";
+  const POLL_MS = 2000;
 
   const els = {
     layout: document.getElementById("layout"),
@@ -13,6 +14,7 @@
     fetchStatus: document.getElementById("fetch-status"),
     quickFilter: document.getElementById("quick-filter"),
     refresh: document.getElementById("refresh-button"),
+    decideAll: document.getElementById("decide-all-button"),
     footer: document.getElementById("footer"),
     announcer: document.getElementById("announcer"),
     panel: document.getElementById("panel"),
@@ -28,9 +30,12 @@
   let gridApi = null;
   let summaryText = null;
   let passcodePrompt = null;
+  let pollTimer = null;
   const reasonsById = new Map();
   const decideState = new Map();
   const sentById = new Map();
+  const isPending = (job) =>
+    job?.state === "queued" || job?.state === "running";
 
   // ---------- formatting ----------
 
@@ -138,11 +143,15 @@
       return fetch(path, { ...init, headers });
     };
     let res = await send();
-    while (res.status === 401) {
+    if (res.status === 401) {
       const hadCode = sessionStorage.getItem(PASSCODE_KEY) !== null;
       sessionStorage.removeItem(PASSCODE_KEY);
       await askPasscode(hadCode);
       res = await send();
+      if (res.status === 401) {
+        sessionStorage.removeItem(PASSCODE_KEY);
+        throw new Error("That passcode was not accepted.");
+      }
     }
     const body = await res.json();
     if (!res.ok) {
@@ -173,7 +182,7 @@
         "Resolved cases",
         "No resolved cases yet",
         "",
-        "Counts disputes whose PayPal status is RESOLVED",
+        "From PayPal's dispute status and dispute_outcome: none of these disputes is RESOLVED yet",
       );
       empty.classList.add("stat-empty");
       items.push(empty);
@@ -293,6 +302,16 @@
     if (p.node.rowPinned) return "";
     const row = p.data;
     const wrap = el("div", "cell-inline");
+    const state = decideState.get(row.disputeId);
+    const label = row.caseKey || shortId(row.disputeId);
+    if (isPending(state)) {
+      const busy = el("button", "button button-small", "Deciding…");
+      busy.type = "button";
+      busy.disabled = true;
+      busy.setAttribute("aria-label", `Deciding case ${label}`);
+      wrap.append(busy);
+      return wrap;
+    }
     if (row.recommendation) {
       wrap.append(
         el(
@@ -306,44 +325,38 @@
       return wrap;
     }
     if (!row.open) return "";
-    const state = decideState.get(row.disputeId);
+    const failed = state?.state === "failed";
     const button = el(
       "button",
-      "button button-small",
-      state?.state === "running"
-        ? "Deciding…"
-        : state?.state === "failed"
-          ? "Retry"
-          : "Decide",
+      failed ? "button button-small button-failed" : "button button-small",
+      failed ? "Failed: retry" : "Decide",
     );
     button.type = "button";
-    button.disabled = state?.state === "running";
     button.setAttribute(
       "aria-label",
-      `Decide case ${row.caseKey || shortId(row.disputeId)}`,
+      failed
+        ? `Retry deciding case ${label}. Failed: ${state.detail}`
+        : `Decide case ${label}`,
     );
     button.addEventListener("click", (event) => {
       event.stopPropagation();
       decide(row.disputeId);
     });
     wrap.append(button);
-    if (state?.state === "failed")
-      wrap.append(el("span", "decide-error", "No decision yet"));
     return wrap;
+  }
+
+  function refreshRecommendations() {
+    gridApi.refreshCells({ columns: ["recommendation"], force: true });
   }
 
   // ---------- decide in place ----------
 
   async function decide(id) {
-    if (decideState.get(id)?.state === "running") return;
-    const node = gridApi.getRowNode(id);
-    const label = node.data.caseKey || shortId(id);
-    decideState.set(id, { state: "running" });
-    gridApi.refreshCells({
-      rowNodes: [node],
-      columns: ["recommendation"],
-      force: true,
-    });
+    if (isPending(decideState.get(id))) return;
+    const label = gridApi.getRowNode(id).data.caseKey || shortId(id);
+    decideState.set(id, { state: "running", posting: true });
+    refreshRecommendations();
     announce(`Deciding case ${label}`);
     try {
       const result = await api(`/api/cases/${encodeURIComponent(id)}/decide`, {
@@ -363,17 +376,87 @@
           },
         ],
       });
+      refreshRecommendations();
       announce(
         `Case ${label}: Settle recommends ${result.decision.recommendation}`,
       );
     } catch (error) {
       decideState.set(id, { state: "failed", detail: error.message });
-      gridApi.refreshCells({
-        rowNodes: [gridApi.getRowNode(id)],
-        columns: ["recommendation"],
-        force: true,
-      });
+      refreshRecommendations();
       announce(`Case ${label}: no decision yet. ${error.message}`);
+    }
+  }
+
+  // ---------- decide queue ----------
+
+  function schedulePoll() {
+    if (pollTimer === null) pollTimer = setTimeout(pollStatus, POLL_MS);
+  }
+
+  async function pollStatus() {
+    try {
+      const jobs = await api("/api/decide/status");
+      const finished = [];
+      const notes = [];
+      for (const [id, job] of Object.entries(jobs)) {
+        const local = decideState.get(id);
+        if (local?.posting) continue;
+        if (job.state === "done") {
+          if (local) {
+            decideState.delete(id);
+            finished.push(id);
+          }
+          continue;
+        }
+        if (job.state === "failed" && isPending(local))
+          notes.push(
+            `Case ${gridApi.getRowNode(id)?.data.caseKey || shortId(id)}: no decision yet`,
+          );
+        decideState.set(id, { state: job.state, detail: job.error });
+      }
+      if (finished.length) {
+        const data = await api("/api/cases");
+        const rows = data.cases.filter(
+          (row) =>
+            finished.includes(row.disputeId) &&
+            gridApi.getRowNode(row.disputeId),
+        );
+        gridApi.applyTransaction({ update: rows });
+        for (const row of rows)
+          notes.push(
+            `Case ${row.caseKey || shortId(row.disputeId)}: Settle recommends ${row.recommendation}`,
+          );
+      }
+      refreshRecommendations();
+      if (notes.length) announce(notes.join(". "));
+      pollTimer = null;
+      const pending = Object.values(jobs).some(isPending);
+      els.decideAll.disabled = pending;
+      if (pending) schedulePoll();
+    } catch (error) {
+      pollTimer = null;
+      els.decideAll.disabled = false;
+      els.fetchStatus.classList.add("is-warning");
+      els.fetchStatus.textContent = `Could not check decision progress. ${error.message}`;
+      announce(`Could not check decision progress. ${error.message}`);
+    }
+  }
+
+  async function decideAll() {
+    els.decideAll.disabled = true;
+    try {
+      const { queued } = await api("/api/cases/decide-all", { method: "POST" });
+      for (const id of queued)
+        if (!decideState.get(id)?.posting)
+          decideState.set(id, { state: "queued" });
+      refreshRecommendations();
+      announce(`Deciding ${plural(queued.length, "case")}`);
+      schedulePoll();
+    } catch (error) {
+      els.decideAll.disabled = false;
+      els.fetchStatus.classList.add("is-warning");
+      els.fetchStatus.textContent = `Could not start deciding. ${error.message}`;
+      announce(`Could not start deciding. ${error.message}`);
     }
   }
 
@@ -523,7 +606,8 @@
     gridApi = agGrid.createGrid(els.grid, {
       theme: agGrid.themeQuartz.withParams({
         accentColor: "#2b4fb8",
-        fontFamily: "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+        fontFamily:
+          'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
         fontSize: 14,
         foregroundColor: "#18181b",
         borderColor: "#e4e4e7",
@@ -630,6 +714,7 @@
         ? `PayPal did not answer, showing the list from ${when}. ${data.warning || ""}`.trim()
         : `${plural(data.cases.length, "case")} from PayPal, updated ${when}`;
       if (refresh) announce(`Refreshed. ${plural(data.cases.length, "case")}.`);
+      schedulePoll();
     } catch (error) {
       els.fetchStatus.classList.add("is-warning");
       els.fetchStatus.textContent = `Could not load cases. ${error.message}`;
@@ -658,6 +743,7 @@
     gridApi.setGridOption("quickFilterText", els.quickFilter.value),
   );
   els.refresh.addEventListener("click", () => loadCases({ refresh: true }));
+  els.decideAll.addEventListener("click", decideAll);
   els.panelClose.addEventListener("click", closePanel);
 
   createGrid();

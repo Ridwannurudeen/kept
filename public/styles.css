@@ -404,9 +404,8 @@ input {
   color: #4b4b55;
 }
 
-.decide-error {
+.button-failed {
   color: var(--danger);
-  font-size: 12px;
 }
 
 /* Panel */
