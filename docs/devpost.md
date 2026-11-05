@@ -69,7 +69,7 @@ Render: hosted as one free web service from the blueprint in `render.yaml` (buil
 - A model that recommends but cannot act. The money path lives only in app code, behind the seller's approval and a server re-check.
 - A recommendation that can say "settle" or "accept", not only "fight".
 - An outcome counter that reports only what PayPal says happened.
-- A replay mode, so anyone can look around without credentials, clearly labelled as recorded data.
+- A replay mode, so anyone can look around without credentials, clearly labelled as recorded sandbox data, with some cases derived from it (marked _replay).
 
 ## What we learned
 
@@ -124,7 +124,7 @@ Measured on the hosted deploy: cold start about [COLD START SECONDS] s, a new re
 
 Judging runs Dec 1 to 15. A fresh case set is seeded on Nov 28 to 30. Each sandbox case can be acted on once; spares are listed in the grid. If everything has been acted on or has expired, each case still shows its recommendation, reasons and log entry.
 
-To look around without any keys, run replay mode (see README, Replay mode). It serves recorded sandbox data and says so in a banner; actions there are simulated.
+To look around without any keys, run replay mode (see README, Replay mode). It serves recorded sandbox data, with some cases derived from it (marked _replay), and says so in a banner; actions there are simulated.
 
 To run with your own sandbox app and Anthropic key, see README, Running it as a judge. For a fresh set of cases, see docs/seeding.md.
 ```

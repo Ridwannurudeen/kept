@@ -5,13 +5,13 @@ Settle is a dispute desk for small PayPal sellers. It reads each open dispute, s
 Hosted demo: link added at submission.
 
 ![Settle case board](docs/img/grid.png)
-The case board with the outcome strip and the pinned total row (replay of recorded sandbox data)
+The case board with the outcome strip and the pinned total row (replay of recorded and derived sandbox data)
 
 ![Case B panel](docs/img/panel.png)
-Case B, an inquiry: what PayPal is asking, evidence, draft note and refund offer under the policy cap (replay of recorded sandbox data)
+Case B before Settle has run (replay of recorded and derived sandbox data)
 
 ![Case A panel](docs/img/claim.png)
-Case A, a PayPal claim: PayPal's hold and the send supporting information action (replay of recorded sandbox data)
+Case A, a PayPal claim: PayPal's hold and the send supporting information action (replay of recorded and derived sandbox data)
 
 ## PayPal APIs and AI model used, and where
 
@@ -96,7 +96,7 @@ Outside replay mode, if the PayPal pair or the model key is missing, the server 
 SETTLE_FAKE_PAYPAL=1 SETTLE_PASSCODE=anything npm run dev
 ```
 
-Replay mode serves recorded sandbox data from `seed/replay/` (recorded 2026-11-04, personal data redacted) instead of calling PayPal. The page shows a banner saying it is a replay of recorded sandbox data and that actions are simulated. `SETTLE_PASSCODE` is still required. Without `ANTHROPIC_API_KEY`, a case cannot get a new recommendation and says so; with it set, the real model runs against the recorded data.
+Replay mode serves recorded sandbox data, with some cases derived from it (marked `_replay`), from `seed/replay/` (recorded 2026-11-04, personal data redacted) instead of calling PayPal. The page shows a banner saying it is a replay of recorded sandbox data and that actions are simulated. `SETTLE_PASSCODE` is still required. Without `ANTHROPIC_API_KEY`, a case cannot get a new recommendation and says so; with it set, the real model runs against the recorded data.
 
 On Windows PowerShell, set variables first, for example `$env:SETTLE_FAKE_PAYPAL='1'; $env:SETTLE_PASSCODE='anything'; npm run dev`.
 

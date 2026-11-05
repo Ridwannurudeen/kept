@@ -22,7 +22,7 @@ describe('FakePayPal replay', () => {
     const a = await paypal.getDispute(A);
     expect(a).toMatchObject({ dispute_life_cycle_stage: 'CHARGEBACK', fund_movements: [{ reason: 'HOLD_PLACED', amount: { value: '18.81' } }] });
     expect(a.supporting_info).toBeUndefined();
-    expect(await paypal.getDispute(B)).toMatchObject({ dispute_life_cycle_stage: 'INQUIRY', status: 'OPEN' });
+    expect(await paypal.getDispute(B)).toMatchObject({ dispute_life_cycle_stage: 'INQUIRY', status: 'OPEN', reason: 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED', disputed_transactions: [{ items: [{ reason: 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED' }] }] });
   });
 
   test('getDispute returns a copy, so callers cannot change the replay state', async () => {

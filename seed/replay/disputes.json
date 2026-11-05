@@ -117,7 +117,7 @@
             "item_name": "Spike test item",
             "item_description": "Spike test item",
             "item_quantity": "1",
-            "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+            "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
             "item_type": "DIGITAL_DOWNLOAD"
           }
         ],
@@ -125,7 +125,7 @@
         "seller_protection_type": "EXPANDED_SELLER_PROTECTION"
       }
     ],
-    "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
     "status": "OPEN",
     "dispute_amount": {
       "currency_code": "USD",
