@@ -62,13 +62,18 @@ async function readSnapshot(path: string): Promise<Snapshot | null> {
 async function freshState(seedPath: string, snapshotPath: string | null, now: Date): Promise<State> {
   const { cases } = JSON.parse(await readFile(seedPath, 'utf8')) as { cases: Record<string, CaseRecord> };
   const snapshot = snapshotPath === null ? null : await readSnapshot(snapshotPath);
+  const decisions = Object.fromEntries(Object.entries(snapshot?.decisions ?? {}).map(([id, stored]) => {
+    const decision = { ...stored.decision };
+    delete decision.photo_findings;
+    return [id, { ...stored, decision }];
+  }));
   return {
     version: 1,
     startedAt: now.toISOString(),
     restoredFrom: snapshot?.snapshotAt ?? null,
     policy: { ...defaultPolicy },
     cases,
-    decisions: snapshot?.decisions ?? {},
+    decisions,
     actions: (snapshot?.actions ?? []).map((action) => ({ ...action, recommended: null })),
     calls: snapshot?.calls ?? [],
     unknownOutcomes: snapshot?.unknownOutcomes ?? {},

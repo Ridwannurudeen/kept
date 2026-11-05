@@ -80,10 +80,12 @@ const committed = fileURLToPath(new URL('../seed/snapshot.json', import.meta.url
 test.skipIf(!existsSync(committed))('the committed seed/snapshot.json passes checkSnapshot (skipped when the file is absent)', async () => {
   expect(checkSnapshot(await readFile(committed, 'utf8'))).toEqual({ ok: true });
 });
-test('the snapshot keeps photo findings and checkSnapshot accepts them', () => {
+test('buildSnapshot drops photo findings and checkSnapshot rejects them', () => {
   const base = valid();
   const decision = { ...base.decisions['PP-D-1'].decision, photo_findings: ['The photo shows a plain blue colour field.'] };
   const snapshot = buildSnapshot({ ...base, decisions: { 'PP-D-1': { ...base.decisions['PP-D-1'], decision } } } as unknown as State, new Date('2026-11-07T00:00:00.000Z'));
-  expect(snapshot.decisions['PP-D-1'].decision.photo_findings).toEqual(['The photo shows a plain blue colour field.']);
-  expect(checkSnapshot(JSON.stringify(snapshot))).toEqual({ ok: true });
+  expect(snapshot.decisions['PP-D-1'].decision).not.toHaveProperty('photo_findings');
+  const withPhoto = valid();
+  withPhoto.decisions['PP-D-1'].decision.photo_findings = ['The photo shows a plain blue colour field.'];
+  expect(checkSnapshot(JSON.stringify(withPhoto))).toEqual({ ok: false, problems: ["$.decisions.PP-D-1.decision.photo_findings is not allowlisted for decision"] });
 });

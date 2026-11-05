@@ -167,3 +167,13 @@ test('unknownOutcomes are restored from the snapshot', async () => {
     expect(store.get().unknownOutcomes).toEqual({ 'PP-D-1': { action: 'make_offer', at: '2026-11-05T00:00:00.000Z' } });
   } finally { await f.cleanup(); }
 });
+test('photo findings are removed when restoring snapshot decisions', async () => {
+  const f = await fixture();
+  try {
+    const snapshotPath = join(f.dir, 'snapshot.json');
+    const decision = { recommendation: 'SETTLE', photo_findings: ['private seller photo details'] };
+    await writeFile(snapshotPath, JSON.stringify({ snapshotAt: '2026-11-06T00:00:00.000Z', decisions: { 'PP-D-1': { decision } }, actions: [], calls: [], unknownOutcomes: {} }));
+    const store = await Store.open({ ...f.opts, snapshotPath });
+    expect(store.get().decisions['PP-D-1'].decision).toEqual({ recommendation: 'SETTLE' });
+  } finally { await f.cleanup(); }
+});
