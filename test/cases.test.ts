@@ -144,6 +144,13 @@ test('summarize of no resolved cases returns zero resolved and null money fields
   expect(summarize([])).toEqual({ resolved: 0, kept: null, refunded: null, medianDaysToClose: null, openAtStake: null, heldByPayPal: null, currency: null, mixedCurrencyExcluded: 0 });
 });
 
+test('row says whether PayPal lists make_offer and carries the recommended offer amount', () => {
+  const decision: Decision = { recommendation: 'SETTLE', plain_ask: 'offer a partial refund', evidence_have: [], evidence_missing: [], reasons: ['fair'], offer_amount: '5.00', draft_note: 'Sorry.' };
+  expect(buildCaseRow(inquiry, null, state({ decisions: { [inquiry.dispute_id]: stored(decision) } }), now, null)).toMatchObject({ canOffer: true, offerAmount: '5.00' });
+  expect(buildCaseRow(inquiry, null, state(), now, null)).toMatchObject({ canOffer: true, offerAmount: null });
+  expect(buildCaseRow(resolved, null, state(), now, null).canOffer).toBe(false);
+});
+
 test('protection says the capture covers an item-not-received dispute', () => {
   expect(buildCaseRow(inquiry, null, state(), now, eligibleCapture).protection).toEqual({ status: 'ELIGIBLE', covers: true });
 });

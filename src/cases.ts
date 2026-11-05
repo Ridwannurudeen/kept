@@ -24,6 +24,8 @@ export type CaseRow = {
   recommendation: Decision['recommendation'] | null;
   recommendationStale: boolean;
   staleReason: string | null;
+  offerAmount: string | null;
+  canOffer: boolean;
   actionTaken: ActionKind | null;
   open: boolean;
   headline: string;
@@ -157,6 +159,8 @@ function buildRow(d: Dispute, record: CaseRecord | null, capture: Capture | null
     recommendation: stored?.decision.recommendation ?? null,
     recommendationStale: stale,
     staleReason: stale && stored ? staleReason(stored, d) : null,
+    offerAmount: stored?.decision.offer_amount ?? null,
+    canOffer: allowedActions(d).has('make_offer'),
     actionTaken: action,
     open,
     headline: explanation.headline,
