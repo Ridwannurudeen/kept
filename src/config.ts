@@ -1,3 +1,5 @@
+import { resolve } from 'node:path';
+
 export type Config = {
   paypalClientId: string;
   paypalClientSecret: string;
@@ -28,8 +30,8 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     passcode: required(env, 'SETTLE_PASSCODE'),
     port,
     dataDir: env.SETTLE_DATA_DIR ?? (replay ? './data/replay' : './data'),
-    seedPath: env.SETTLE_SEED_PATH ?? (replay ? './seed/replay/cases.json' : './seed/cases.json'),
-    snapshotPath: replay ? null : './seed/snapshot.json',
+    seedPath: env.SETTLE_SEED_PATH ? resolve(env.SETTLE_SEED_PATH) : resolve(process.cwd(), replay ? 'seed/replay/cases.json' : 'seed/cases.json'),
+    snapshotPath: replay ? null : resolve(process.cwd(), 'seed/snapshot.json'),
     mode,
   };
 }

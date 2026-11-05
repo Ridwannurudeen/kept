@@ -1,8 +1,9 @@
+import { resolve } from 'node:path';
 import { loadConfig } from '../src/config.js';
 const base = { PAYPAL_CLIENT_ID: 'id', PAYPAL_CLIENT_SECRET: 'sec', ANTHROPIC_API_KEY: 'k', SETTLE_PASSCODE: 'pass' };
 test('defaults port, data dir and seed path', () => {
   const c = loadConfig(base);
-  expect(c.port).toBe(3000); expect(c.dataDir).toBe('./data'); expect(c.seedPath).toBe('./seed/cases.json'); expect(c.snapshotPath).toBe('./seed/snapshot.json');
+  expect(c.port).toBe(3000); expect(c.dataDir).toBe('./data'); expect(c.seedPath).toBe(resolve(process.cwd(), 'seed/cases.json')); expect(c.snapshotPath).toBe(resolve(process.cwd(), 'seed/snapshot.json'));
 });
 test('defaults to live mode and requires the model key there', () => {
   expect(loadConfig(base).mode).toBe('live');
@@ -10,7 +11,7 @@ test('defaults to live mode and requires the model key there', () => {
 });
 test('SETTLE_FAKE_PAYPAL=1 selects replay, the replay seed and an optional model key', () => {
   const c = loadConfig({ ...base, ANTHROPIC_API_KEY: undefined, SETTLE_FAKE_PAYPAL: '1' });
-  expect(c.mode).toBe('replay'); expect(c.anthropicApiKey).toBe(''); expect(c.seedPath).toBe('./seed/replay/cases.json');
+  expect(c.mode).toBe('replay'); expect(c.anthropicApiKey).toBe(''); expect(c.seedPath).toBe(resolve(process.cwd(), 'seed/replay/cases.json'));
 });
 test('replay keeps its own data dir, reads no snapshot and needs only the passcode', () => {
   const c = loadConfig({ SETTLE_FAKE_PAYPAL: '1', SETTLE_PASSCODE: 'dev' });

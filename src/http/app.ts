@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { resolve } from 'node:path';
 import express, { type Express } from 'express';
 import type { PayPalAgentToolkit } from '@paypal/agent-toolkit/ai-sdk';
 import type { DecideInput, DecideResult } from '../ai/decide.js';
@@ -29,8 +30,8 @@ export function createApp(deps: Deps): Express {
   const router = express.Router();
   registerRoutes(router, deps);
   app.use(router);
-  app.use('/vendor', express.static('node_modules/ag-grid-community/dist'));
-  app.use(express.static('public'));
+  app.use('/vendor', express.static(resolve(process.cwd(), 'node_modules/ag-grid-community/dist')));
+  app.use(express.static(resolve(process.cwd(), 'public')));
   app.use((error: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => errorResponse(error, req, res));
   return app;
 }
