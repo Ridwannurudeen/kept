@@ -164,7 +164,7 @@ textarea {
 
 .summary-strip {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 1px;
   margin: 0;
   overflow: hidden;
@@ -173,18 +173,26 @@ textarea {
   border-radius: var(--radius);
 }
 
-@media (min-width: 760px) {
-  .summary-strip {
-    grid-template-columns: none;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(0, 1fr);
-  }
-}
-
 .stat {
+  grid-column: span 2;
   min-width: 0;
   padding: 14px 18px;
   background: var(--surface);
+}
+
+.stat-lead {
+  grid-column: span 3;
+}
+
+@media (min-width: 760px) {
+  .summary-strip {
+    grid-template-columns: repeat(2, minmax(0, 1.6fr)) repeat(3, minmax(0, 1fr));
+  }
+
+  .stat,
+  .stat-lead {
+    grid-column: auto;
+  }
 }
 
 .stat-label {
@@ -208,10 +216,19 @@ textarea {
   font-variant-numeric: tabular-nums;
 }
 
-.stat-empty .stat-value {
+.stat-lead .stat-label {
   color: var(--ink-2);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.stat-lead .stat-value {
+  font-size: 30px;
+  font-weight: 650;
+}
+
+.stat:not(.stat-lead) .stat-value {
   font-size: 16px;
-  font-weight: 550;
 }
 
 /* Layout */
@@ -406,6 +423,21 @@ textarea {
 .chip-due {
   background: var(--danger);
   color: #ffffff;
+}
+
+.chip-protect-yes {
+  background: #ecfdf3;
+  color: var(--ok);
+}
+
+.chip-protect-no {
+  background: #fffaeb;
+  color: #93370d;
+}
+
+.chip-protect-none {
+  background: #f2f2f4;
+  color: #4b4b55;
 }
 
 .chip-stale {

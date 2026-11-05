@@ -130,6 +130,24 @@
     return { text: "Open", cls: "chip-open" };
   }
 
+  function protectionChip(protection) {
+    if (!protection)
+      return { status: "Not reported", reason: "", cls: "chip-protect-none" };
+    const status =
+      protection.status.charAt(0) +
+      protection.status.slice(1).toLowerCase().replaceAll("_", " ");
+    if (protection.covers === null)
+      return { status, reason: "", cls: "chip-protect-none" };
+    return protection.covers
+      ? { status, reason: "covers this reason", cls: "chip-protect-yes" }
+      : { status, reason: "not this reason", cls: "chip-protect-no" };
+  }
+
+  function protectionText(protection) {
+    const chip = protectionChip(protection);
+    return chip.reason ? `${chip.status}, ${chip.reason}` : chip.status;
+  }
+
   function actionText(row) {
     const sent = sentById.get(row.disputeId);
     if (sent) {
@@ -233,50 +251,49 @@
   function renderSummary(summary) {
     const currency = summary.currency || "USD";
     const zero = `${currency} 0.00`;
-    const items = [];
-    if (summary.resolved === 0) {
-      const empty = stat(
-        "Resolved cases",
-        "No resolved cases yet",
-        "",
-        "None of these disputes has been resolved yet",
-      );
-      empty.classList.add("stat-empty");
-      items.push(empty);
-    } else {
-      const days = summary.medianDaysToClose;
-      items.push(
+    const days = summary.medianDaysToClose;
+    const lead = (node) => {
+      node.classList.add("stat-lead");
+      return node;
+    };
+    const items = [
+      lead(
         stat(
-          "Kept after resolution",
-          money(summary.kept),
-          "",
+          "Held now",
+          money(summary.heldByPayPal) || zero,
+          summary.heldByPayPal ? "PayPal's hold on open cases" : "No funds on hold",
+          "Sum of fund_movements with reason HOLD_PLACED on open cases",
+        ),
+      ),
+      lead(
+        stat(
+          "Kept",
+          money(summary.kept) || zero,
+          summary.resolved
+            ? `on ${plural(summary.resolved, "resolved case")}`
+            : "No resolved cases yet",
           "disputed_transactions[0].gross_amount (or dispute_amount) minus dispute_outcome.amount_refunded, on resolved cases; a seller-favour close with no amount_refunded counts as 0.00 refunded",
         ),
-        stat(
-          "Refunded",
-          money(summary.refunded),
-          "",
-          "Sum of dispute_outcome.amount_refunded on resolved cases",
-        ),
-        stat(
-          "Resolved",
-          String(summary.resolved),
-          days === null ? "" : `median ${plural(days, "day")} to close`,
-          "Disputes with status RESOLVED; days from create_time to update_time",
-        ),
-      );
-    }
-    const holding = summary.heldByPayPal
-      ? `PayPal holding ${money(summary.heldByPayPal)}`
-      : "No funds on hold";
-    items.push(
+      ),
+      stat(
+        "Refunded",
+        money(summary.refunded) || zero,
+        "",
+        "Sum of dispute_outcome.amount_refunded on resolved cases",
+      ),
+      stat(
+        "Resolved",
+        String(summary.resolved),
+        days === null ? "" : `median ${plural(days, "day")} to close`,
+        "Disputes with status RESOLVED; days from create_time to update_time",
+      ),
       stat(
         "Open at stake",
         money(summary.openAtStake) || zero,
-        holding,
-        "dispute_amount on open cases; holds from fund_movements with reason HOLD_PLACED",
+        "",
+        "Sum of dispute_amount on open cases",
       ),
-    );
+    ];
     els.strip.replaceChildren(...items);
 
     const text = [...els.strip.querySelectorAll(".stat")]
@@ -327,6 +344,17 @@
     const top = el("span", "cell-line");
     top.append(el("span", `chip ${chip.cls}`, chip.text));
     wrap.append(top, el("span", "cell-line cell-sub", p.data.headline));
+    return wrap;
+  }
+
+  function protectionCell(p) {
+    if (p.node.rowPinned) return "";
+    const chip = protectionChip(p.data.protection);
+    const wrap = el("div", "cell-stack");
+    const top = el("span", "cell-line");
+    top.append(el("span", `chip ${chip.cls}`, chip.status));
+    wrap.append(top);
+    if (chip.reason) wrap.append(el("span", "cell-line cell-sub", chip.reason));
     return wrap;
   }
 
@@ -694,6 +722,13 @@
           `PayPal is holding ${money(detail.hold)} for this case`,
         ),
       );
+    wrap.append(
+      el(
+        "p",
+        "panel-sub",
+        `Seller Protection on this payment: ${protectionText(detail.protection)}`,
+      ),
+    );
     if (detail.warnings.length)
       wrap.append(
         el(
@@ -1796,22 +1831,52 @@
       colId: "item",
       headerName: "Item",
       field: "itemName",
-      minWidth: 110,
+      minWidth: 100,
       tooltipField: "itemName",
     },
     {
       colId: "reason",
       headerName: "Buyer reason",
       field: "reasonLabel",
-      minWidth: 110,
+      minWidth: 100,
       filter: "agTextColumnFilter",
     },
     moneyColumn("amount", "Amount", (d) => d.amount),
+    moneyColumn("hold", "Held", (d) => d.hold, {
+      tooltipValueGetter: (p) =>
+        p.node.rowPinned
+          ? "Total PayPal is holding on open cases"
+          : p.data.hold
+            ? "PayPal is holding this amount for the case"
+            : null,
+    }),
+    moneyColumn("kept", "Kept", (d) => d.outcome?.kept ?? null, {
+      tooltipValueGetter: (p) =>
+        p.node.rowPinned
+          ? "Total kept after resolution"
+          : p.data.outcome?.kept
+            ? p.data.outcome.refundedReported
+              ? "disputed_transactions[0].gross_amount minus what PayPal refunded"
+              : "disputed_transactions[0].gross_amount; PayPal reported no refund, counted as 0.00"
+            : null,
+    }),
+    {
+      colId: "protection",
+      headerName: "Seller Protection",
+      minWidth: 130,
+      valueGetter: (p) =>
+        p.node.rowPinned ? "" : protectionText(p.data.protection),
+      cellRenderer: protectionCell,
+      tooltipValueGetter: (p) =>
+        p.node.rowPinned
+          ? null
+          : "The capture's seller_protection.status and dispute_categories, compared with the buyer's reason",
+    },
     { colId: "stage", headerName: "Stage", field: "stageLabel", minWidth: 100 },
     {
       colId: "status",
       headerName: "Status",
-      minWidth: 150,
+      minWidth: 140,
       valueGetter: (p) =>
         p.node.rowPinned ? "" : `${statusChip(p.data).text} ${p.data.headline}`,
       cellRenderer: statusCell,
@@ -1820,7 +1885,7 @@
     {
       colId: "due",
       headerName: "Seller response due",
-      minWidth: 180,
+      minWidth: 165,
       sort: "asc",
       valueGetter: (p) =>
         p.node.rowPinned || !p.data.dueAt ? null : new Date(p.data.dueAt),
@@ -1832,18 +1897,10 @@
       filter: "agDateColumnFilter",
       cellRenderer: dueCell,
     },
-    moneyColumn("hold", "Hold", (d) => d.hold, {
-      tooltipValueGetter: (p) =>
-        p.node.rowPinned
-          ? "Total PayPal is holding on open cases"
-          : p.data.hold
-            ? "PayPal is holding this amount for the case"
-            : null,
-    }),
     {
       colId: "recommendation",
       headerName: "Recommendation",
-      minWidth: 175,
+      minWidth: 160,
       valueGetter: (p) => (p.node.rowPinned ? "" : p.data.recommendation || ""),
       cellRenderer: recommendationCell,
       tooltipValueGetter: (p) => {
@@ -1866,16 +1923,6 @@
       minWidth: 100,
       valueGetter: (p) => (p.node.rowPinned ? "" : actionText(p.data)),
     },
-    moneyColumn("kept", "Kept", (d) => d.outcome?.kept ?? null, {
-      tooltipValueGetter: (p) =>
-        p.node.rowPinned
-          ? "Total kept after resolution"
-          : p.data.outcome?.kept
-            ? p.data.outcome.refundedReported
-              ? "disputed_transactions[0].gross_amount minus what PayPal refunded"
-              : "disputed_transactions[0].gross_amount; PayPal reported no refund, counted as 0.00"
-            : null,
-    }),
   ];
 
   function createGrid() {
