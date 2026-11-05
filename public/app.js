@@ -10,6 +10,17 @@
   const CALL_SLACK_MS = 10_000;
   const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
   const MAX_PHOTOS = 3;
+  const VIEW_KEY = "kept.gridView";
+  const VIEW_VERSION = 1;
+  const VIEW_PARTS = [
+    "columnOrder",
+    "columnPinning",
+    "columnVisibility",
+    "sort",
+    "filter",
+    "columnSizing",
+  ];
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const els = {
     layout: document.getElementById("layout"),
@@ -19,6 +30,8 @@
     fetchStatus: document.getElementById("fetch-status"),
     quickFilter: document.getElementById("quick-filter"),
     refresh: document.getElementById("refresh-button"),
+    exportCsv: document.getElementById("export-csv-button"),
+    resetView: document.getElementById("reset-view-button"),
     decideAll: document.getElementById("decide-all-button"),
     footer: document.getElementById("footer"),
     announcer: document.getElementById("announcer"),
@@ -63,6 +76,10 @@
   const decideState = new Map();
   const sentById = new Map();
   const resultById = new Map();
+  const offerDrafts = new Map();
+  const offerRefusals = new Map();
+  let policy = null;
+  let userSized = false;
   let panelId = null;
   let panelDetail = null;
   let returnFocus = null;
@@ -464,6 +481,7 @@
           {
             ...current,
             recommendation: result.decision.recommendation,
+            offerAmount: result.decision.offer_amount,
             recommendationStale: false,
             staleReason: null,
           },
@@ -568,35 +586,45 @@
   const fromCents = (cents) =>
     `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, "0")}`;
 
-  function checkOffer(offer, disputed, policy) {
+  function offerCap(disputed, policy) {
     const disputedCents = centsOf(disputed);
     if (disputedCents === null || centsOf(policy.maxOfferAbsolute) === null)
-      return { ok: false, message: "Disputed amount is not a valid amount" };
-    const cap = fromCents(
+      return null;
+    return fromCents(
       Math.min(
         Math.floor((disputedCents * policy.maxOfferPercent) / 100),
         centsOf(policy.maxOfferAbsolute),
         disputedCents,
       ),
     );
+  }
+
+  function checkOffer(offer, disputed, policy) {
+    const disputedCents = centsOf(disputed);
+    const cap = offerCap(disputed, policy);
+    if (cap === null)
+      return { ok: false, message: "Disputed amount is not a valid amount" };
     if (!/^\d+\.\d{2}$/.test(offer))
-      return { ok: false, message: "Offer must be an amount like 9.00" };
+      return { ok: false, cap, message: "Offer must be an amount like 9.00" };
     const offerCents = centsOf(offer);
     if (offerCents === 0)
-      return { ok: false, message: "Offer must be more than 0.00" };
+      return { ok: false, cap, message: "Offer must be more than 0.00" };
     if (offerCents <= centsOf(cap)) return { ok: true, cap };
     if (offerCents > disputedCents)
       return {
         ok: false,
+        cap,
         message: `Offer ${offer} is above the disputed amount of ${disputed}`,
       };
     if (offerCents > centsOf(policy.maxOfferAbsolute))
       return {
         ok: false,
+        cap,
         message: `Offer ${offer} is above the absolute cap of ${policy.maxOfferAbsolute}`,
       };
     return {
       ok: false,
+      cap,
       message: `Offer ${offer} is above the policy cap of ${cap} (${policy.maxOfferPercent}% of ${disputed})`,
     };
   }
@@ -624,6 +652,8 @@
     const sent = sentEntry(detail);
     if (sent) return sent.action;
     const allowed = detail.allowed;
+    if (offerDrafts.has(detail.disputeId) && allowed.includes("make_offer"))
+      return "make_offer";
     const recommendation = detail.decision?.decision.recommendation;
     if (recommendation === "SETTLE") return "make_offer";
     if (recommendation === "ACCEPT") return "accept_claim";
@@ -937,7 +967,7 @@
       offer.autocomplete = "off";
       offer.defaultValue = sent
         ? sent.submitted.offerAmount || ""
-        : decision?.offer_amount || "";
+        : offerDrafts.get(detail.disputeId) || decision?.offer_amount || "";
       offer.readOnly = Boolean(sent);
       offer.placeholder = "9.00";
       offer.setAttribute("aria-describedby", "offer-cap offer-hint");
@@ -1590,6 +1620,8 @@
       if (res.status === 200) {
         const { entry, detail: fresh } = result.body;
         sentById.set(id, entry);
+        offerDrafts.delete(id);
+        offerRefusals.delete(id);
         gridApi.applyTransaction({ update: [fresh] });
         await loadCases({ refresh: true });
         announce(
@@ -1929,7 +1961,7 @@
       colId: field,
       headerName,
       type: "rightAligned",
-      minWidth: 96,
+      minWidth: 90,
       valueGetter: (p) => toCents(read(p.data)),
       valueFormatter: (p) => money(read(p.data)),
       getQuickFilterText: (p) => money(read(p.data)),
@@ -1937,6 +1969,113 @@
       filterValueGetter: (p) => toCents(read(p.data)),
       ...extra,
     };
+  }
+
+  function sentOffer(row) {
+    return sentById.get(row.disputeId)?.submitted.offerAmount ?? null;
+  }
+
+  function canEditOffer(row) {
+    return (
+      policy !== null &&
+      row.open &&
+      row.canOffer &&
+      !row.actionTaken &&
+      !sentById.has(row.disputeId)
+    );
+  }
+
+  function offerValue(row) {
+    if (row.actionTaken || sentById.has(row.disputeId)) return sentOffer(row);
+    return offerDrafts.get(row.disputeId) ?? row.offerAmount;
+  }
+
+  function setOffer(p) {
+    const row = p.data;
+    const id = row.disputeId;
+    const label = row.caseKey || shortId(id);
+    const value = typeof p.newValue === "string" ? p.newValue.trim() : "";
+    if (value === "" || value === row.offerAmount) {
+      offerRefusals.delete(id);
+      offerDrafts.delete(id);
+    } else {
+      const check = checkOffer(value, row.amount.value, policy);
+      if (!check.ok) {
+        offerRefusals.set(id, {
+          value,
+          message: check.message,
+          cap: check.cap,
+          over: centsOf(value) !== null && centsOf(value) > centsOf(check.cap),
+        });
+        announce(`Case ${label}: offer not changed. ${check.message}.`);
+        return false;
+      }
+      offerRefusals.delete(id);
+      offerDrafts.set(id, value);
+    }
+    syncPanelOffer(id);
+    const now = offerValue(row);
+    announce(
+      now
+        ? `Case ${label}: draft offer ${row.amount.currency_code} ${now}. Approve it in the case panel.`
+        : `Case ${label}: draft offer cleared.`,
+    );
+    return true;
+  }
+
+  function syncPanelOffer(id) {
+    if (panelId !== id || !panelDetail) return;
+    const input = document.getElementById("offer-amount");
+    if (input && !input.readOnly) {
+      const value = offerValue(gridApi.getRowNode(id).data) || "";
+      input.defaultValue = value;
+      input.value = value;
+      input.dispatchEvent(new Event("input"));
+    } else if (!input && !panelHasEdits()) {
+      renderPanel(panelDetail);
+    }
+  }
+
+  function offerCell(p) {
+    if (p.node.rowPinned) return "";
+    const row = p.data;
+    const value = offerValue(row);
+    const refusal = offerRefusals.get(row.disputeId);
+    const wrap = el("div", "cell-stack");
+    const top = el("span", "cell-line");
+    if (refusal) top.append(el("span", "chip chip-refused", "Refused"));
+    top.append(
+      el(
+        "span",
+        value ? "" : "cell-muted",
+        value
+          ? `${row.amount.currency_code} ${value}`
+          : canEditOffer(row)
+            ? "None"
+            : "",
+      ),
+    );
+    wrap.append(top);
+    if (refusal)
+      wrap.append(
+        el(
+          "span",
+          "cell-line cell-sub offer-refused-text",
+          refusal.over
+            ? `Cap ${row.amount.currency_code} ${refusal.cap}`
+            : "Not a valid amount",
+        ),
+      );
+    else if (row.actionTaken || sentById.has(row.disputeId)) {
+      if (value) wrap.append(el("span", "cell-line cell-sub", "Sent"));
+    } else if (offerDrafts.has(row.disputeId))
+      wrap.append(el("span", "cell-line cell-sub", "Your draft"));
+    else if (value)
+      wrap.append(el("span", "cell-line cell-sub", "Kept's offer"));
+    if (wrap.children.length > 1) return wrap;
+    const line = el("div", "cell-inline");
+    line.append(top);
+    return line;
   }
 
   function dueComparator(a, b, nodeA, nodeB, isDescending) {
@@ -1959,7 +2098,9 @@
       colId: "case",
       headerName: "Case",
       pinned: "left",
-      minWidth: 120,
+      lockPosition: "left",
+      suppressMovable: true,
+      minWidth: 110,
       valueGetter: (p) =>
         p.node.rowPinned
           ? "Total"
@@ -1970,104 +2111,254 @@
       colId: "item",
       headerName: "Item",
       field: "itemName",
-      minWidth: 100,
+      minWidth: 90,
       tooltipField: "itemName",
     },
     {
       colId: "reason",
       headerName: "Buyer reason",
       field: "reasonLabel",
-      minWidth: 100,
+      minWidth: 90,
       filter: "agTextColumnFilter",
     },
-    moneyColumn("amount", "Amount", (d) => d.amount),
-    moneyColumn("hold", "Held", (d) => d.hold, {
-      enableCellChangeFlash: true,
-      tooltipValueGetter: (p) =>
-        p.node.rowPinned
-          ? "Total PayPal is holding on open cases"
-          : p.data.hold
-            ? "PayPal is holding this amount for the case"
-            : null,
-    }),
-    moneyColumn("kept", "Kept", (d) => d.outcome?.kept ?? null, {
-      enableCellChangeFlash: true,
-      tooltipValueGetter: (p) =>
-        p.node.rowPinned
-          ? "Total kept after resolution"
-          : p.data.outcome?.kept
-            ? p.data.outcome.refundedReported
-              ? "disputed_transactions[0].gross_amount minus what PayPal refunded"
-              : "disputed_transactions[0].gross_amount; PayPal reported no refund, counted as 0.00"
-            : null,
-    }),
     {
-      colId: "protection",
-      headerName: "Seller Protection",
-      minWidth: 130,
-      valueGetter: (p) =>
-        p.node.rowPinned ? "" : protectionText(p.data.protection),
-      cellRenderer: protectionCell,
-      tooltipValueGetter: (p) =>
-        p.node.rowPinned
-          ? null
-          : "The capture's seller_protection.status and dispute_categories, compared with the buyer's reason",
-    },
-    { colId: "stage", headerName: "Stage", field: "stageLabel", minWidth: 100 },
-    {
-      colId: "status",
-      headerName: "Status",
-      minWidth: 140,
-      enableCellChangeFlash: true,
-      valueGetter: (p) =>
-        p.node.rowPinned ? "" : `${statusChip(p.data).text} ${p.data.headline}`,
-      cellRenderer: statusCell,
-      tooltipValueGetter: (p) => (p.node.rowPinned ? null : p.data.headline),
-    },
-    {
-      colId: "due",
-      headerName: "Seller response due",
-      minWidth: 165,
-      sort: "asc",
-      valueGetter: (p) =>
-        p.node.rowPinned || !p.data.dueAt ? null : new Date(p.data.dueAt),
-      getQuickFilterText: (p) =>
-        p.data.dueAt
-          ? `${dayFormat.format(new Date(p.data.dueAt)).replace(",", "")} ${p.data.deadline.state === "due_soon" ? "due soon" : ""}`
-          : "",
-      comparator: dueComparator,
-      filter: "agDateColumnFilter",
-      cellRenderer: dueCell,
-    },
-    {
-      colId: "recommendation",
-      headerName: "Recommendation",
-      minWidth: 160,
-      valueGetter: (p) => (p.node.rowPinned ? "" : p.data.recommendation || ""),
-      cellRenderer: recommendationCell,
-      tooltipValueGetter: (p) => {
-        if (p.node.rowPinned) return null;
-        const row = p.data;
-        if (row.recommendationStale && row.staleReason)
-          return `This case changed since Kept looked: ${row.staleReason}`;
-        if (row.recommendation)
-          return (
-            reasonsById.get(row.disputeId) ||
-            "Open the case to read the reasons"
-          );
-        const failed = decideState.get(row.disputeId);
-        return failed?.state === "failed" ? failed.detail : null;
-      },
+      groupId: "paypalReports",
+      headerName: "PayPal reports",
+      marryChildren: true,
+      children: [
+        moneyColumn("amount", "Amount", (d) => d.amount),
+        moneyColumn("hold", "Held", (d) => d.hold, {
+          enableCellChangeFlash: true,
+          tooltipValueGetter: (p) =>
+            p.node.rowPinned
+              ? "Total PayPal is holding on open cases"
+              : p.data.hold
+                ? "PayPal is holding this amount for the case"
+                : null,
+        }),
+        moneyColumn("kept", "Kept", (d) => d.outcome?.kept ?? null, {
+          enableCellChangeFlash: true,
+          tooltipValueGetter: (p) =>
+            p.node.rowPinned
+              ? "Total kept after resolution"
+              : p.data.outcome?.kept
+                ? p.data.outcome.refundedReported
+                  ? "disputed_transactions[0].gross_amount minus what PayPal refunded"
+                  : "disputed_transactions[0].gross_amount; PayPal reported no refund, counted as 0.00"
+                : null,
+        }),
+        {
+          colId: "protection",
+          headerName: "Seller Protection",
+          minWidth: 110,
+          valueGetter: (p) =>
+            p.node.rowPinned ? "" : protectionText(p.data.protection),
+          cellRenderer: protectionCell,
+          tooltipValueGetter: (p) =>
+            p.node.rowPinned
+              ? null
+              : "The capture's seller_protection.status and dispute_categories, compared with the buyer's reason",
+        },
+        {
+          colId: "stage",
+          headerName: "Stage",
+          field: "stageLabel",
+          minWidth: 90,
+        },
+        {
+          colId: "status",
+          headerName: "Status",
+          minWidth: 110,
+          enableCellChangeFlash: true,
+          valueGetter: (p) =>
+            p.node.rowPinned
+              ? ""
+              : `${statusChip(p.data).text} ${p.data.headline}`,
+          cellRenderer: statusCell,
+          tooltipValueGetter: (p) =>
+            p.node.rowPinned ? null : p.data.headline,
+        },
+        {
+          colId: "due",
+          headerName: "Seller response due",
+          minWidth: 130,
+          sort: "asc",
+          valueGetter: (p) =>
+            p.node.rowPinned || !p.data.dueAt ? null : new Date(p.data.dueAt),
+          getQuickFilterText: (p) =>
+            p.data.dueAt
+              ? `${dayFormat.format(new Date(p.data.dueAt)).replace(",", "")} ${p.data.deadline.state === "due_soon" ? "due soon" : ""}`
+              : "",
+          comparator: dueComparator,
+          filter: "agDateColumnFilter",
+          cellRenderer: dueCell,
+        },
+      ],
     },
     {
-      colId: "action",
-      headerName: "Action",
-      minWidth: 100,
-      valueGetter: (p) => (p.node.rowPinned ? "" : actionText(p.data)),
+      groupId: "keptRecommends",
+      headerName: "Kept recommends",
+      marryChildren: true,
+      children: [
+        {
+          colId: "recommendation",
+          headerName: "Recommendation",
+          minWidth: 150,
+          valueGetter: (p) =>
+            p.node.rowPinned ? "" : p.data.recommendation || "",
+          cellRenderer: recommendationCell,
+          tooltipValueGetter: (p) => {
+            if (p.node.rowPinned) return null;
+            const row = p.data;
+            if (row.recommendationStale && row.staleReason)
+              return `This case changed since Kept looked: ${row.staleReason}`;
+            if (row.recommendation)
+              return (
+                reasonsById.get(row.disputeId) ||
+                "Open the case to read the reasons"
+              );
+            const failed = decideState.get(row.disputeId);
+            return failed?.state === "failed" ? failed.detail : null;
+          },
+        },
+        {
+          colId: "offer",
+          headerName: "Offer",
+          minWidth: 120,
+          valueGetter: (p) => (p.node.rowPinned ? null : offerValue(p.data)),
+          valueSetter: setOffer,
+          editable: (p) => !p.node.rowPinned && canEditOffer(p.data),
+          cellEditor: "agTextCellEditor",
+          cellEditorParams: { maxLength: 12 },
+          cellRenderer: offerCell,
+          cellClassRules: {
+            "cell-editable": (p) => !p.node.rowPinned && canEditOffer(p.data),
+            "cell-refused": (p) =>
+              !p.node.rowPinned && offerRefusals.has(p.data.disputeId),
+          },
+          tooltipValueGetter: (p) => {
+            if (p.node.rowPinned) return null;
+            const refusal = offerRefusals.get(p.data.disputeId);
+            if (refusal) return `${refusal.value} refused. ${refusal.message}`;
+            if (canEditOffer(p.data))
+              return `Press Enter to edit. Your policy caps this offer at ${p.data.amount.currency_code} ${offerCap(p.data.amount.value, policy)}. Approve it in the case panel.`;
+            return null;
+          },
+        },
+      ],
+    },
+    {
+      groupId: "youApproved",
+      headerName: "You approved",
+      children: [
+        {
+          colId: "action",
+          headerName: "Action",
+          minWidth: 86,
+          valueGetter: (p) => (p.node.rowPinned ? "" : actionText(p.data)),
+        },
+      ],
+    },
+    {
+      colId: "disputeId",
+      headerName: "PayPal case ID",
+      field: "disputeId",
+      hide: true,
+    },
+    {
+      colId: "currency",
+      headerName: "Currency",
+      valueGetter: (p) => p.data.amount?.currency_code ?? "",
+      hide: true,
     },
   ];
 
+  // ---------- saved view ----------
+
+  function readView() {
+    try {
+      const view = JSON.parse(localStorage.getItem(VIEW_KEY));
+      if (view?.version !== VIEW_VERSION || typeof view.state !== "object")
+        return null;
+      return view;
+    } catch (error) {
+      console.warn("Kept could not read the saved grid view", error);
+      return null;
+    }
+  }
+
+  function saveView() {
+    const state = gridApi.getState();
+    const view = {};
+    for (const part of VIEW_PARTS)
+      if (state[part] && (part !== "columnSizing" || userSized))
+        view[part] = state[part];
+    try {
+      localStorage.setItem(
+        VIEW_KEY,
+        JSON.stringify({ version: VIEW_VERSION, state: view }),
+      );
+    } catch (error) {
+      console.warn("Kept could not save the grid view", error);
+    }
+  }
+
+  function resetView() {
+    try {
+      localStorage.removeItem(VIEW_KEY);
+    } catch (error) {
+      console.warn("Kept could not clear the saved grid view", error);
+    }
+    userSized = false;
+    gridApi.resetColumnState();
+    gridApi.setFilterModel(null);
+    gridApi.sizeColumnsToFit();
+    announce("Grid view reset: default columns, widths, sort and no filters.");
+  }
+
+  // ---------- CSV export ----------
+
+  const CSV_COLUMNS = {
+    case: (row) => row.caseKey || "",
+    disputeId: (row) => row.disputeId,
+    item: (row) => row.itemName || "",
+    reason: (row) => row.reasonLabel,
+    currency: (row) => row.amount.currency_code,
+    amount: (row) => row.amount.value,
+    hold: (row) => row.hold?.value || "",
+    kept: (row) => row.outcome?.kept?.value || "",
+    protection: (row) => protectionText(row.protection),
+    stage: (row) => row.stageLabel,
+    status: (row) => row.status,
+    due: (row) => row.dueAt || "",
+    recommendation: (row) => row.recommendation || "",
+    offer: (row) => offerValue(row) || "",
+    action: (row) => actionText(row),
+  };
+
+  function exportCsv() {
+    const selected = gridApi.getSelectedRows().length;
+    const count = selected || gridRows().length;
+    const fileName = `kept-cases-${new Date().toLocaleDateString("en-CA")}.csv`;
+    gridApi.exportDataAsCsv({
+      fileName,
+      onlySelected: selected > 0,
+      columnKeys: Object.keys(CSV_COLUMNS),
+      skipColumnGroupHeaders: true,
+      skipPinnedBottom: true,
+      processCellCallback: (p) => {
+        const text = String(CSV_COLUMNS[p.column.getColId()](p.node.data));
+        return /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
+      },
+    });
+    announce(
+      `Exported ${selected ? plural(count, "selected case") : `all ${plural(count, "case")}`} to ${fileName}`,
+    );
+  }
+
   function createGrid() {
+    const view = readView();
+    userSized = Boolean(view?.state.columnSizing);
     gridApi = agGrid.createGrid(els.grid, {
       theme: agGrid.themeQuartz.withParams({
         accentColor: "#2b4fb8",
@@ -2090,12 +2381,34 @@
         sortable: true,
         resizable: true,
         filter: true,
-        suppressMovable: true,
         wrapHeaderText: true,
         autoHeaderHeight: true,
       },
+      defaultColGroupDef: { wrapHeaderText: true, autoHeaderHeight: true },
       loading: true,
-      animateRows: !matchMedia("(prefers-reduced-motion: reduce)").matches,
+      animateRows: !reducedMotion,
+      suppressColumnMoveAnimation: reducedMotion,
+      initialState: view?.state,
+      onStateUpdated: (p) => {
+        if (p.sources.some((source) => VIEW_PARTS.includes(source))) saveView();
+      },
+      onColumnResized: (p) => {
+        if (!p.finished || p.source !== "uiColumnResized") return;
+        userSized = true;
+        saveView();
+      },
+      singleClickEdit: false,
+      stopEditingWhenCellsLoseFocus: true,
+      undoRedoCellEditing: true,
+      undoRedoCellEditingLimit: 20,
+      onCellEditingStopped: (p) => {
+        if (p.column.getColId() === "offer")
+          p.api.refreshCells({
+            rowNodes: [p.node],
+            columns: ["offer"],
+            force: true,
+          });
+      },
       rowHeight: 56,
       getRowId: (p) => p.data.disputeId,
       postSortRows: (p) => {
@@ -2111,8 +2424,9 @@
         "row-total": (p) => Boolean(p.node.rowPinned),
       },
       rowSelection: {
-        mode: "singleRow",
+        mode: "multiRow",
         checkboxes: false,
+        headerCheckbox: false,
         enableClickSelection: true,
         isRowSelectable: (node) => !node.rowPinned,
       },
@@ -2122,21 +2436,26 @@
       domLayout: "autoHeight",
       enableCellTextSelection: true,
       tooltipShowDelay: 300,
-      autoSizeStrategy: { type: "fitGridWidth", defaultMinWidth: 110 },
+      autoSizeStrategy: userSized
+        ? undefined
+        : { type: "fitGridWidth", defaultMinWidth: 110 },
       onGridSizeChanged: (p) => {
-        if (p.clientWidth > 0) p.api.sizeColumnsToFit();
+        if (!userSized && p.clientWidth > 0) p.api.sizeColumnsToFit();
       },
       onRowClicked: (p) => {
         if (p.node.rowPinned) return;
         if (
           p.event?.target instanceof Element &&
-          p.event.target.closest("button")
+          (p.event.target.closest("button") ||
+            (p.event.target.closest('[col-id="offer"]') &&
+              canEditOffer(p.data)))
         )
           return;
         openCase(p.data.disputeId);
       },
       onCellKeyDown: (p) => {
         if (p.event?.key !== "Enter" || p.node.rowPinned) return;
+        if (p.column.getColId() === "offer" && canEditOffer(p.data)) return;
         if (
           p.event.target instanceof Element &&
           p.event.target.closest("button")
@@ -2169,14 +2488,17 @@
     els.refresh.disabled = true;
     const callsLoaded = loadCalls();
     try {
-      const [data, log] = await Promise.all([
+      const [data, log, current] = await Promise.all([
         api(`/api/cases${refresh ? "?refresh=1" : ""}`),
         api("/api/log?kind=actions"),
+        api("/api/policy"),
       ]);
+      policy = current;
       sentById.clear();
       for (const entry of log.entries)
         if (entry.paypal.ok) sentById.set(entry.disputeId, entry);
       renderGrid(data.cases);
+      gridApi.refreshCells({ columns: ["offer"], force: true });
       gridApi.setGridOption(
         "pinnedBottomRowData",
         data.cases.length ? [totalRow(data.summary)] : [],
@@ -2327,6 +2649,8 @@
     gridApi.setGridOption("quickFilterText", els.quickFilter.value),
   );
   els.refresh.addEventListener("click", () => loadCases({ refresh: true }));
+  els.exportCsv.addEventListener("click", exportCsv);
+  els.resetView.addEventListener("click", resetView);
   els.decideAll.addEventListener("click", decideAll);
   els.policyButton.addEventListener("click", openPolicy);
   els.compareClose.addEventListener("click", closeCompare);
@@ -2342,7 +2666,8 @@
       els.panel.hidden ||
       els.dialog.open ||
       els.confirmDialog.open ||
-      els.policyDialog.open
+      els.policyDialog.open ||
+      gridApi.getEditingCells().length > 0
     )
       return;
     const active = document.activeElement;
@@ -2358,7 +2683,7 @@
     )
       return;
     closePanel();
-  });
+  }, true);
 
   createGrid();
   loadFooter().catch((error) => {

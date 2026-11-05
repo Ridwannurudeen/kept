@@ -92,6 +92,7 @@ textarea {
 
 .topbar-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -449,6 +450,25 @@ textarea {
 .chip-stale {
   background: #fffaeb;
   color: #93370d;
+}
+
+.chip-refused {
+  margin-right: 6px;
+  background: var(--danger);
+  color: #ffffff;
+}
+
+.kept-grid .ag-cell.cell-editable {
+  box-shadow: inset 0 -2px 0 var(--line-strong);
+}
+
+.kept-grid .ag-cell.cell-refused {
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+.offer-refused-text {
+  color: var(--danger);
+  font-weight: 600;
 }
 
 .badge {
