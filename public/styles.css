@@ -9,6 +9,7 @@
   --muted: #5f5f69;
   --line: #e4e4e7;
   --line-strong: #d4d4d8;
+  --field-line: #85858e;
   --accent: #2b4fb8;
   --accent-ink: #ffffff;
   --accent-hover: #233f94;
@@ -121,9 +122,13 @@ textarea {
   outline-offset: 2px;
 }
 
-.button:disabled,
-.button[aria-disabled="true"] {
+.button:disabled {
   color: #8b8b94;
+  cursor: not-allowed;
+}
+
+.button[aria-disabled="true"] {
+  color: var(--muted);
   cursor: not-allowed;
 }
 
@@ -220,7 +225,23 @@ textarea {
 @media (min-width: 960px) {
   .layout.has-panel {
     grid-template-columns: minmax(0, 1fr) 460px;
+    grid-template-rows: auto 1fr;
     align-items: start;
+  }
+
+  .layout.has-panel .workspace {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .layout.has-panel .panel {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .layout.has-panel .compare {
+    grid-column: 1;
+    grid-row: 2;
   }
 }
 
@@ -254,7 +275,7 @@ textarea {
   width: 100%;
   min-height: 36px;
   padding: 0 10px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--field-line);
   border-radius: 6px;
   background: var(--surface);
   color: var(--ink);
@@ -652,7 +673,7 @@ textarea {
 
 @media (prefers-reduced-motion: reduce) {
   .spinner {
-    animation-duration: 2.4s;
+    animation: none;
   }
 }
 
@@ -660,7 +681,7 @@ textarea {
   display: block;
   width: 100%;
   padding: 8px 10px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--field-line);
   border-radius: 6px;
   background: var(--surface);
   color: var(--ink);
@@ -828,6 +849,10 @@ textarea {
 
 .panel-section .panel-row + .evidence-title {
   margin-top: 16px;
+}
+
+.activity-scroll {
+  overflow-x: auto;
 }
 
 .activity {
@@ -1032,6 +1057,11 @@ textarea {
   background: #eef2fb;
 }
 
+.calls-table tr.is-linked td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+  padding-left: 8px;
+}
+
 .calls-table tr:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
@@ -1091,7 +1121,7 @@ textarea {
 .field-input {
   min-height: 40px;
   padding: 0 10px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--field-line);
   border-radius: 6px;
 }
 
@@ -1150,7 +1180,7 @@ textarea {
 
 /* Compare */
 .compare {
-  margin-top: 24px;
+  margin-top: 8px;
   scroll-margin-top: 72px;
   padding: 20px;
   background: var(--surface);
@@ -1325,4 +1355,22 @@ textarea {
 .compare-empty-title {
   margin: 0;
   font-weight: 600;
+}
+
+/* Touch */
+@media (pointer: coarse) {
+  .button,
+  .button-small,
+  .search-input,
+  .field-input,
+  .file-input::file-selector-button,
+  .calls-summary,
+  .calls-link {
+    min-height: 44px;
+  }
+
+  .calls-link {
+    display: inline-flex;
+    align-items: center;
+  }
 }

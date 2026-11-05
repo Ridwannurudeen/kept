@@ -27,8 +27,8 @@
       <dl class="summary-strip" id="summary-strip"></dl>
     </section>
 
-    <div class="layout" id="layout">
-      <main class="workspace" id="workspace">
+    <main class="layout" id="layout">
+      <div class="workspace" id="workspace">
         <div class="toolbar">
           <div class="search">
             <label class="search-label" for="quick-filter">Search cases</label>
@@ -43,28 +43,28 @@
           <p class="fetch-status" id="fetch-status"></p>
         </div>
         <div class="grid-frame" id="grid-frame">
-          <div class="settle-grid" id="grid" aria-label="Disputes"></div>
+          <div class="settle-grid" id="grid"></div>
         </div>
-        <section class="compare" id="compare" aria-labelledby="compare-title" hidden>
-          <div class="compare-head">
-            <h2 class="compare-title" id="compare-title" tabindex="-1">Compare</h2>
-            <button type="button" class="button button-quiet" id="compare-close">Close compare</button>
-          </div>
-          <div class="compare-pick" id="compare-pick">
-            <label class="field-label" for="compare-select">Compare with</label>
-            <select class="field-input compare-select" id="compare-select"></select>
-          </div>
-          <div class="compare-body" id="compare-body"></div>
-        </section>
-      </main>
-      <aside class="panel" id="panel" aria-labelledby="panel-title" hidden>
+      </div>
+      <section class="panel" id="panel" aria-labelledby="panel-title" hidden>
         <div class="panel-head">
           <h2 class="panel-title" id="panel-title" tabindex="-1"></h2>
           <button type="button" class="button button-quiet" id="panel-close">Close</button>
         </div>
         <div class="panel-body" id="panel-body"></div>
-      </aside>
-    </div>
+      </section>
+      <section class="compare" id="compare" aria-labelledby="compare-title" hidden>
+        <div class="compare-head">
+          <h2 class="compare-title" id="compare-title" tabindex="-1">Compare</h2>
+          <button type="button" class="button button-quiet" id="compare-close">Close compare</button>
+        </div>
+        <div class="compare-pick" id="compare-pick">
+          <label class="field-label" for="compare-select">Compare with</label>
+          <select class="field-input compare-select" id="compare-select"></select>
+        </div>
+        <div class="compare-body" id="compare-body"></div>
+      </section>
+    </main>
 
     <details class="calls" id="calls">
       <summary class="calls-summary">
@@ -124,7 +124,7 @@
         <p class="dialog-text">Settle keeps the case list behind a passcode. You only need to enter it once per tab.</p>
         <label class="field-label" for="passcode-input">Passcode</label>
         <input type="password" id="passcode-input" class="field-input" autocomplete="current-password" required />
-        <p class="dialog-error" id="passcode-error" hidden>That passcode did not work. Try again.</p>
+        <p class="dialog-error" id="passcode-error" role="alert" hidden>That passcode did not work. Try again.</p>
         <div class="dialog-actions">
           <button type="submit" class="button button-primary" value="ok">Continue</button>
         </div>

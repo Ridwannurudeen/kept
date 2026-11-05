@@ -1096,6 +1096,8 @@
     for (const row of els.callsScroll.querySelectorAll("tbody tr")) {
       const match = ids.has(row.id);
       row.classList.toggle("is-linked", match);
+      if (match) row.setAttribute("aria-current", "true");
+      else row.removeAttribute("aria-current");
       if (match && !first) first = row;
     }
     if (!first) return;
@@ -1211,7 +1213,9 @@
       );
       table.tBodies[0].append(row);
     }
-    wrap.append(table);
+    const scroll = el("div", "activity-scroll");
+    scroll.append(table);
+    wrap.append(scroll);
     return wrap;
   }
 
@@ -1791,7 +1795,7 @@
     {
       colId: "due",
       headerName: "Seller response due",
-      minWidth: 140,
+      minWidth: 180,
       sort: "asc",
       valueGetter: (p) =>
         p.node.rowPinned || !p.data.dueAt ? null : new Date(p.data.dueAt),
@@ -1875,6 +1879,7 @@
         autoHeaderHeight: true,
       },
       loading: true,
+      animateRows: !matchMedia("(prefers-reduced-motion: reduce)").matches,
       rowHeight: 56,
       getRowId: (p) => p.data.disputeId,
       postSortRows: (p) => {
@@ -1932,6 +1937,7 @@
         openCase(p.data.disputeId);
       },
     });
+    els.grid.querySelector('[role="grid"]').setAttribute("aria-label", "Disputes");
   }
 
   function renderGrid(rows) {
