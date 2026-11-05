@@ -231,6 +231,12 @@ textarea {
   font-size: 16px;
 }
 
+.summary-note {
+  margin: 8px 2px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 /* Layout */
 .layout {
   display: grid;
