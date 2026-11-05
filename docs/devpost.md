@@ -113,7 +113,7 @@ At most one Grand Prize or one Honorable Mention, plus one Sponsor Prize, can be
 
 ## Testing notes for judges (Devpost private testing field only)
 
-Put this in the private testing instructions field, never in the public description. Never put PayPal or Anthropic secrets anywhere in Devpost.
+Put this in the private testing instructions field, never in the public description. Never put PayPal or Anthropic secrets anywhere in Devpost. Set `SETTLE_PASSCODE` on the hosted demo to a long random passcode (24 or more characters, for example the output of `openssl rand -base64 18`) and paste that here. After 5 wrong passcodes from one IP in 10 minutes, Settle answers 429 until the window passes.
 
 ```
 Hosted demo: [HOSTED URL]

@@ -82,7 +82,7 @@ Then open `http://localhost:3000` and enter your passcode. `npm run dev` runs `s
 | `PAYPAL_CLIENT_ID` | Sandbox REST app client id | developer.paypal.com, Apps and Credentials, Sandbox, your business app |
 | `PAYPAL_CLIENT_SECRET` | Sandbox REST app secret | Same app |
 | `ANTHROPIC_API_KEY` | Key for the model that writes the recommendation | console.anthropic.com |
-| `SETTLE_PASSCODE` | Passcode the page asks for before any `/api` call | Any string you choose |
+| `SETTLE_PASSCODE` | Passcode the page asks for before any `/api` call. After 5 wrong passcodes from one IP in 10 minutes, `/api` answers 429 until the window passes | Any string locally; a long random passcode (24 or more characters) for the hosted demo |
 | `PORT` (optional) | HTTP port, default 3000 | |
 | `SETTLE_DATA_DIR` (optional) | Where runtime state is written, default `./data` | |
 | `SETTLE_SEED_PATH` (optional) | Seed case file, default `seed/cases.json` | |

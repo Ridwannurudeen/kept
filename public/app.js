@@ -200,6 +200,10 @@
         throw new Error("That passcode was not accepted.");
       }
     }
+    if (res.status === 429)
+      throw new Error(
+        "Too many wrong passcodes from this network. Try again in 10 minutes.",
+      );
     return res;
   }
 
