@@ -19,8 +19,11 @@
     announcer: document.getElementById("announcer"),
     panel: document.getElementById("panel"),
     panelTitle: document.getElementById("panel-title"),
-    panelHeadline: document.getElementById("panel-headline"),
+    panelBody: document.getElementById("panel-body"),
     panelClose: document.getElementById("panel-close"),
+    replayBanner: document.getElementById("replay-banner"),
+    confirmDialog: document.getElementById("confirm-dialog"),
+    confirmSummary: document.getElementById("confirm-summary"),
     dialog: document.getElementById("passcode-dialog"),
     passcodeForm: document.getElementById("passcode-form"),
     passcodeInput: document.getElementById("passcode-input"),
@@ -34,6 +37,10 @@
   const reasonsById = new Map();
   const decideState = new Map();
   const sentById = new Map();
+  const resultById = new Map();
+  let panelId = null;
+  let panelDetail = null;
+  let returnFocus = null;
   const isPending = (job) =>
     job?.state === "queued" || job?.state === "running";
 
@@ -58,6 +65,12 @@
   const timeFormat = new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
+  });
+  const recordedFormat = new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
   });
   const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
@@ -135,7 +148,7 @@
     return passcodePrompt;
   }
 
-  async function api(path, init = {}) {
+  async function authedFetch(path, init = {}) {
     const send = () => {
       const headers = new Headers(init.headers);
       const code = sessionStorage.getItem(PASSCODE_KEY);
@@ -153,6 +166,11 @@
         throw new Error("That passcode was not accepted.");
       }
     }
+    return res;
+  }
+
+  async function api(path, init = {}) {
+    const res = await authedFetch(path, init);
     const body = await res.json();
     if (!res.ok) {
       const message =
@@ -414,6 +432,7 @@
           );
         decideState.set(id, { state: job.state, detail: job.error });
       }
+      if (panelId && finished.includes(panelId)) loadPanel(panelId);
       if (finished.length) {
         const data = await api("/api/cases");
         const rows = data.cases.filter(
@@ -458,6 +477,608 @@
       els.fetchStatus.textContent = `Could not start deciding. ${error.message}`;
       announce(`Could not start deciding. ${error.message}`);
     }
+  }
+
+  // ---------- case panel ----------
+
+  const ACTION_LABELS = {
+    make_offer: "Offer",
+    provide_supporting_info: "Supporting information",
+    provide_evidence: "Evidence",
+    accept_claim: "Accepted the claim",
+  };
+
+  const centsOf = (value) => Number(value.replace(".", ""));
+  const fromCents = (cents) =>
+    `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, "0")}`;
+
+  function checkOffer(offer, disputed, policy) {
+    const disputedCents = centsOf(disputed);
+    const cap = fromCents(
+      Math.min(
+        Math.floor((disputedCents * policy.maxOfferPercent) / 100),
+        centsOf(policy.maxOfferAbsolute),
+        disputedCents,
+      ),
+    );
+    if (!/^\d+\.\d{2}$/.test(offer))
+      return { ok: false, message: "Offer must be an amount like 9.00" };
+    const offerCents = centsOf(offer);
+    if (offerCents === 0)
+      return { ok: false, message: "Offer must be more than 0.00" };
+    if (offerCents <= centsOf(cap)) return { ok: true, cap };
+    if (offerCents > disputedCents)
+      return {
+        ok: false,
+        message: `Offer ${offer} is above the disputed amount of ${disputed}`,
+      };
+    if (offerCents > centsOf(policy.maxOfferAbsolute))
+      return {
+        ok: false,
+        message: `Offer ${offer} is above the absolute cap of ${policy.maxOfferAbsolute}`,
+      };
+    return {
+      ok: false,
+      message: `Offer ${offer} is above the policy cap of ${cap} (${policy.maxOfferPercent}% of ${disputed})`,
+    };
+  }
+
+  function sentEntry(detail) {
+    return detail.actions.filter((entry) => entry.paypal.ok).at(-1) || null;
+  }
+
+  function panelAction(detail) {
+    const sent = sentEntry(detail);
+    if (sent) return sent.action;
+    const allowed = detail.allowed;
+    const recommendation = detail.decision?.decision.recommendation;
+    if (recommendation === "SETTLE") return "make_offer";
+    if (recommendation === "ACCEPT") return "accept_claim";
+    if (recommendation === "FIGHT")
+      return allowed.includes("provide_supporting_info")
+        ? "provide_supporting_info"
+        : "provide_evidence";
+    return (
+      [
+        "make_offer",
+        "provide_supporting_info",
+        "provide_evidence",
+        "accept_claim",
+      ].find((kind) => allowed.includes(kind)) || null
+    );
+  }
+
+  function approveLabel(action, detail) {
+    if (action === "make_offer") return "Send offer to PayPal";
+    if (action === "provide_supporting_info")
+      return "Send supporting information";
+    if (action === "provide_evidence") return "Send evidence";
+    return `Accept the claim and refund ${money(detail.amount)}`;
+  }
+
+  function staleNotice(detail) {
+    return `This case changed since Settle looked at it (${detail.staleReason}). Run Settle again before approving.`;
+  }
+
+  function approveBlockers(detail, action, note, offer) {
+    if (detail.sent) return ["This case already has a sent action"];
+    if (!detail.open) return ["PayPal has closed this case"];
+    if (!action) return ["PayPal lists no seller action for this case yet"];
+    const blockers = [];
+    if (detail.recommendationStale) blockers.push(staleNotice(detail));
+    if (!detail.allowed.includes(action))
+      blockers.push(
+        `PayPal does not list ${action} for this case (stage ${detail.stageLabel})`,
+      );
+    if (note.trim().length === 0) blockers.push("Note is empty");
+    if (note.length > 2000) blockers.push("Note is longer than 2000 characters");
+    if (action === "make_offer") {
+      const check = checkOffer(offer, detail.amount.value, detail.policy);
+      if (!check.ok) blockers.push(check.message);
+    }
+    return blockers;
+  }
+
+  function section(title, cls) {
+    const wrap = el("section", `panel-section${cls ? ` ${cls}` : ""}`);
+    const id = `panel-${title.toLowerCase().replace(/[^a-z]+/g, "-")}`;
+    const heading = el("h3", "panel-section-title", title);
+    heading.id = id;
+    heading.tabIndex = -1;
+    wrap.setAttribute("aria-labelledby", id);
+    wrap.append(heading);
+    return wrap;
+  }
+
+  function list(items, empty) {
+    if (!items.length) return el("p", "panel-muted", empty);
+    const ul = el("ul", "panel-list");
+    for (const item of items) ul.append(el("li", "", item));
+    return ul;
+  }
+
+  function spinner() {
+    const node = el("span", "spinner");
+    node.setAttribute("aria-hidden", "true");
+    return node;
+  }
+
+  function panelLabel(detail) {
+    return detail.caseKey || shortId(detail.disputeId);
+  }
+
+  function renderHead(detail) {
+    const wrap = el("div", "panel-meta");
+    const chips = el("div", "panel-chips");
+    const chip = statusChip(detail);
+    chips.append(
+      el("span", "chip chip-stage", detail.stageLabel),
+      el("span", `chip ${chip.cls}`, chip.text),
+      el("span", "panel-amount", money(detail.amount)),
+    );
+    wrap.append(chips);
+    wrap.append(
+      el(
+        "p",
+        "panel-sub",
+        `${detail.reasonLabel} · PayPal case ${detail.disputeId}`,
+      ),
+    );
+    if (detail.hold)
+      wrap.append(
+        el(
+          "p",
+          "panel-hold",
+          `PayPal is holding ${money(detail.hold)} for this case`,
+        ),
+      );
+    if (detail.warnings.length)
+      wrap.append(
+        el(
+          "p",
+          "panel-warning",
+          `Some PayPal records did not load: ${detail.warnings.join("; ")}`,
+        ),
+      );
+    return wrap;
+  }
+
+  function renderAsk(detail) {
+    const wrap = section("What PayPal is asking");
+    wrap.append(el("p", "panel-lead", detail.explanation.headline));
+    if (detail.explanation.detail)
+      wrap.append(el("p", "panel-text", detail.explanation.detail));
+    if (detail.decision?.decision.plain_ask)
+      wrap.append(
+        el("p", "panel-text panel-muted", detail.decision.decision.plain_ask),
+      );
+    return wrap;
+  }
+
+  function renderEvidence(detail) {
+    const wrap = section("Evidence");
+    const columns = el("div", "evidence-columns");
+    const have = el("div", "evidence-column");
+    const missing = el("div", "evidence-column");
+    have.append(el("h4", "evidence-title evidence-have", "Evidence you have"));
+    missing.append(
+      el("h4", "evidence-title evidence-missing", "Evidence missing"),
+    );
+    const decision = detail.decision?.decision;
+    if (decision) {
+      have.append(list(decision.evidence_have, "None listed"));
+      missing.append(list(decision.evidence_missing, "Nothing missing"));
+    } else {
+      have.append(el("p", "panel-muted", "Run Settle to see"));
+      missing.append(el("p", "panel-muted", "Run Settle to see"));
+    }
+    columns.append(have, missing);
+    wrap.append(columns);
+    return wrap;
+  }
+
+  function renderRecommendation(detail) {
+    const wrap = section("Recommendation");
+    const id = detail.disputeId;
+    const state = decideState.get(id);
+    const decision = detail.decision?.decision;
+    const top = el("div", "panel-row");
+    if (decision)
+      top.append(
+        el(
+          "span",
+          `badge badge-${decision.recommendation.toLowerCase()}`,
+          decision.recommendation,
+        ),
+      );
+    else
+      top.append(
+        el(
+          "span",
+          "panel-muted",
+          "Not decided yet",
+        ),
+      );
+    if (detail.open) {
+      const button = el("button", "button button-small");
+      button.type = "button";
+      if (isPending(state)) {
+        button.disabled = true;
+        button.append(spinner(), document.createTextNode("Deciding…"));
+      } else {
+        button.textContent =
+          state?.state === "failed" ? "Retry" : decision ? "Decide again" : "Decide";
+        button.addEventListener("click", () => decideInPanel(id));
+      }
+      top.append(button);
+    }
+    wrap.append(top);
+    if (state?.state === "failed" && !isPending(state))
+      wrap.append(
+        el("p", "panel-error", `No decision yet. ${state.detail || ""}`.trim()),
+      );
+    if (decision) wrap.append(list(decision.reasons, "No reasons given"));
+    if (detail.recommendationStale && detail.staleReason)
+      wrap.append(el("p", "notice notice-stale", staleNotice(detail)));
+    return wrap;
+  }
+
+  function renderDraftAndApprove(detail) {
+    const action = panelAction(detail);
+    const decision = detail.decision?.decision;
+    const sent = sentEntry(detail);
+    const draft = section("Draft");
+    const noteId = "draft-note";
+    const noteLabel = el("label", "field-label", "Note to PayPal and the buyer");
+    noteLabel.htmlFor = noteId;
+    const note = el("textarea", "field-textarea");
+    note.id = noteId;
+    note.rows = 6;
+    note.maxLength = 2000;
+    note.value = sent ? sent.submitted.note : decision?.draft_note || "";
+    note.readOnly = Boolean(sent);
+    note.placeholder = "Write what PayPal and the buyer will read";
+    const count = el("p", "field-hint");
+    draft.append(noteLabel, note, count);
+
+    let offer = null;
+    const offerHint = el("p", "field-hint");
+    offerHint.id = "offer-hint";
+    if (action === "make_offer") {
+      const row = el("div", "offer-row");
+      const label = el("label", "field-label", `Refund offer (${detail.amount.currency_code})`);
+      label.htmlFor = "offer-amount";
+      offer = el("input", "field-input offer-input");
+      offer.id = "offer-amount";
+      offer.inputMode = "decimal";
+      offer.autocomplete = "off";
+      offer.value = sent
+        ? sent.submitted.offerAmount || ""
+        : decision?.offer_amount || "";
+      offer.readOnly = Boolean(sent);
+      offer.placeholder = "9.00";
+      offer.setAttribute("aria-describedby", "offer-cap offer-hint");
+      const cap = el(
+        "span",
+        "offer-cap",
+        detail.cap ? `Policy cap ${detail.amount.currency_code} ${detail.cap}` : "",
+      );
+      cap.id = "offer-cap";
+      const field = el("div", "offer-field");
+      field.append(offer, cap);
+      row.append(label, field, offerHint);
+      draft.append(row);
+    }
+
+    const approve = section("Approve");
+    const button = el(
+      "button",
+      "button button-primary button-approve",
+      action ? approveLabel(action, detail) : "Nothing to send",
+    );
+    button.type = "button";
+    button.setAttribute("aria-describedby", "approve-reason");
+    const reason = el("ul", "approve-reason");
+    reason.id = "approve-reason";
+    approve.append(button, reason);
+
+    const update = () => {
+      count.textContent = `${note.value.length} / 2000 characters`;
+      if (offer) {
+        const check = checkOffer(offer.value.trim(), detail.amount.value, detail.policy);
+        offerHint.textContent = check.ok
+          ? "Within your policy"
+          : check.message;
+        offerHint.classList.toggle("is-error", !check.ok);
+        offer.setAttribute("aria-invalid", String(!check.ok));
+      }
+      const blockers = approveBlockers(
+        detail,
+        action,
+        note.value,
+        offer ? offer.value.trim() : null,
+      );
+      button.setAttribute("aria-disabled", String(blockers.length > 0));
+      reason.replaceChildren(...blockers.map((text) => el("li", "", text)));
+      return blockers;
+    };
+    note.addEventListener("input", update);
+    offer?.addEventListener("input", update);
+    button.addEventListener("click", () => {
+      const blockers = update();
+      if (blockers.length) {
+        announce(`Not sent. ${blockers.join(". ")}`);
+        return;
+      }
+      confirmAndApprove(detail, {
+        action,
+        note: note.value,
+        offerAmount: offer ? offer.value.trim() : null,
+      });
+    });
+    update();
+    return [draft, approve];
+  }
+
+  function renderResult(detail) {
+    const result = resultById.get(detail.disputeId);
+    if (!result) return null;
+    const wrap = section("Result");
+    if (result.status === 200) {
+      const { entry, dispute } = result.body;
+      wrap.classList.add("result-ok");
+      const facts = el("dl", "result-facts");
+      const fact = (label, value) =>
+        facts.append(el("dt", "", label), el("dd", "", value));
+      fact("PayPal HTTP status", String(entry.paypal.status ?? result.status));
+      fact("Links on the dispute now", String(dispute.links?.length ?? 0));
+      wrap.append(facts);
+      wrap.append(
+        el(
+          "p",
+          "panel-lead",
+          entry.after
+            ? `PayPal now reports: ${entry.after.status} at ${result.body.detail.stageLabel}`
+            : "PayPal did not answer the follow-up read. Refresh the case to see its state.",
+        ),
+      );
+    } else if (result.status === 409) {
+      wrap.classList.add("result-refused");
+      wrap.append(el("p", "panel-lead", "Settle did not send this."));
+      wrap.append(list(result.body.blockers, ""));
+    } else if (result.status === 0) {
+      wrap.classList.add("result-failed");
+      wrap.append(
+        el("p", "panel-lead", `Could not send. ${result.body.error.message}`),
+      );
+    } else {
+      wrap.classList.add("result-failed");
+      const error = result.body.error || {};
+      wrap.append(
+        el(
+          "p",
+          "panel-lead",
+          `PayPal did not accept the action (HTTP ${error.status ?? result.status}).`,
+        ),
+      );
+      if (error.message) wrap.append(el("p", "panel-text", error.message));
+      if (error.debugId)
+        wrap.append(el("p", "panel-muted cell-mono", `Debug id ${error.debugId}`));
+    }
+    return wrap;
+  }
+
+  function renderNotes(detail) {
+    const wrap = section("Seller notes");
+    const label = el("label", "visually-hidden", "Seller notes");
+    label.htmlFor = "seller-notes";
+    const notes = el("textarea", "field-textarea");
+    notes.id = "seller-notes";
+    notes.rows = 4;
+    notes.maxLength = 4000;
+    notes.value = detail.record?.notes || "";
+    const row = el("div", "panel-row");
+    const save = el("button", "button button-small", "Save notes");
+    save.type = "button";
+    const status = el("span", "field-hint");
+    status.setAttribute("role", "status");
+    save.addEventListener("click", async () => {
+      save.disabled = true;
+      status.textContent = "Saving…";
+      try {
+        await api(`/api/cases/${encodeURIComponent(detail.disputeId)}/notes`, {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ notes: notes.value }),
+        });
+        status.textContent = `Saved ${timeFormat.format(new Date())}`;
+      } catch (error) {
+        status.textContent = `Not saved. ${error.message}`;
+      } finally {
+        save.disabled = false;
+      }
+    });
+    row.append(save, status);
+    wrap.append(label, notes, row);
+
+    const files = [
+      ...(detail.record?.attachments || []),
+      ...detail.attachments,
+    ];
+    wrap.append(el("h4", "evidence-title", "Attachments"));
+    if (files.length) {
+      const ul = el("ul", "attachment-list");
+      for (const file of files) {
+        const li = el("li", "");
+        li.append(
+          el("span", "cell-mono", file.name),
+          el("span", "panel-muted", file.type),
+        );
+        ul.append(li);
+      }
+      wrap.append(ul);
+    } else wrap.append(el("p", "panel-muted", "No attachments"));
+    return wrap;
+  }
+
+  function renderActivity(detail) {
+    const wrap = section("Activity");
+    if (!detail.actions.length) {
+      wrap.append(el("p", "panel-muted", "No actions sent yet."));
+      return wrap;
+    }
+    const table = el("table", "activity");
+    const head = el("tr");
+    for (const title of ["Time", "Action", "Amount", "Edited", "PayPal"])
+      head.append(el("th", "", title));
+    table.append(el("thead"), el("tbody"));
+    table.tHead.append(head);
+    for (const entry of [...detail.actions].reverse()) {
+      const row = el("tr");
+      const status = entry.paypal.ok
+        ? `Sent${entry.paypal.status ? ` (${entry.paypal.status})` : ""}`
+        : `Failed (${entry.paypal.status ?? "no response"})`;
+      row.append(
+        el("td", "", stampFormat.format(new Date(entry.at))),
+        el("td", "", ACTION_LABELS[entry.action] || entry.action),
+        el(
+          "td",
+          "num",
+          entry.submitted.offerAmount
+            ? `${detail.amount.currency_code} ${entry.submitted.offerAmount}`
+            : "None",
+        ),
+        el("td", "", entry.sellerEdited ? "Yes" : "No"),
+        el("td", entry.paypal.ok ? "" : "is-error", status),
+      );
+      table.tBodies[0].append(row);
+    }
+    wrap.append(table);
+    return wrap;
+  }
+
+  function renderPanel(detail) {
+    els.panelTitle.textContent = `Case ${panelLabel(detail)}${detail.itemName ? `: ${detail.itemName}` : ""}`;
+    els.panelBody.replaceChildren(
+      ...[
+        renderHead(detail),
+        renderAsk(detail),
+        renderEvidence(detail),
+        renderRecommendation(detail),
+        ...(detail.open || detail.sent ? renderDraftAndApprove(detail) : []),
+        renderResult(detail),
+        renderNotes(detail),
+        renderActivity(detail),
+      ].filter(Boolean),
+    );
+  }
+
+  async function loadPanel(id) {
+    try {
+      const detail = await api(`/api/cases/${encodeURIComponent(id)}`);
+      if (panelId !== id) return;
+      panelDetail = detail;
+      renderPanel(detail);
+    } catch (error) {
+      if (panelId !== id) return;
+      els.panelBody.replaceChildren(
+        el("p", "panel-error", `Could not load this case. ${error.message}`),
+      );
+    }
+  }
+
+  async function decideInPanel(id) {
+    const pending = decide(id);
+    if (panelId === id && panelDetail) renderPanel(panelDetail);
+    await pending;
+    if (panelId !== id) return;
+    await loadPanel(id);
+    document.getElementById("panel-recommendation")?.focus();
+  }
+
+  function confirmAndApprove(detail, body) {
+    els.confirmSummary.textContent = `${approveLabel(body.action, detail)}${body.offerAmount ? ` (${detail.amount.currency_code} ${body.offerAmount})` : ""} for case ${panelLabel(detail)}.`;
+    els.confirmDialog.returnValue = "";
+    const onClose = () => {
+      els.confirmDialog.removeEventListener("close", onClose);
+      if (els.confirmDialog.returnValue === "ok") approve(detail, body);
+    };
+    els.confirmDialog.addEventListener("close", onClose);
+    els.confirmDialog.showModal();
+  }
+
+  async function approve(detail, body) {
+    const id = detail.disputeId;
+    const label = panelLabel(detail);
+    const button = els.panelBody.querySelector(".button-approve");
+    if (button) {
+      button.setAttribute("aria-disabled", "true");
+      button.replaceChildren(spinner(), document.createTextNode("Sending…"));
+    }
+    announce(`Sending to PayPal for case ${label}`);
+    try {
+      const res = await authedFetch(
+        `/api/cases/${encodeURIComponent(id)}/approve`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
+      const result = { status: res.status, body: await res.json() };
+      if (![200, 409, 502].includes(res.status))
+        throw new Error(result.body.message || `Server returned ${res.status}`);
+      resultById.set(id, result);
+      if (res.status === 200) {
+        const { entry, detail: fresh } = result.body;
+        sentById.set(id, entry);
+        gridApi.applyTransaction({ update: [fresh] });
+        announce(
+          entry.after
+            ? `Case ${label}: PayPal now reports ${entry.after.status} at ${fresh.stageLabel}`
+            : `Case ${label}: sent to PayPal`,
+        );
+      } else if (res.status === 409) {
+        announce(`Case ${label}: not sent. ${result.body.blockers.join(". ")}`);
+      } else {
+        announce(
+          `Case ${label}: PayPal did not accept the action. ${result.body.error?.message || ""}`,
+        );
+      }
+    } catch (error) {
+      resultById.set(id, {
+        status: 0,
+        body: { error: { status: null, message: error.message } },
+      });
+      announce(`Case ${label}: could not send. ${error.message}`);
+    }
+    if (panelId !== id) return;
+    await loadPanel(id);
+    document.getElementById("panel-result")?.focus();
+  }
+
+  function openCase(id) {
+    const node = gridApi.getRowNode(id);
+    if (els.panel.hidden) returnFocus = document.activeElement;
+    panelId = id;
+    panelDetail = null;
+    els.panelTitle.textContent = `Case ${node.data.caseKey || shortId(id)}${node.data.itemName ? `: ${node.data.itemName}` : ""}`;
+    els.panelBody.replaceChildren(
+      el("p", "panel-muted", "Loading the case from PayPal…"),
+    );
+    els.panel.hidden = false;
+    els.layout.classList.add("has-panel");
+    els.panelTitle.focus();
+    loadPanel(id);
+  }
+
+  function closePanel() {
+    els.panel.hidden = true;
+    els.layout.classList.remove("has-panel");
+    panelId = null;
+    panelDetail = null;
+    if (returnFocus?.isConnected) returnFocus.focus();
+    returnFocus = null;
   }
 
   // ---------- grid ----------
@@ -588,20 +1209,6 @@
     }),
   ];
 
-  function openCase(id) {
-    const node = gridApi.getRowNode(id);
-    console.log("openCase", id);
-    els.panelTitle.textContent = `Case ${node.data.caseKey || shortId(id)}${node.data.itemName ? `: ${node.data.itemName}` : ""}`;
-    els.panelHeadline.textContent = node.data.headline;
-    els.panel.hidden = false;
-    els.layout.classList.add("has-panel");
-  }
-
-  function closePanel() {
-    els.panel.hidden = true;
-    els.layout.classList.remove("has-panel");
-  }
-
   function createGrid() {
     gridApi = agGrid.createGrid(els.grid, {
       theme: agGrid.themeQuartz.withParams({
@@ -731,6 +1338,10 @@
     const snapshot = health.restoredFrom
       ? `; decisions and the action log are restored from the snapshot recorded ${stampFormat.format(new Date(health.restoredFrom))}`
       : "";
+    if (health.mode === "replay") {
+      els.replayBanner.textContent = `Replay of recorded sandbox data from ${recordedFormat.format(new Date(health.recordedOn))}. Actions here are simulated.`;
+      els.replayBanner.hidden = false;
+    }
     els.footer.textContent = `Demo state resets to the seed when the server restarts (Render free tier keeps no disk)${snapshot}. Started ${stampFormat.format(new Date(health.startedAt))}. Sandbox only.`;
   }
 
@@ -745,6 +1356,16 @@
   els.refresh.addEventListener("click", () => loadCases({ refresh: true }));
   els.decideAll.addEventListener("click", decideAll);
   els.panelClose.addEventListener("click", closePanel);
+  document.addEventListener("keydown", (event) => {
+    if (
+      event.key !== "Escape" ||
+      els.panel.hidden ||
+      els.dialog.open ||
+      els.confirmDialog.open
+    )
+      return;
+    closePanel();
+  });
 
   createGrid();
   loadFooter().catch((error) => {

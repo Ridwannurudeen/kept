@@ -10,6 +10,7 @@
     <script src="/app.js" defer></script>
   </head>
   <body>
+    <p class="replay-banner" id="replay-banner" hidden></p>
     <header class="topbar">
       <div class="brand">
         <h1 class="brand-name">Settle</h1>
@@ -47,16 +48,28 @@
       </main>
       <aside class="panel" id="panel" aria-labelledby="panel-title" hidden>
         <div class="panel-head">
-          <h2 class="panel-title" id="panel-title"></h2>
+          <h2 class="panel-title" id="panel-title" tabindex="-1"></h2>
           <button type="button" class="button button-quiet" id="panel-close">Close</button>
         </div>
-        <p class="panel-headline" id="panel-headline"></p>
+        <div class="panel-body" id="panel-body"></div>
       </aside>
     </div>
 
     <footer class="footer" id="footer"></footer>
 
     <div class="visually-hidden" aria-live="polite" id="announcer"></div>
+
+    <dialog class="dialog" id="confirm-dialog" aria-labelledby="confirm-title">
+      <form method="dialog" class="dialog-form">
+        <h2 class="dialog-title" id="confirm-title">Send to PayPal?</h2>
+        <p class="dialog-text">This sends a real sandbox action to PayPal. Continue?</p>
+        <p class="dialog-summary" id="confirm-summary"></p>
+        <div class="dialog-actions">
+          <button type="submit" class="button" value="cancel">Cancel</button>
+          <button type="submit" class="button button-primary" value="ok" id="confirm-ok">Continue</button>
+        </div>
+      </form>
+    </dialog>
 
     <dialog class="dialog" id="passcode-dialog" aria-labelledby="passcode-title">
       <form method="dialog" class="dialog-form" id="passcode-form">

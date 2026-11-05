@@ -1,5 +1,5 @@
 import { PayPalAgentToolkit } from '@paypal/agent-toolkit/ai-sdk';
-import { decideCase } from './ai/decide.js';
+import { decideCase, type DecideResult } from './ai/decide.js';
 import { createSettleModel } from './ai/provider.js';
 import { modelToolset, submitDecisionTool } from './ai/tools.js';
 import { PayPalClient } from './paypal/client.js';
@@ -7,12 +7,15 @@ import { loadConfig } from './config.js';
 import { Store } from './store.js';
 import { createApp } from './http/app.js';
 import { performAction } from './actions.js';
+import { FakePayPal, fakeToolkit } from '../test/fakes/fakePaypal.js';
 
 const config = loadConfig(process.env);
 const store = await Store.open({ dataDir: config.dataDir, seedPath: config.seedPath });
-const paypal = new PayPalClient({ clientId: config.paypalClientId, clientSecret: config.paypalClientSecret });
-const toolkit = new PayPalAgentToolkit({ clientId: config.paypalClientId, clientSecret: config.paypalClientSecret, configuration: { actions: { disputes: { list: true, get: true, create: true } }, context: { sandbox: true } } });
-const model = createSettleModel(config.anthropicApiKey);
+const fake = config.mode === 'replay' ? new FakePayPal({ dir: './seed/replay' }) : null;
+const paypal = fake ? (fake as unknown as PayPalClient) : new PayPalClient({ clientId: config.paypalClientId, clientSecret: config.paypalClientSecret });
+const toolkit = fake ? (fakeToolkit(fake) as unknown as PayPalAgentToolkit) : new PayPalAgentToolkit({ clientId: config.paypalClientId, clientSecret: config.paypalClientSecret, configuration: { actions: { disputes: { list: true, get: true, create: true } }, context: { sandbox: true } } });
+const noKey: DecideResult = { ok: false, error: 'no_decision', detail: 'Replay mode has no ANTHROPIC_API_KEY, so Settle cannot decide here.', steps: 0, toolCalls: [], durationMs: 0 };
+const model = config.anthropicApiKey ? createSettleModel(config.anthropicApiKey) : null;
 const tools = { ...modelToolset(toolkit), submit_decision: submitDecisionTool() };
-const app = createApp({ config, paypal, store, toolkit, now: () => new Date(), decide: (input) => decideCase(input, { model, tools }), act: performAction });
-app.listen(config.port, () => console.log(`Settle listening on ${config.port}`));
+const app = createApp({ config, paypal, store, toolkit, now: () => new Date(), decide: async (input) => (model ? decideCase(input, { model, tools }) : noKey), act: performAction, recordedOn: fake?.recordedOn ?? null });
+app.listen(config.port, () => console.log(`Settle listening on ${config.port} (${config.mode})`));

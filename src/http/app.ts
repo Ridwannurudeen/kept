@@ -17,6 +17,7 @@ export type Deps = {
   act: typeof performAction;
   now: () => Date;
   toolkit: PayPalAgentToolkit;
+  recordedOn: string | null;
 };
 
 export function createApp(deps: Deps): Express {

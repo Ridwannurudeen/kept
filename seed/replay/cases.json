@@ -1,0 +1,56 @@
+{
+  "_replay": "derived from recorded sandbox fixtures 2026-11-04",
+  "cases": {
+    "A": {
+      "_replay": "derived from recorded sandbox fixtures 2026-11-04",
+      "key": "A",
+      "orderId": "92U413849D170012F",
+      "captureId": "1VS093774J460400T",
+      "amount": "20.00",
+      "currency": "USD",
+      "itemName": "Ceramic pour-over set",
+      "trackingNumber": "1Z999AA10123456784",
+      "carrier": "UPS",
+      "trackedAt": "2026-11-04T18:15:53.000Z",
+      "notes": "Shipping address matches the order address.\nShipped on 2026-11-04 via UPS, tracking 1Z999AA10123456784.",
+      "attachments": [{ "name": "packing-slip.txt", "type": "text/plain" }, { "name": "ups-label.txt", "type": "text/plain" }],
+      "disputeId": "PP-R-LKL-10196413",
+      "createdAt": "2026-11-04T18:15:53.000Z",
+      "observed": null
+    },
+    "B": {
+      "_replay": "derived from recorded sandbox fixtures 2026-11-04",
+      "key": "B",
+      "orderId": "ORDERB0000000001",
+      "captureId": "CAPTUREB0000000001",
+      "amount": "36.00",
+      "currency": "USD",
+      "itemName": "Linen table runner",
+      "trackingNumber": null,
+      "carrier": null,
+      "trackedAt": null,
+      "notes": "Sent as listed, no photos before shipping, buyer says the colour differs.",
+      "attachments": [{ "name": "listing-photo-note.txt", "type": "text/plain" }],
+      "disputeId": "PP-R-HND-00000001",
+      "createdAt": "2026-11-04T18:17:01.000Z",
+      "observed": null
+    },
+    "R1": {
+      "_replay": "derived from recorded sandbox fixtures 2026-11-04",
+      "key": "R1",
+      "orderId": "205118069H056835L",
+      "captureId": "7FH08202AN770703L",
+      "amount": "20.00",
+      "currency": "USD",
+      "itemName": "Spike test item",
+      "trackingNumber": null,
+      "carrier": null,
+      "trackedAt": null,
+      "notes": "Settled in the spike with a partial refund the buyer accepted.",
+      "attachments": [],
+      "disputeId": "PP-R-CWP-10196411",
+      "createdAt": "2026-11-04T18:17:01.000Z",
+      "observed": null
+    }
+  }
+}

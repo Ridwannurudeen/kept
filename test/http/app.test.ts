@@ -8,6 +8,7 @@ import type { Config } from '../../src/config.js';
 import type { Dispute } from '../../src/paypal/types.js';
 import { PayPalError } from '../../src/paypal/errors.js';
 import { Store } from '../../src/store.js';
+import { FakePayPal } from '../fakes/fakePaypal.js';
 
 const dispute = (id: string, due: string, captureId = `CAP-${id}`): Dispute => ({
   dispute_id: id,
@@ -33,6 +34,7 @@ describe('HTTP app', () => {
     getCapture: ReturnType<typeof vi.fn>;
   };
   let app: ReturnType<typeof createApp>;
+  let config: Config;
   let decide: ReturnType<typeof vi.fn>;
   let act: ReturnType<typeof vi.fn>;
 
@@ -49,16 +51,22 @@ describe('HTTP app', () => {
       getOrder: vi.fn(async () => { throw new Error('order unavailable'); }),
       getCapture: vi.fn(async () => { throw new Error('capture unavailable'); }),
     };
-    const config: Config = { paypalClientId: 'id', paypalClientSecret: 'secret', anthropicApiKey: 'key', passcode: 'pass', port: 3000, dataDir: join(dir, 'data'), seedPath };
+    config = { paypalClientId: 'id', paypalClientSecret: 'secret', anthropicApiKey: 'key', passcode: 'pass', port: 3000, dataDir: join(dir, 'data'), seedPath, mode: 'live' };
     decide = vi.fn(async () => { throw new Error('Not wired yet'); });
     act = vi.fn();
-    app = createApp({ config, paypal: paypal as never, store, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never });
+    app = createApp({ config, paypal: paypal as never, store, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: null });
   });
 
   afterEach(async () => { await rm(dir, { recursive: true, force: true }); });
 
   test('healthz needs no passcode and includes mode', async () => {
     await request(app).get('/healthz').expect(200).expect(({ body }) => expect(body).toMatchObject({ ok: true, mode: 'live' }));
+  });
+
+  test('healthz reports replay mode and the recording date when the fake is injected', async () => {
+    const fake = new FakePayPal({ dir: './seed/replay' });
+    const replay = createApp({ config: { ...config, mode: 'replay' }, paypal: fake as never, store, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: fake.recordedOn });
+    await request(replay).get('/healthz').expect(200).expect(({ body }) => expect(body).toMatchObject({ ok: true, mode: 'replay', recordedOn: '2026-11-04' }));
   });
 
   test('api routes refuse a missing or wrong passcode with 401', async () => {

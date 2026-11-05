@@ -1,0 +1,129 @@
+[
+  {
+    "_replay": "derived from recorded sandbox fixtures 2026-11-04",
+    "id": "1VS093774J460400T",
+    "amount": {
+      "currency_code": "USD",
+      "value": "20.00"
+    },
+    "final_capture": true,
+    "seller_protection": {
+      "status": "ELIGIBLE",
+      "dispute_categories": [
+        "ITEM_NOT_RECEIVED",
+        "UNAUTHORIZED_TRANSACTION"
+      ]
+    },
+    "status": "PENDING",
+    "status_details": {
+      "reason": "BUYER_COMPLAINT"
+    },
+    "supplementary_data": {
+      "related_ids": {
+        "order_id": "92U413849D170012F"
+      }
+    },
+    "create_time": "2026-11-04T18:15:53Z",
+    "update_time": "2026-11-04T18:35:03Z",
+    "links": [
+      {
+        "href": "https://api.sandbox.paypal.com/v2/payments/captures/1VS093774J460400T",
+        "rel": "self",
+        "method": "GET"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v2/payments/captures/1VS093774J460400T/refund",
+        "rel": "refund",
+        "method": "POST"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/92U413849D170012F",
+        "rel": "up",
+        "method": "GET"
+      }
+    ]
+  },
+  {
+    "_replay": "derived from recorded sandbox fixtures 2026-11-04",
+    "id": "CAPTUREB0000000001",
+    "amount": {
+      "currency_code": "USD",
+      "value": "36.00"
+    },
+    "final_capture": true,
+    "seller_protection": {
+      "status": "ELIGIBLE",
+      "dispute_categories": [
+        "ITEM_NOT_RECEIVED",
+        "UNAUTHORIZED_TRANSACTION"
+      ]
+    },
+    "status": "PENDING",
+    "status_details": {
+      "reason": "BUYER_COMPLAINT"
+    },
+    "supplementary_data": {
+      "related_ids": {
+        "order_id": "ORDERB0000000001"
+      }
+    },
+    "create_time": "2026-11-04T18:15:53Z",
+    "update_time": "2026-11-04T18:35:03Z",
+    "links": []
+  },
+  {
+    "_replay": "derived from recorded sandbox fixtures 2026-11-04",
+    "id": "7FH08202AN770703L",
+    "amount": {
+      "currency_code": "USD",
+      "value": "20.00"
+    },
+    "final_capture": true,
+    "seller_protection": {
+      "status": "ELIGIBLE",
+      "dispute_categories": [
+        "ITEM_NOT_RECEIVED",
+        "UNAUTHORIZED_TRANSACTION"
+      ]
+    },
+    "seller_receivable_breakdown": {
+      "gross_amount": {
+        "currency_code": "USD",
+        "value": "20.00"
+      },
+      "paypal_fee": {
+        "currency_code": "USD",
+        "value": "1.19"
+      },
+      "net_amount": {
+        "currency_code": "USD",
+        "value": "18.81"
+      }
+    },
+    "status": "PARTIALLY_REFUNDED",
+    "supplementary_data": {
+      "related_ids": {
+        "order_id": "205118069H056835L"
+      }
+    },
+    "create_time": "2026-11-04T18:17:01Z",
+    "update_time": "2026-11-04T18:31:42Z",
+    "links": [
+      {
+        "href": "https://api.sandbox.paypal.com/v2/payments/captures/7FH08202AN770703L",
+        "rel": "self",
+        "method": "GET"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v2/payments/captures/7FH08202AN770703L/refund",
+        "rel": "refund",
+        "method": "POST"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/205118069H056835L",
+        "rel": "up",
+        "method": "GET"
+      }
+    ]
+  }
+]
