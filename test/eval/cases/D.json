@@ -5,7 +5,8 @@
     "amount kept at the fixture's 36.00 (the plan gives a different price) so every money field, with no fund movements, stays as recorded; seller_response_due_date 2026-11-24T18:22:34.555Z reused from the fixture.",
     "order and capture: seed/replay ORDERB0000000001 and CAPTUREB0000000001 with the ids changed to ORDERD0000000001 and CAPTURED0000000001.",
     "record: built from seed/plan.json case D (item, notes, attachments) with the amount and ids above; createdAt reused from the replay case B.",
-    "now: fixed at 2026-11-05T00:00:00.000Z."
+    "now: fixed at 2026-11-05T00:00:00.000Z.",
+    "Tracking was added to model an ordinary shipped order."
   ],
   "dispute": {
     "dispute_id": "PP-R-HND-00000004",
@@ -143,6 +144,24 @@
           "breakdown": {}
         },
         "description": "Spike test item",
+        "shipping": {
+          "name": {
+            "full_name": "REDACTED"
+          },
+          "address": {
+            "address_line_1": "REDACTED",
+            "admin_area_2": "San Jose",
+            "admin_area_1": "REDACTED",
+            "postal_code": "REDACTED",
+            "country_code": "US"
+          },
+          "trackers": [
+            {
+              "id": "CAPTURED0000000001-1Z999AA10123456785",
+              "status": "SHIPPED"
+            }
+          ]
+        },
         "payments": {
           "captures": [
             {
@@ -212,7 +231,7 @@
     "trackingNumber": null,
     "carrier": null,
     "trackedAt": null,
-    "notes": "The Walnut phone stand was packed and shipped as ordered.",
+    "notes": "The Walnut phone stand was packed and shipped by UPS, tracking 1Z999AA10123456785.",
     "attachments": [],
     "disputeId": "PP-R-HND-00000004",
     "createdAt": "2026-11-04T18:17:01.000Z",

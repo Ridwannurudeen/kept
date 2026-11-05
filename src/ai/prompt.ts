@@ -40,6 +40,9 @@ export function buildUserPrompt(input: DecideInput): string {
   const notes = record?.notes ? `Seller notes: ${record.notes}` : 'Seller notes: none recorded for this case.';
   const files = attachments.length ? `Attachments: ${attachments.map((file) => `${file.name} (${file.type})`).join(', ')}` : 'Attachments: none';
   const cap = allowed.includes('make_offer') ? `Largest offer the policy allows for this case: ${amount.currency_code} ${offerCap(amount.value, policy)}` : 'PayPal does not list make_offer for this case.';
+  const deadline = dispute.seller_response_due_date
+    ? new Date(new Date(dispute.seller_response_due_date).getTime() - policy.deadlineBufferHours * 60 * 60 * 1000)
+    : null;
   return [
     `Dispute id: ${dispute.dispute_id}. Call get_dispute with this id first.`,
     `Order: ${JSON.stringify(orderSummary)}`,
@@ -51,5 +54,6 @@ export function buildUserPrompt(input: DecideInput): string {
     `Actions PayPal lists for this case: ${allowed.length ? allowed.join(', ') : 'none'}`,
     `Current time: ${now.toISOString()}`,
     `Seller response due: ${dispute.seller_response_due_date ?? 'not given by PayPal'}`,
+    ...(deadline ? [`Your deadline buffer is ${policy.deadlineBufferHours} hours, so decide by ${deadline.toISOString().slice(0, 16).replace('T', ' ')} UTC.`] : []),
   ].join('\n');
 }

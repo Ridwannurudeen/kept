@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const app = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
-const styles = readFileSync(new URL('../public/styles.css', import.meta.url), 'utf8');
+const app = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
+const styles = readFileSync(new URL('../public/styles.css', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 
 describe('AG Grid fix round 1', () => {
   it('uses Claude wording for the recommendation group and announcements', () => {

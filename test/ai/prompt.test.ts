@@ -13,6 +13,15 @@ test('says plainly when there are no notes and no attachments', () => {
   const p = buildUserPrompt(inputFor('dispute-chargeback-fresh', null));
   expect(p).toContain('Seller notes: none recorded for this case.'); expect(p).toContain('Attachments: none');
 });
+test('includes the deadline buffer decision time when PayPal gives a due date', () => {
+  const p = buildUserPrompt(inputFor('dispute-inquiry-open', recordB));
+  expect(p).toContain('Your deadline buffer is 48 hours, so decide by 2026-11-22 18:22 UTC.');
+});
+test('omits the deadline buffer decision time when PayPal gives no due date', () => {
+  const input = inputFor('dispute-chargeback-fresh', null);
+  input.dispute.seller_response_due_date = undefined;
+  expect(buildUserPrompt(input)).not.toContain('Your deadline buffer is');
+});
 test('never includes buyer email or full address', () => {
   const order = fixture<Order>('order-205118069H056835L');
   const shipping = order.purchase_units[0]!.shipping!;
