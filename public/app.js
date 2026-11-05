@@ -5,6 +5,7 @@
   const AUTO_HEIGHT_LIMIT = 20;
   const TOTAL_ID = "__total__";
   const POLL_MS = 2000;
+  const CALL_SLACK_MS = 10_000;
   const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 
   const els = {
@@ -42,6 +43,9 @@
     comparePick: document.getElementById("compare-pick"),
     compareSelect: document.getElementById("compare-select"),
     compareBody: document.getElementById("compare-body"),
+    calls: document.getElementById("calls"),
+    callsCount: document.getElementById("calls-count"),
+    callsScroll: document.getElementById("calls-scroll"),
   };
 
   let gridApi = null;
@@ -57,6 +61,7 @@
   let returnFocus = null;
   let approving = false;
   let compareReturn = null;
+  let calls = [];
   const isPending = (job) =>
     job?.state === "queued" || job?.state === "running";
 
@@ -81,6 +86,13 @@
   const timeFormat = new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
+  });
+  const callFormat = new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
   });
   const recordedFormat = new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
@@ -1051,6 +1063,114 @@
     return wrap;
   }
 
+  function callsFor(entry) {
+    const end = Date.parse(entry.at) + CALL_SLACK_MS;
+    const start = Date.parse(entry.at) - entry.paypal.durationMs - CALL_SLACK_MS;
+    return calls.filter((call) => {
+      const at = Date.parse(call.at);
+      return call.path.includes(entry.disputeId) && at >= start && at <= end;
+    });
+  }
+
+  function callsCell(entry) {
+    const cell = el("td", "num");
+    const linked = callsFor(entry);
+    if (!linked.length) {
+      cell.append(el("span", "panel-muted", "None logged"));
+      return cell;
+    }
+    const link = el("a", "calls-link", plural(linked.length, "call"));
+    link.href = "#calls";
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      showCalls(linked);
+    });
+    cell.append(link);
+    return cell;
+  }
+
+  function showCalls(linked) {
+    els.calls.open = true;
+    const ids = new Set(linked.map((call) => `call-${call.id}`));
+    let first = null;
+    for (const row of els.callsScroll.querySelectorAll("tbody tr")) {
+      const match = ids.has(row.id);
+      row.classList.toggle("is-linked", match);
+      if (match && !first) first = row;
+    }
+    if (!first) return;
+    first.scrollIntoView({ block: "center" });
+    first.focus();
+    announce(`Showing ${plural(linked.length, "PayPal call")} for this action`);
+  }
+
+  function renderCalls() {
+    els.callsCount.textContent = calls.length
+      ? plural(calls.length, "call")
+      : "";
+    if (!calls.length) {
+      els.callsScroll.replaceChildren(
+        el(
+          "p",
+          "calls-empty",
+          "No PayPal calls recorded yet. Each request Settle makes appears here with its status and debug id.",
+        ),
+      );
+      return;
+    }
+    const table = el("table", "calls-table");
+    const head = el("tr");
+    for (const [title, cls] of [
+      ["Time", ""],
+      ["Method", ""],
+      ["Path", ""],
+      ["Status", "num"],
+      ["ms", "num"],
+      ["Debug id", ""],
+      ["Retried", ""],
+    ]) {
+      const th = el("th", cls, title);
+      th.scope = "col";
+      head.append(th);
+    }
+    table.append(el("thead"), el("tbody"));
+    table.tHead.append(head);
+    for (const call of [...calls].reverse()) {
+      const failed = call.status === null || call.status >= 400;
+      const row = el("tr", failed ? "is-failed" : "");
+      row.id = `call-${call.id}`;
+      row.tabIndex = -1;
+      const status = el(
+        "td",
+        "num",
+        call.status === null ? "No response" : String(call.status),
+      );
+      if (call.error) status.title = call.error;
+      row.append(
+        el("td", "calls-time", callFormat.format(new Date(call.at))),
+        el("td", "cell-mono", call.method),
+        el("td", "cell-mono calls-path", call.path),
+        status,
+        el("td", "num", String(call.durationMs)),
+        el("td", "cell-mono", call.debugId || "None"),
+        el("td", "", call.retried ? "Yes" : "No"),
+      );
+      table.tBodies[0].append(row);
+    }
+    els.callsScroll.replaceChildren(table);
+  }
+
+  async function loadCalls() {
+    try {
+      calls = (await api("/api/log?kind=calls")).entries;
+      renderCalls();
+    } catch (error) {
+      els.callsScroll.replaceChildren(
+        el("p", "panel-error", `Could not load the call log. ${error.message}`),
+      );
+    }
+  }
+
   function renderActivity(detail) {
     const wrap = section("Activity");
     if (!detail.actions.length) {
@@ -1059,7 +1179,14 @@
     }
     const table = el("table", "activity");
     const head = el("tr");
-    for (const title of ["Time", "Action", "Amount", "Edited", "PayPal"])
+    for (const title of [
+      "Time",
+      "Action",
+      "Amount",
+      "Edited",
+      "PayPal",
+      "Calls",
+    ])
       head.append(el("th", "", title));
     table.append(el("thead"), el("tbody"));
     table.tHead.append(head);
@@ -1080,6 +1207,7 @@
         ),
         el("td", "", entry.sellerEdited ? "Yes" : "No"),
         el("td", entry.paypal.ok ? "" : "is-error", status),
+        callsCell(entry),
       );
       table.tBodies[0].append(row);
     }
@@ -1087,15 +1215,112 @@
     return wrap;
   }
 
+  function panelState(detail) {
+    const dispute = detail.dispute;
+    if (!detail.open) return "resolved";
+    if (
+      dispute.status === "WAITING_FOR_BUYER_RESPONSE" &&
+      dispute.offer?.seller_offered_amount
+    )
+      return "offer";
+    if (
+      dispute.supporting_info?.some(
+        (info) => info.source === "SUBMITTED_BY_SELLER",
+      )
+    )
+      return "review";
+    if (!detail.allowed.length && !detail.sent) return "opening";
+    return "action";
+  }
+
+  function stateCard(detail, state) {
+    const wrap = section("Status");
+    const card = el("div", `state-card state-${state}`);
+    const facts = el("dl", "result-facts");
+    const fact = (label, value) =>
+      facts.append(el("dt", "", label), el("dd", "", value));
+    const dispute = detail.dispute;
+    const explanation = detail.explanation;
+    if (state === "resolved") {
+      card.append(el("p", "panel-lead", explanation.headline));
+      if (explanation.detail)
+        card.append(el("p", "panel-text", explanation.detail));
+      const outcome = detail.outcome;
+      if (outcome?.refunded) fact("Refunded", money(outcome.refunded));
+      if (outcome?.kept) fact("Kept", money(outcome.kept));
+      if (outcome?.daysToClose !== null && outcome?.daysToClose !== undefined)
+        fact("Closed after", plural(outcome.daysToClose, "day"));
+      fact("Last update", stampFormat.format(new Date(detail.updatedAt)));
+      card.append(facts);
+    } else if (state === "offer") {
+      const offered = dispute.offer.history
+        ?.filter((event) => event.actor === "SELLER")
+        .at(-1);
+      card.append(
+        el("p", "panel-lead", "Your offer is with the buyer"),
+        el("p", "panel-text", explanation.detail),
+      );
+      fact("Offer", money(dispute.offer.seller_offered_amount));
+      if (offered?.offer_time)
+        fact("Offered", stampFormat.format(new Date(offered.offer_time)));
+      if (dispute.buyer_response_due_date)
+        fact(
+          "Buyer answers by",
+          stampFormat.format(new Date(dispute.buyer_response_due_date)),
+        );
+      card.append(facts);
+      const sent = sentEntry(detail);
+      if (sent?.submitted.note) {
+        card.append(el("h4", "evidence-title", "Your note"));
+        card.append(el("blockquote", "state-quote", sent.submitted.note));
+      }
+    } else if (state === "review") {
+      const info = dispute.supporting_info
+        .filter((entry) => entry.source === "SUBMITTED_BY_SELLER")
+        .at(-1);
+      card.append(el("p", "panel-lead", explanation.headline));
+      if (explanation.detail)
+        card.append(el("p", "panel-text", explanation.detail));
+      if (info.provided_time) {
+        fact("Sent", stampFormat.format(new Date(info.provided_time)));
+        card.append(facts);
+      }
+      card.append(
+        el("h4", "evidence-title", "What you sent"),
+        el("blockquote", "state-quote", info.notes || "No note text"),
+      );
+    } else {
+      card.append(
+        el("p", "panel-lead", explanation.headline),
+        el("p", "panel-text", explanation.detail),
+      );
+      const button = el("button", "button button-small", "Refresh");
+      button.type = "button";
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        button.replaceChildren(spinner(), document.createTextNode("Refreshing…"));
+        const id = detail.disputeId;
+        await Promise.all([loadPanel(id), loadCases({ refresh: true })]);
+        if (panelId === id) document.getElementById("panel-status")?.focus();
+      });
+      const row = el("div", "panel-row state-actions");
+      row.append(button);
+      card.append(row);
+    }
+    wrap.append(card);
+    return wrap;
+  }
+
   function renderPanel(detail) {
     els.panelTitle.textContent = `Case ${panelLabel(detail)}${detail.itemName ? `: ${detail.itemName}` : ""}`;
+    const state = panelState(detail);
     els.panelBody.replaceChildren(
       ...[
         renderHead(detail),
-        renderAsk(detail),
+        state === "action" ? renderAsk(detail) : stateCard(detail, state),
         renderEvidence(detail),
         renderRecommendation(detail),
-        ...(detail.open || detail.sent ? renderDraftAndApprove(detail) : []),
+        ...(state === "action" ? renderDraftAndApprove(detail) : []),
         renderResult(detail),
         renderNotes(detail),
         renderActivity(detail),
@@ -1652,6 +1877,12 @@
       loading: true,
       rowHeight: 56,
       getRowId: (p) => p.data.disputeId,
+      postSortRows: (p) => {
+        const resolved = p.nodes.filter((node) => !node.data.open);
+        if (!resolved.length) return;
+        const open = p.nodes.filter((node) => node.data.open);
+        p.nodes.splice(0, p.nodes.length, ...open, ...resolved);
+      },
       rowClassRules: {
         "row-due-soon": (p) =>
           !p.node.rowPinned && p.data.deadline.state === "due_soon",
@@ -1714,6 +1945,7 @@
   async function loadCases({ refresh } = {}) {
     gridApi.setGridOption("loading", true);
     els.refresh.disabled = true;
+    const callsLoaded = loadCalls();
     try {
       const [data, log] = await Promise.all([
         api(`/api/cases${refresh ? "?refresh=1" : ""}`),
@@ -1743,6 +1975,7 @@
       gridApi.setGridOption("loading", false);
       els.refresh.disabled = false;
     }
+    await callsLoaded;
   }
 
   async function loadFooter() {
