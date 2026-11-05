@@ -5,6 +5,7 @@
   const AUTO_HEIGHT_LIMIT = 20;
   const TOTAL_ID = "__total__";
   const POLL_MS = 2000;
+  const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 
   const els = {
     layout: document.getElementById("layout"),
@@ -29,6 +30,12 @@
     passcodeForm: document.getElementById("passcode-form"),
     passcodeInput: document.getElementById("passcode-input"),
     passcodeError: document.getElementById("passcode-error"),
+    policyButton: document.getElementById("policy-button"),
+    policyDialog: document.getElementById("policy-dialog"),
+    policyForm: document.getElementById("policy-form"),
+    policyError: document.getElementById("policy-error"),
+    policySave: document.getElementById("policy-save"),
+    policyCancel: document.getElementById("policy-cancel"),
   };
 
   let gridApi = null;
@@ -75,6 +82,12 @@
     timeZone: "UTC",
   });
   const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  const formatSize = (bytes) =>
+    bytes < 1024
+      ? `${bytes} B`
+      : bytes < 1024 * 1024
+        ? `${(bytes / 1024).toFixed(1)} KB`
+        : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
   function relativeDue(deadline) {
     const hours = deadline.hoursLeft;
@@ -529,6 +542,21 @@
     };
   }
 
+  function capText(detail) {
+    if (!detail.cap) return "";
+    const currency = detail.amount.currency_code;
+    const { maxOfferPercent, maxOfferAbsolute } = detail.policy;
+    const capCents = centsOf(detail.cap);
+    const disputedCents = centsOf(detail.amount.value);
+    const base = `Policy cap ${currency} ${detail.cap}`;
+    if (disputedCents === null) return base;
+    if (capCents === Math.floor((disputedCents * maxOfferPercent) / 100))
+      return `${base} = ${maxOfferPercent}% of ${money(detail.amount)}`;
+    if (capCents === centsOf(maxOfferAbsolute))
+      return `${base} = your ${currency} ${maxOfferAbsolute} limit`;
+    return `${base} = the disputed amount`;
+  }
+
   function sentEntry(detail) {
     return detail.actions.filter((entry) => entry.paypal.ok).at(-1) || null;
   }
@@ -578,7 +606,8 @@
         `PayPal does not list ${action} for this case (stage ${detail.stageLabel})`,
       );
     if (note.trim().length === 0) blockers.push("Note is empty");
-    if (note.length > 2000) blockers.push("Note is longer than 2000 characters");
+    if (note.length > 2000)
+      blockers.push("Note is longer than 2000 characters");
     if (action === "make_offer") {
       const check = checkOffer(offer, detail.amount.value, detail.policy);
       if (!check.ok) blockers.push(check.message);
@@ -698,14 +727,7 @@
           decision.recommendation,
         ),
       );
-    else
-      top.append(
-        el(
-          "span",
-          "panel-muted",
-          "Not decided yet",
-        ),
-      );
+    else top.append(el("span", "panel-muted", "Not decided yet"));
     if (detail.open) {
       const button = el("button", "button button-small");
       button.type = "button";
@@ -714,7 +736,11 @@
         button.append(spinner(), document.createTextNode("Deciding…"));
       } else {
         button.textContent =
-          state?.state === "failed" ? "Retry" : decision ? "Decide again" : "Decide";
+          state?.state === "failed"
+            ? "Retry"
+            : decision
+              ? "Decide again"
+              : "Decide";
         button.addEventListener("click", () => decideInPanel(id));
       }
       top.append(button);
@@ -736,7 +762,11 @@
     const sent = sentEntry(detail);
     const draft = section("Draft");
     const noteId = "draft-note";
-    const noteLabel = el("label", "field-label", "Note to PayPal and the buyer");
+    const noteLabel = el(
+      "label",
+      "field-label",
+      "Note to PayPal and the buyer",
+    );
     noteLabel.htmlFor = noteId;
     const note = el("textarea", "field-textarea");
     note.id = noteId;
@@ -753,7 +783,11 @@
     offerHint.id = "offer-hint";
     if (action === "make_offer") {
       const row = el("div", "offer-row");
-      const label = el("label", "field-label", `Refund offer (${detail.amount.currency_code})`);
+      const label = el(
+        "label",
+        "field-label",
+        `Refund offer (${detail.amount.currency_code})`,
+      );
       label.htmlFor = "offer-amount";
       offer = el("input", "field-input offer-input");
       offer.id = "offer-amount";
@@ -765,11 +799,7 @@
       offer.readOnly = Boolean(sent);
       offer.placeholder = "9.00";
       offer.setAttribute("aria-describedby", "offer-cap offer-hint");
-      const cap = el(
-        "span",
-        "offer-cap",
-        detail.cap ? `Policy cap ${detail.amount.currency_code} ${detail.cap}` : "",
-      );
+      const cap = el("span", "offer-cap", capText(detail));
       cap.id = "offer-cap";
       const field = el("div", "offer-field");
       field.append(offer, cap);
@@ -794,10 +824,12 @@
     const update = () => {
       count.textContent = `${note.value.length} / 2000 characters`;
       if (offer) {
-        const check = checkOffer(offer.value.trim(), detail.amount.value, detail.policy);
-        offerHint.textContent = check.ok
-          ? "Within your policy"
-          : check.message;
+        const check = checkOffer(
+          offer.value.trim(),
+          detail.amount.value,
+          detail.policy,
+        );
+        offerHint.textContent = check.ok ? "Within your policy" : check.message;
         offerHint.classList.toggle("is-error", !check.ok);
         offer.setAttribute("aria-invalid", String(!check.ok));
       }
@@ -878,7 +910,9 @@
       );
       if (error.message) wrap.append(el("p", "panel-text", error.message));
       if (error.debugId)
-        wrap.append(el("p", "panel-muted cell-mono", `Debug id ${error.debugId}`));
+        wrap.append(
+          el("p", "panel-muted cell-mono", `Debug id ${error.debugId}`),
+        );
     }
     return wrap;
   }
@@ -917,23 +951,91 @@
     row.append(save, status);
     wrap.append(label, notes, row);
 
-    const files = [
-      ...(detail.record?.attachments || []),
-      ...detail.attachments,
-    ];
-    wrap.append(el("h4", "evidence-title", "Attachments"));
-    if (files.length) {
+    const files = el("div", "attachments");
+    const renderFiles = () => {
+      const all = [
+        ...(detail.record?.attachments || []),
+        ...detail.attachments,
+      ];
+      if (!all.length) {
+        files.replaceChildren(el("p", "panel-muted", "No attachments yet"));
+        return;
+      }
       const ul = el("ul", "attachment-list");
-      for (const file of files) {
+      for (const file of all) {
         const li = el("li", "");
         li.append(
-          el("span", "cell-mono", file.name),
-          el("span", "panel-muted", file.type),
+          el("span", "attachment-name cell-mono", file.name),
+          el("span", "attachment-type", file.type),
+          el(
+            "span",
+            "attachment-size",
+            file.size === undefined ? "" : formatSize(file.size),
+          ),
         );
         ul.append(li);
       }
-      wrap.append(ul);
-    } else wrap.append(el("p", "panel-muted", "No attachments"));
+      files.replaceChildren(ul);
+    };
+    renderFiles();
+
+    const upload = el("div", "upload");
+    const uploadLabel = el(
+      "label",
+      "field-label",
+      "Add an attachment (any file up to 5 MB)",
+    );
+    uploadLabel.htmlFor = "attachment-input";
+    const input = el("input", "file-input");
+    input.type = "file";
+    input.id = "attachment-input";
+    const uploadStatus = el("p", "field-hint");
+    uploadStatus.setAttribute("role", "status");
+    input.addEventListener("change", async () => {
+      const chosen = input.files[0];
+      if (!chosen) return;
+      const name = chosen.name.replace(/[^A-Za-z0-9._-]+/g, "-").slice(-100);
+      const type = chosen.type || "application/octet-stream";
+      uploadStatus.classList.remove("is-error");
+      if (chosen.size > MAX_ATTACHMENT_BYTES || !/^[A-Za-z0-9._-]{1,100}$/.test(name) || name === "." || name === "..") {
+        uploadStatus.classList.add("is-error");
+        uploadStatus.textContent =
+          chosen.size > MAX_ATTACHMENT_BYTES
+            ? `Not attached. ${chosen.name} is ${formatSize(chosen.size)}; the limit is 5 MB.`
+            : "Not attached. Give the file a name with letters or numbers.";
+        input.value = "";
+        return;
+      }
+      input.disabled = true;
+      uploadStatus.textContent = `Attaching ${name}…`;
+      try {
+        const saved = await api(
+          `/api/cases/${encodeURIComponent(detail.disputeId)}/attachments?name=${encodeURIComponent(name)}&type=${encodeURIComponent(type)}`,
+          { method: "POST", headers: { "content-type": type }, body: chosen },
+        );
+        detail.attachments = [...detail.attachments, saved];
+        renderFiles();
+        uploadStatus.textContent = `Attached ${saved.name} (${formatSize(saved.size)})`;
+      } catch (error) {
+        uploadStatus.classList.add("is-error");
+        uploadStatus.textContent = `Not attached. ${error.message}`;
+      } finally {
+        input.value = "";
+        input.disabled = false;
+      }
+    });
+    upload.append(uploadLabel, input, uploadStatus);
+
+    wrap.append(
+      el("h4", "evidence-title", "Attachments"),
+      el(
+        "p",
+        "panel-muted",
+        "Settle keeps attachments on the seller's side; the AI sees names and types only.",
+      ),
+      files,
+      upload,
+    );
     return wrap;
   }
 
@@ -1101,6 +1203,113 @@
     panelDetail = null;
     if (returnFocus?.isConnected) returnFocus.focus();
     returnFocus = null;
+  }
+
+  // ---------- policy ----------
+
+  const POLICY_FIELDS = {
+    maxOfferPercent: "policy-percent",
+    maxOfferAbsolute: "policy-absolute",
+    deadlineBufferHours: "policy-buffer",
+  };
+
+  function setFieldError(name, message) {
+    const id = POLICY_FIELDS[name];
+    const error = document.getElementById(`${id}-error`);
+    error.textContent = message;
+    error.hidden = !message;
+    document
+      .getElementById(id)
+      .setAttribute("aria-invalid", String(Boolean(message)));
+  }
+
+  function clearPolicyErrors() {
+    for (const name of Object.keys(POLICY_FIELDS)) setFieldError(name, "");
+    els.policyError.hidden = true;
+    els.policyError.textContent = "";
+  }
+
+  function issueText(name, issue) {
+    if (issue.code === "too_big") return `Must be ${issue.maximum} or less`;
+    if (issue.code === "too_small") return `Must be ${issue.minimum} or more`;
+    if (name === "maxOfferAbsolute") return "Enter an amount like 50.00";
+    if (issue.code === "invalid_type") return "Enter a whole number";
+    return issue.message;
+  }
+
+  async function openPolicy() {
+    if (els.policyDialog.open) return;
+    clearPolicyErrors();
+    els.policySave.disabled = false;
+    try {
+      const policy = await api("/api/policy");
+      for (const [name, id] of Object.entries(POLICY_FIELDS))
+        document.getElementById(id).value = String(policy[name]);
+    } catch (error) {
+      els.policyError.textContent = `Could not load the current policy. ${error.message}`;
+      els.policyError.hidden = false;
+    }
+    els.policyDialog.showModal();
+    document.getElementById(POLICY_FIELDS.maxOfferPercent).focus();
+  }
+
+  function panelHasEdits() {
+    return [...els.panelBody.querySelectorAll("textarea, input:not([type=file])")].some(
+      (field) => field.value !== field.defaultValue,
+    );
+  }
+
+  async function savePolicy(event) {
+    event.preventDefault();
+    clearPolicyErrors();
+    const read = (name) =>
+      document.getElementById(POLICY_FIELDS[name]).value.trim();
+    const number = (text) =>
+      /^-?\d+(\.\d+)?$/.test(text) ? Number(text) : text;
+    const body = {
+      maxOfferPercent: number(read("maxOfferPercent")),
+      maxOfferAbsolute: read("maxOfferAbsolute"),
+      deadlineBufferHours: number(read("deadlineBufferHours")),
+    };
+    els.policySave.disabled = true;
+    try {
+      const res = await authedFetch("/api/policy", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const result = await res.json();
+      if (res.status === 400 && Array.isArray(result.issues)) {
+        const invalid = [];
+        for (const issue of result.issues) {
+          const name = issue.path[0];
+          if (!(name in POLICY_FIELDS) || invalid.includes(name)) continue;
+          setFieldError(name, issueText(name, issue));
+          invalid.push(name);
+        }
+        if (invalid.length)
+          document.getElementById(POLICY_FIELDS[invalid[0]]).focus();
+        else {
+          els.policyError.textContent = "Not saved. Check the values.";
+          els.policyError.hidden = false;
+        }
+        announce(`Policy not saved. ${plural(invalid.length, "field")} need attention.`);
+        return;
+      }
+      if (!res.ok)
+        throw new Error(result.message || `Server returned ${res.status}`);
+      els.policyDialog.close();
+      announce(
+        `Policy saved: offers up to ${result.maxOfferPercent}% or ${result.maxOfferAbsolute}, due soon inside ${plural(result.deadlineBufferHours, "hour")}`,
+      );
+      await loadCases();
+      if (panelId && !panelHasEdits()) loadPanel(panelId);
+    } catch (error) {
+      els.policyError.textContent = `Not saved. ${error.message}`;
+      els.policyError.hidden = false;
+    } finally {
+      els.policySave.disabled = false;
+    }
   }
 
   // ---------- grid ----------
@@ -1379,13 +1588,17 @@
   );
   els.refresh.addEventListener("click", () => loadCases({ refresh: true }));
   els.decideAll.addEventListener("click", decideAll);
+  els.policyButton.addEventListener("click", openPolicy);
+  els.policyForm.addEventListener("submit", savePolicy);
+  els.policyCancel.addEventListener("click", () => els.policyDialog.close());
   els.panelClose.addEventListener("click", closePanel);
   document.addEventListener("keydown", (event) => {
     if (
       event.key !== "Escape" ||
       els.panel.hidden ||
       els.dialog.open ||
-      els.confirmDialog.open
+      els.confirmDialog.open ||
+      els.policyDialog.open
     )
       return;
     const active = document.activeElement;

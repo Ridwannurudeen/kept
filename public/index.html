@@ -17,7 +17,7 @@
         <p class="brand-tagline">A dispute desk for small PayPal sellers</p>
       </div>
       <div class="topbar-actions">
-        <button type="button" class="button" id="policy-button" disabled>Policy</button>
+        <button type="button" class="button" id="policy-button" aria-haspopup="dialog">Policy</button>
         <button type="button" class="button" id="decide-all-button">Decide all</button>
         <button type="button" class="button button-primary" id="refresh-button">Refresh</button>
       </div>
@@ -67,6 +67,33 @@
         <div class="dialog-actions">
           <button type="submit" class="button" value="cancel">Cancel</button>
           <button type="submit" class="button button-primary" value="ok" id="confirm-ok">Continue</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="dialog dialog-wide" id="policy-dialog" aria-labelledby="policy-title">
+      <form method="dialog" class="dialog-form" id="policy-form" novalidate>
+        <h2 class="dialog-title" id="policy-title">Policy</h2>
+        <p class="dialog-text">Settle never offers more than these limits, and flags a case as due soon inside the buffer.</p>
+        <div class="field" data-field="maxOfferPercent">
+          <label class="field-label" for="policy-percent">Max partial offer, % of the disputed amount</label>
+          <input type="number" id="policy-percent" class="field-input field-number" name="maxOfferPercent" inputmode="numeric" min="0" max="100" step="1" required aria-describedby="policy-percent-error" />
+          <p class="field-error" id="policy-percent-error" hidden></p>
+        </div>
+        <div class="field" data-field="maxOfferAbsolute">
+          <label class="field-label" for="policy-absolute">Max partial offer, USD</label>
+          <input type="text" id="policy-absolute" class="field-input field-number" name="maxOfferAbsolute" inputmode="decimal" autocomplete="off" placeholder="50.00" required aria-describedby="policy-absolute-error" />
+          <p class="field-error" id="policy-absolute-error" hidden></p>
+        </div>
+        <div class="field" data-field="deadlineBufferHours">
+          <label class="field-label" for="policy-buffer">Deadline buffer, hours</label>
+          <input type="number" id="policy-buffer" class="field-input field-number" name="deadlineBufferHours" inputmode="numeric" min="0" max="2000" step="1" required aria-describedby="policy-buffer-error" />
+          <p class="field-error" id="policy-buffer-error" hidden></p>
+        </div>
+        <p class="dialog-error" id="policy-error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button type="button" class="button" id="policy-cancel">Cancel</button>
+          <button type="submit" class="button button-primary" id="policy-save">Save policy</button>
         </div>
       </form>
     </dialog>
