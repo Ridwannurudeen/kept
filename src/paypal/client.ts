@@ -58,20 +58,24 @@ export class PayPalClient {
     return body.access_token;
   }
 
-  async listDisputes(params: { disputeState?: string; updateTimeAfter?: string } = {}): Promise<DisputeListItem[]> {
+  async listDisputes(params: { disputeState?: string; updateTimeAfter?: string } = {}): Promise<DisputeListItem[] & { warnings?: string[] }> {
     const query = new URLSearchParams({ page_size: '50' });
     if (params.disputeState) query.set('dispute_state', params.disputeState);
     if (params.updateTimeAfter) query.set('update_time_after', params.updateTimeAfter);
     let path = `/v1/customer/disputes?${query}`;
     const items: DisputeListItem[] = [];
+    let hasMore = false;
     for (let page = 0; page < 5; page++) {
       const list = (await this.request('GET', path)) as DisputeList;
       items.push(...(list.items ?? []));
       const next = list.links?.find((link) => link.rel === 'next');
       if (!next) break;
+      if (page === 4) { hasMore = true; break; }
       const url = new URL(next.href, this.baseUrl);
+      if (url.origin !== new URL(this.baseUrl).origin || url.pathname !== '/v1/customer/disputes') break;
       path = `${url.pathname}${url.search}`;
     }
+    if (hasMore) Object.assign(items, { warnings: ['Showing the first 250 disputes; PayPal has more.'] });
     return items;
   }
 
@@ -130,8 +134,11 @@ export class PayPalClient {
       headers['Content-Type'] = 'application/json';
       body = JSON.stringify(write.json);
     }
-    const attempt = async (retried = false) =>
-      this.send(method, path, { headers: { ...headers, Authorization: `Bearer ${await this.getAccessToken()}` }, body, requestId }, onCall, retried);
+    const attempt = async (retried = false) => {
+      const token = await this.getAccessToken();
+      return this.send(method, path, { headers: { ...headers, Authorization: `Bearer ${token}` }, body, requestId }, onCall, retried);
+    };
+    if (method === 'GET') await this.getAccessToken();
     try {
       return await attempt();
     } catch (err) {

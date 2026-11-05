@@ -17,6 +17,9 @@ test('cap is the lowest of percent, absolute and disputed, floored to cents', ()
 test('refuses above the percent cap and names it', () => {
   expect(checkOffer('12.00', '36.00', defaultPolicy)).toEqual({ ok: false, cap: '10.80', limit: 'percent', message: 'Offer 12.00 is above the policy cap of 10.80 (30% of 36.00)' });
 });
+test('formats PayPal disputed amounts with two decimals in seller messages', () => {
+  expect(checkOffer('12.00', '36.5', defaultPolicy)).toMatchObject({ message: 'Offer 12.00 is above the policy cap of 10.95 (30% of 36.50)' });
+});
 test('refuses above the absolute cap', () => {
   expect(checkOffer('60.00', '500.00', defaultPolicy)).toMatchObject({ ok: false, limit: 'absolute', message: 'Offer 60.00 is above the absolute cap of 50.00' });
 });

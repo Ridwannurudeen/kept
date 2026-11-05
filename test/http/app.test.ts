@@ -235,6 +235,24 @@ describe('HTTP app', () => {
     expect(paypal.getDispute.mock.calls.length).toBeGreaterThan(before);
   });
 
+  test('an in-flight cases fetch cannot restore the cache after approval', async () => {
+    const auth = { 'x-settle-passcode': 'pass' };
+    let release!: (value: Awaited<ReturnType<typeof paypal.listDisputes>>) => void;
+    paypal.listDisputes.mockImplementationOnce(() => new Promise((resolve) => { release = resolve; }));
+    const pending = request(app).get('/api/cases').set(auth).then((response) => response);
+    await vi.waitFor(() => expect(paypal.listDisputes).toHaveBeenCalledTimes(1));
+    const current = disputes[1]!;
+    const entry = { id: 'action-generation', at: '2026-11-05T00:00:00.000Z', disputeId: current.dispute_id, caseKey: 'A', action: 'make_offer', recommended: null, submitted: { note: 'Sorry.', offerAmount: '2.00' }, sellerEdited: false, paypal: { ok: true, status: 200, requestId: null, debugId: null, durationMs: 1, message: null }, after: null };
+    act.mockResolvedValueOnce({ status: 'sent', entry, dispute: current });
+    await request(app).post('/api/cases/d-early/approve').set(auth).send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(200);
+    release(disputes.map(({ dispute_id, create_time, update_time, reason, status, dispute_life_cycle_stage, dispute_amount, seller_response_due_date, links }) => ({ dispute_id, create_time, update_time, reason, status, dispute_life_cycle_stage, dispute_amount, seller_response_due_date, links })));
+    await pending;
+    const before = paypal.getDispute.mock.calls.length;
+    await request(app).get('/api/cases').set(auth).expect(200);
+    expect(paypal.listDisputes).toHaveBeenCalledTimes(2);
+    expect(paypal.getDispute.mock.calls.length).toBeGreaterThan(before);
+  });
+
   test('POST decide-all queues every open case and GET decide/status reports them', async () => {
     decide.mockImplementation(async (input: { dispute: Dispute }) => ({ ok: false, error: 'no_decision', detail: `none for ${input.dispute.dispute_id}`, steps: 1, toolCalls: [], durationMs: 1 }));
     paypal.getOrder.mockResolvedValue({ id: 'ORDER-A', status: 'COMPLETED', purchase_units: [] });

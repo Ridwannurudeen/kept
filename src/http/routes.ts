@@ -14,8 +14,9 @@ import type { CaseRecord } from '../../seed/seed.js';
 import type { Deps } from './app.js';
 import { ACTION_KINDS } from '../paypal/dispute.js';
 
-type CachedCases = { disputes: Dispute[]; fetchedAt: string; at: number };
+type CachedCases = { disputes: Dispute[]; fetchedAt: string; at: number; warnings: string[] };
 const caches = new WeakMap<object, CachedCases>();
+const generations = new WeakMap<object, number>();
 
 function requestId(res: import('express').Response): string { return String(res.locals.requestId ?? 'unknown'); }
 
@@ -48,15 +49,16 @@ export function registerRoutes(router: Router, deps: Deps): void {
 
   router.get('/api/cases', async (req, res, next) => {
     try {
+      const generation = generations.get(deps.store) ?? 0;
       const cachedCases = caches.get(deps.store);
       const refresh = req.query.refresh === '1';
       if (!refresh && cachedCases && deps.now().getTime() - cachedCases.at < 20_000) {
         const cases = cachedRows(cachedCases, deps);
-        res.json({ cases, summary: summarize(cases), fetchedAt: cachedCases.fetchedAt, stale: false });
+        res.json({ cases, summary: summarize(cases), fetchedAt: cachedCases.fetchedAt, stale: false, warnings: cachedCases.warnings });
         return;
       }
       const listed = await deps.paypal.listDisputes();
-      const warnings: string[] = [];
+      const warnings: string[] = [...(listed.warnings ?? [])];
       const results = await Promise.all(listed.map(async (entry) => {
         try { return await deps.paypal.getDispute(entry.dispute_id); }
         catch (error) {
@@ -65,16 +67,16 @@ export function registerRoutes(router: Router, deps: Deps): void {
         }
       }));
       const disputes = results.filter((dispute): dispute is Dispute => dispute !== null);
-      const fresh: CachedCases = { disputes, fetchedAt: deps.now().toISOString(), at: deps.now().getTime() };
+      const fresh: CachedCases = { disputes, fetchedAt: deps.now().toISOString(), at: deps.now().getTime(), warnings };
       const cases = cachedRows(fresh, deps);
-      caches.set(deps.store, fresh);
+      if (generation === (generations.get(deps.store) ?? 0)) caches.set(deps.store, fresh);
       res.json({ cases, summary: summarize(cases), fetchedAt: fresh.fetchedAt, stale: false, warnings });
     } catch (error) {
       const cachedCases = caches.get(deps.store);
       if (cachedCases) {
         try {
           const cases = cachedRows(cachedCases, deps);
-          res.json({ cases, summary: summarize(cases), fetchedAt: cachedCases.fetchedAt, stale: true, warning: error instanceof PayPalError ? error.message : 'PayPal unavailable' });
+          res.json({ cases, summary: summarize(cases), fetchedAt: cachedCases.fetchedAt, stale: true, warning: error instanceof PayPalError ? error.message : 'PayPal unavailable', warnings: cachedCases.warnings });
         } catch (buildError) { next(buildError); }
         return;
       }
@@ -145,7 +147,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
     res.status(400).json({ error: 'kind' });
   });
   router.post('/api/reset', async (_req, res, next) => {
-    try { await deps.store.reset(); caches.delete(deps.store); res.json({ ok: true }); } catch (error) { next(error); }
+    try { await deps.store.reset(); generations.set(deps.store, (generations.get(deps.store) ?? 0) + 1); caches.delete(deps.store); res.json({ ok: true }); } catch (error) { next(error); }
   });
   router.post('/api/cases/decide-all', async (_req, res, next) => {
     try {
@@ -172,6 +174,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
       const outcome = await deps.act(req.params.id, { action: body.action as (typeof ACTION_KINDS)[number], note: body.note, offerAmount: body.offerAmount as string | null | undefined, evidenceType: body.evidenceType as 'PROOF_OF_FULFILLMENT' | 'OTHER' | undefined }, { paypal: deps.paypal, toolkit: deps.toolkit, store: deps.store, now: deps.now });
       if (outcome.status === 'refused') { res.status(409).json({ blockers: outcome.blockers }); return; }
       if (outcome.status === 'failed') { res.status(502).json({ entry: outcome.entry, error: outcome.error }); return; }
+      generations.set(deps.store, (generations.get(deps.store) ?? 0) + 1);
       caches.delete(deps.store);
       const state = deps.store.get();
       const captureId = captureIdOf(outcome.dispute);

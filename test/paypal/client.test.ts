@@ -156,8 +156,22 @@ test('stops listing disputes after five pages', async () => {
   const replies: Reply[] = [tokenReply()];
   for (let page = 1; page <= 5; page++) replies.push({ status: 200, json: { items: [{ dispute_id: `PP-${page}` }], links: [{ rel: 'next', href: `https://api-m.sandbox.paypal.com/v1/customer/disputes?page=${page + 1}` }] } });
   const { client, requests } = makeClient(replies);
-  expect(await client.listDisputes()).toHaveLength(5);
+  const items = await client.listDisputes();
+  expect(items).toHaveLength(5);
+  expect(items.warnings).toEqual(['Showing the first 250 disputes; PayPal has more.']);
   expect(requests.filter((request) => request.method === 'GET')).toHaveLength(5);
+});
+
+test('does not follow a next link to another origin', async () => {
+  const { client, requests } = makeClient([tokenReply(), { status: 200, json: { items: [], links: [{ rel: 'next', href: 'https://evil.example/v1/customer/disputes?page=2' }] } }]);
+  await client.listDisputes();
+  expect(requests.filter((request) => request.method === 'GET')).toHaveLength(1);
+});
+
+test('does not retry a GET when fetching its token fails', async () => {
+  const { client, requests } = makeClient([{ status: 503, json: {} }]);
+  await expect(client.getDispute('PP-1')).rejects.toMatchObject({ status: 503 });
+  expect(requests).toHaveLength(1);
 });
 
 test('provideSupportingInfo posts multipart with the input part', async () => {

@@ -51,17 +51,18 @@ export function checkOffer(offer: string, disputed: string, policy: Policy): Off
   }
   const offerCents = toCents(offer);
   const disputedCents = parseAmount(disputed);
+  const disputedValue = fromCents(disputedCents);
   const cap = offerCap(disputed, policy);
   if (offerCents === 0) return { ok: false, cap, limit: 'zero', message: 'Offer must be more than 0.00' };
   if (offerCents <= toCents(cap)) return { ok: true, cap };
 
   if (offerCents > disputedCents) {
-    return { ok: false, cap, limit: 'disputed', message: `Offer ${offer} is above the disputed amount of ${disputed}` };
+    return { ok: false, cap, limit: 'disputed', message: `Offer ${offer} is above the disputed amount of ${disputedValue}` };
   }
   if (offerCents > toCents(policy.maxOfferAbsolute)) {
     return { ok: false, cap, limit: 'absolute', message: `Offer ${offer} is above the absolute cap of ${policy.maxOfferAbsolute}` };
   }
-  return { ok: false, cap, limit: 'percent', message: `Offer ${offer} is above the policy cap of ${cap} (${policy.maxOfferPercent}% of ${disputed})` };
+  return { ok: false, cap, limit: 'percent', message: `Offer ${offer} is above the policy cap of ${cap} (${policy.maxOfferPercent}% of ${disputedValue})` };
 }
 
 export type DeadlineStatus = { state: 'due_soon' | 'ok' | 'unknown' | 'passed'; hoursLeft: number | null };
