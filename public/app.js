@@ -5,6 +5,8 @@
   const AUTO_HEIGHT_LIMIT = 20;
   const TOTAL_ID = "__total__";
   const POLL_MS = 2000;
+  const WATCH_MS = 15_000;
+  const WATCH_BACKOFF_MS = 60_000;
   const CALL_SLACK_MS = 10_000;
   const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 
@@ -52,6 +54,9 @@
   let summaryText = null;
   let passcodePrompt = null;
   let pollTimer = null;
+  let watchTimer = null;
+  let watching = false;
+  let watchDelay = WATCH_MS;
   const reasonsById = new Map();
   const decideState = new Map();
   const sentById = new Map();
@@ -1334,6 +1339,7 @@
         card.append(el("h4", "evidence-title", "Your note"));
         card.append(el("blockquote", "state-quote", sent.submitted.note));
       }
+      if (replay) card.append(simulateAcceptRow(detail));
     } else if (state === "review") {
       const info = dispute.supporting_info
         .filter((entry) => entry.source === "SUBMITTED_BY_SELLER")
@@ -1371,6 +1377,66 @@
     return wrap;
   }
 
+  function simulateAcceptRow(detail) {
+    const button = el(
+      "button",
+      "button button-small",
+      "Simulate the buyer accepting (replay)",
+    );
+    button.type = "button";
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      try {
+        await api(
+          `/api/replay/cases/${encodeURIComponent(detail.disputeId)}/buyer-accepts`,
+          { method: "POST" },
+        );
+        button.textContent = "Simulated. Kept checks PayPal within 15 seconds.";
+        announce(
+          `Replay: the buyer accepted the offer on case ${panelLabel(detail)}. Kept checks PayPal within 15 seconds.`,
+        );
+      } catch (error) {
+        button.disabled = false;
+        announce(`Replay: could not simulate the buyer. ${error.message}`);
+      }
+    });
+    const row = el("div", "panel-row state-actions");
+    row.append(button);
+    return row;
+  }
+
+  const WHO_LABELS = { seller: "You", buyer: "Buyer", paypal: "PayPal" };
+
+  function renderTimeline(detail) {
+    const wrap = section("What PayPal reports");
+    if (!detail.timeline.length) {
+      wrap.append(
+        el(
+          "p",
+          "panel-muted",
+          "PayPal reports no offers, outcome or fund movements yet.",
+        ),
+      );
+      return wrap;
+    }
+    const ol = el("ol", "timeline");
+    for (const entry of detail.timeline) {
+      const item = el("li", "timeline-item");
+      item.append(
+        el(
+          "span",
+          "timeline-time",
+          entry.at ? callFormat.format(new Date(entry.at)) : "Time not reported",
+        ),
+        el("span", "timeline-who", WHO_LABELS[entry.who]),
+        el("span", "timeline-text", entry.text),
+      );
+      ol.append(item);
+    }
+    wrap.append(ol);
+    return wrap;
+  }
+
   function renderPanel(detail) {
     els.panelTitle.textContent = `Case ${panelLabel(detail)}${detail.itemName ? `: ${detail.itemName}` : ""}`;
     const state = panelState(detail);
@@ -1382,6 +1448,7 @@
         renderRecommendation(detail),
         ...(state === "action" ? renderDraftAndApprove(detail) : []),
         renderResult(detail),
+        renderTimeline(detail),
         renderNotes(detail),
         renderActivity(detail),
       ].filter(Boolean),
@@ -1843,6 +1910,7 @@
     },
     moneyColumn("amount", "Amount", (d) => d.amount),
     moneyColumn("hold", "Held", (d) => d.hold, {
+      enableCellChangeFlash: true,
       tooltipValueGetter: (p) =>
         p.node.rowPinned
           ? "Total PayPal is holding on open cases"
@@ -1851,6 +1919,7 @@
             : null,
     }),
     moneyColumn("kept", "Kept", (d) => d.outcome?.kept ?? null, {
+      enableCellChangeFlash: true,
       tooltipValueGetter: (p) =>
         p.node.rowPinned
           ? "Total kept after resolution"
@@ -1877,6 +1946,7 @@
       colId: "status",
       headerName: "Status",
       minWidth: 140,
+      enableCellChangeFlash: true,
       valueGetter: (p) =>
         p.node.rowPinned ? "" : `${statusChip(p.data).text} ${p.data.headline}`,
       cellRenderer: statusCell,
@@ -2047,6 +2117,7 @@
         : `${plural(data.cases.length, "case")} from PayPal, updated ${when}`;
       if (refresh) announce(`Refreshed. ${plural(data.cases.length, "case")}.`);
       schedulePoll();
+      scheduleWatch();
     } catch (error) {
       els.fetchStatus.classList.add("is-warning");
       els.fetchStatus.textContent = `Could not load cases. ${error.message}`;
@@ -2057,6 +2128,107 @@
     }
     await callsLoaded;
   }
+
+  // ---------- watch cases awaiting PayPal ----------
+
+  function isWaiting(row) {
+    if (!row.open) return false;
+    if (row.status === "WAITING_FOR_BUYER_RESPONSE") return true;
+    return (
+      row.status === "UNDER_REVIEW" &&
+      Boolean(row.actionTaken || sentById.has(row.disputeId))
+    );
+  }
+
+  function gridRows() {
+    const rows = [];
+    gridApi.forEachNode((node) => rows.push(node.data));
+    return rows;
+  }
+
+  function scheduleWatch() {
+    clearTimeout(watchTimer);
+    watchTimer = null;
+    if (document.hidden || !gridRows().some(isWaiting)) return;
+    watchTimer = setTimeout(watchCases, watchDelay);
+  }
+
+  const watchKey = (row) =>
+    [
+      row.status,
+      row.headline,
+      row.open,
+      toCents(row.hold),
+      toCents(row.outcome?.kept),
+      row.outcome?.code,
+    ].join("|");
+
+  function changeText(row, summary) {
+    const label = row.caseKey || shortId(row.disputeId);
+    if (row.open) return `Case ${label}: ${row.headline}.`;
+    const refunded = row.outcome?.refundedReported
+      ? ` PayPal refunded ${money(row.outcome.refunded)}.`
+      : "";
+    const kept = money(summary.kept) || `${summary.currency || "USD"} 0.00`;
+    return `Case ${label} resolved.${refunded} Kept is now ${kept}.`;
+  }
+
+  async function watchCases() {
+    watchTimer = null;
+    if (watching || document.hidden) return;
+    watching = true;
+    try {
+      const data = await api("/api/cases?refresh=1");
+      if (data.stale) throw new Error(data.warning || "PayPal did not answer");
+      watchDelay = WATCH_MS;
+      const ids = new Set(data.cases.map((row) => row.disputeId));
+      const current = gridRows();
+      if (
+        current.length !== ids.size ||
+        current.some((row) => !ids.has(row.disputeId))
+      ) {
+        await loadCases();
+        return;
+      }
+      const changed = data.cases.filter(
+        (row) =>
+          watchKey(row) !== watchKey(gridApi.getRowNode(row.disputeId).data),
+      );
+      if (!changed.length) return;
+      gridApi.applyTransaction({ update: changed });
+      gridApi.setGridOption("pinnedBottomRowData", [totalRow(data.summary)]);
+      renderSummary(data.summary);
+      els.fetchStatus.classList.remove("is-warning");
+      els.fetchStatus.textContent = `${plural(data.cases.length, "case")} from PayPal, updated ${timeFormat.format(new Date(data.fetchedAt))}`;
+      const held = data.summary.heldByPayPal
+        ? ` Held now is ${money(data.summary.heldByPayPal)}.`
+        : "";
+      announce(
+        `${changed.map((row) => changeText(row, data.summary)).join(" ")}${held}`,
+      );
+      if (
+        changed.some((row) => row.disputeId === panelId) &&
+        !panelHasEdits()
+      )
+        loadPanel(panelId);
+    } catch (error) {
+      watchDelay = WATCH_BACKOFF_MS;
+      els.fetchStatus.classList.add("is-warning");
+      els.fetchStatus.textContent = `Could not check PayPal for updates; trying again in a minute. ${error.message}`;
+    } finally {
+      watching = false;
+      scheduleWatch();
+    }
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      clearTimeout(watchTimer);
+      watchTimer = null;
+    } else if (!watching && gridRows().some(isWaiting)) {
+      watchCases();
+    }
+  });
 
   async function loadFooter() {
     const res = await fetch("/healthz");

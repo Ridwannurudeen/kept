@@ -650,6 +650,49 @@ textarea {
   margin-top: 4px;
 }
 
+.timeline {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.timeline-item {
+  display: grid;
+  grid-template-columns: max-content max-content 1fr;
+  gap: 2px 12px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+
+.timeline-item:first-child {
+  border-top: 0;
+}
+
+.timeline-time {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.timeline-who {
+  font-weight: 600;
+}
+
+.timeline-text {
+  color: var(--ink-2);
+}
+
+@media (max-width: 480px) {
+  .timeline-item {
+    grid-template-columns: max-content 1fr;
+  }
+
+  .timeline-text {
+    grid-column: 1 / -1;
+  }
+}
+
 .evidence-columns {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
