@@ -1143,14 +1143,18 @@
     table.append(el("thead"), el("tbody"));
     table.tHead.append(head);
     for (const call of [...calls].reverse()) {
-      const failed = call.status === null || call.status >= 400;
+      const failed = call.status === null ? Boolean(call.error) : call.status >= 400;
       const row = el("tr", failed ? "is-failed" : "");
       row.id = `call-${call.id}`;
       row.tabIndex = -1;
       const status = el(
         "td",
         "num",
-        call.status === null ? "No response" : String(call.status),
+        call.status === null
+          ? call.error
+            ? "No response"
+            : "Not reported"
+          : String(call.status),
       );
       if (call.error) status.title = call.error;
       row.append(

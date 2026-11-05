@@ -100,6 +100,25 @@ describe('performAction', () => {
     expect(result.status).toBe('sent');
   });
 
+  test('records the toolkit accept in the call log like any other PayPal call', async () => {
+    await performAction('d-action', { action: 'accept_claim', note: 'We accept.' }, deps);
+    await vi.waitFor(() => expect(store.get().calls).toHaveLength(1));
+    expect(store.get().calls[0]).toMatchObject({ id: expect.any(String), at: '2026-11-05T00:00:00.000Z', method: 'POST', path: '/v1/customer/disputes/d-action/accept-claim', status: null, durationMs: 0, requestId: null, debugId: null });
+    expect(store.get().calls[0]).not.toHaveProperty('error');
+    await store.update((state) => { state.actions = []; state.calls = []; });
+    execute.mockResolvedValueOnce(JSON.stringify({ ok: false, status: 422, code: 'PAYPAL_API_HTTP_ERROR', message: 'not allowed' }));
+    await performAction('d-action', { action: 'accept_claim', note: 'We accept.' }, deps);
+    await vi.waitFor(() => expect(store.get().calls).toHaveLength(1));
+    expect(store.get().calls[0]).toMatchObject({ method: 'POST', path: '/v1/customer/disputes/d-action/accept-claim', status: 422, error: 'not allowed' });
+  });
+
+  test('records a thrown toolkit accept in the call log with its error', async () => {
+    execute.mockRejectedValueOnce(new Error('socket hang up'));
+    expect(await performAction('d-action', { action: 'accept_claim', note: 'We accept.' }, deps)).toMatchObject({ status: 'failed', error: { unknown: true } });
+    await vi.waitFor(() => expect(store.get().calls).toHaveLength(1));
+    expect(store.get().calls[0]).toMatchObject({ path: '/v1/customer/disputes/d-action/accept-claim', status: null, error: 'socket hang up' });
+  });
+
   test('provide_supporting_info posts the note as multipart', async () => {
     fresh = { ...fresh, dispute_life_cycle_stage: 'CHARGEBACK', links: [{ href: '', rel: 'provide_supporting_info' }] };
     await store.update((state) => { delete state.decisions['d-action']; });

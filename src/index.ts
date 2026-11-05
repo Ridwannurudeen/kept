@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import { PayPalAgentToolkit } from '@paypal/agent-toolkit/ai-sdk';
@@ -10,20 +9,7 @@ import { loadConfig } from './config.js';
 import { Store } from './store.js';
 import { createApp } from './http/app.js';
 import { performAction } from './actions.js';
-import { appendCall } from './log.js';
-import type { CallRecord } from './paypal/client.js';
-
-export function recordCalls(store: Store): (call: CallRecord) => void {
-  return (call) => {
-    try {
-      void store.update((state) => {
-        state.calls = appendCall(state.calls, { ...call, id: randomUUID() });
-      }).catch((error: unknown) => console.error('Failed to record PayPal call', error));
-    } catch (error) {
-      console.error('Failed to record PayPal call', error);
-    }
-  };
-}
+import { recordCalls } from './log.js';
 
 async function startServer(): Promise<void> {
   const config = loadConfig(process.env);

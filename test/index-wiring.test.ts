@@ -2,7 +2,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, expect, test, vi } from 'vitest';
-import { recordCalls } from '../src/index.js';
+import { recordCalls } from '../src/log.js';
 import { PayPalClient } from '../src/paypal/client.js';
 import { Store } from '../src/store.js';
 

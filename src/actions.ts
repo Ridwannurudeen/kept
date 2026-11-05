@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { buildCaseRow } from './cases.js';
 import type { ActionEntry } from './log.js';
-import { appendAction, hasSentAction } from './log.js';
+import { appendAction, hasSentAction, recordCalls } from './log.js';
 import { PayPalError } from './paypal/errors.js';
 import { allowedActions, captureIdOf, disputedAmount, type ActionKind } from './paypal/dispute.js';
 import type { CallRecord, PayPalClient } from './paypal/client.js';
@@ -120,8 +120,21 @@ export async function performAction(disputeId: string, req: ApproveRequest, deps
       const acceptTool = deps.toolkit.getTools().accept_dispute_claim;
       if (!acceptTool?.execute) throw new Error('Accept claim tool is unavailable');
       writeAttempted = true;
-      const result = await acceptTool.execute({ dispute_id: disputeId, note: req.note }, { toolCallId: 'settle-accept', messages: [] });
+      const callStart = deps.now();
+      const recordAccept = (status: number | null, error: string | undefined) => {
+        const call: CallRecord = { at: callStart.toISOString(), method: 'POST', path: `/v1/customer/disputes/${encodeURIComponent(disputeId)}/accept-claim`, status, durationMs: Math.max(0, deps.now().getTime() - callStart.getTime()), requestId: null, debugId: null, ...(error === undefined ? {} : { error }) };
+        writeCall.value = call;
+        recordCalls(deps.store)(call);
+      };
+      let result: unknown;
+      try {
+        result = await acceptTool.execute({ dispute_id: disputeId, note: req.note }, { toolCallId: 'settle-accept', messages: [] });
+      } catch (error) {
+        recordAccept(responseError(error).status, error instanceof Error ? error.message : String(error));
+        throw error;
+      }
       const toolFailure = toolkitError(result);
+      recordAccept(toolFailure?.status ?? null, toolFailure?.message);
       if (toolFailure) failure = { ...toolFailure, message: toolFailure.unknown ? unknownMessage : toolFailure.message };
     } else if (req.action === 'provide_supporting_info') {
       writeAttempted = true;

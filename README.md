@@ -50,7 +50,7 @@ Other parts: AG Grid Community 36 (`ag-grid-community` 36.3.0) renders the case 
 - The model holds only read tools (`list_disputes`, `get_dispute`) plus `submit_decision`, which records a decision and sends nothing. It has no tool that moves money.
 - Money actions (`make-offer`, `accept-claim`, `provide-supporting-info`, `provide-evidence`) are sent only from app code in `src/actions.ts`, and only after the seller approves.
 - The refund cap refuses, it never clamps. The seller sets a maximum offer as a percentage of the disputed amount, an absolute maximum, and a deadline buffer (`src/policy.ts`, default 30%, 50.00 and 48 hours). An offer above either cap or above the disputed amount is blocked and the UI names the limit it breaks.
-- Every PayPal call Settle makes is recorded in the call log shown at the bottom of the page.
+- Every PayPal call Settle makes from app code is recorded in the call log; the model's read calls go through the PayPal Agent Toolkit and are listed in each decision's tool calls.
 - The server re-checks every approve (`performAction` in `src/actions.ts`): it re-reads the dispute from PayPal, refuses an action PayPal does not list for the case, refuses a stale recommendation, refuses a second action on a case, re-runs the policy check on the submitted amount and note, and blocks a retry while an earlier outcome is unknown.
 
 ### Case states
