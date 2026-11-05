@@ -896,6 +896,37 @@ textarea {
   text-align: right;
 }
 
+.photo-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 8px 0;
+}
+
+.photo {
+  margin: 0;
+  width: 96px;
+}
+
+.photo-thumb {
+  display: block;
+  width: 96px;
+  height: 72px;
+  object-fit: cover;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.photo-name {
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .upload {
   margin-top: 12px;
 }

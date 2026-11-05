@@ -9,6 +9,7 @@
   const WATCH_BACKOFF_MS = 60_000;
   const CALL_SLACK_MS = 10_000;
   const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+  const MAX_PHOTOS = 3;
 
   const els = {
     layout: document.getElementById("layout"),
@@ -58,6 +59,7 @@
   let watching = false;
   let watchDelay = WATCH_MS;
   const reasonsById = new Map();
+  const photoUrls = new Map();
   const decideState = new Map();
   const sentById = new Map();
   const resultById = new Map();
@@ -779,6 +781,75 @@
     return wrap;
   }
 
+  const isPhoto = (file) =>
+    file.type === "image/jpeg" || file.type === "image/png";
+
+  function photoUrl(disputeId, name) {
+    const key = `${disputeId}/${name}`;
+    if (!photoUrls.has(key)) {
+      const pending = authedFetch(
+        `/api/cases/${encodeURIComponent(disputeId)}/attachments/${encodeURIComponent(name)}`,
+      )
+        .then((res) => {
+          if (!res.ok) throw new Error(`Server returned ${res.status}`);
+          return res.blob();
+        })
+        .then((blob) => URL.createObjectURL(blob));
+      pending.catch(() => photoUrls.delete(key));
+      photoUrls.set(key, pending);
+    }
+    return photoUrls.get(key);
+  }
+
+  function renderPhotos(detail) {
+    const photos = [
+      ...(detail.record?.attachments || []),
+      ...detail.attachments,
+    ].filter(isPhoto);
+    const decision = detail.decision?.decision;
+    const findings = decision?.photo_findings || [];
+    if (!photos.length && !findings.length) return null;
+    const wrap = section("What Claude sees in your photos");
+    if (decision)
+      wrap.append(
+        list(
+          findings,
+          "No photo findings in this decision. Decide again to have Claude read these photos.",
+        ),
+      );
+    else wrap.append(el("p", "panel-muted", "Decide to see"));
+    const strip = el("div", "photo-strip");
+    for (const file of photos) {
+      const figure = el("figure", "photo");
+      const img = el("img", "photo-thumb");
+      img.alt = `Your photo ${file.name}`;
+      img.width = 96;
+      img.height = 72;
+      const caption = el("figcaption", "photo-name cell-mono", file.name);
+      photoUrl(detail.disputeId, file.name).then(
+        (url) => {
+          img.src = url;
+        },
+        (error) => {
+          caption.textContent = `${file.name} did not load. ${error.message}`;
+        },
+      );
+      figure.append(img, caption);
+      strip.append(figure);
+    }
+    wrap.append(strip);
+    wrap.append(
+      el(
+        "p",
+        "panel-muted",
+        photos.length > MAX_PHOTOS
+          ? `Claude reads the ${MAX_PHOTOS} newest photos. They stay in Kept; nothing is uploaded to PayPal.`
+          : "These photos stay in Kept; nothing is uploaded to PayPal.",
+      ),
+    );
+    return wrap;
+  }
+
   function renderRecommendation(detail) {
     const wrap = section("Recommendation");
     const id = detail.disputeId;
@@ -1058,7 +1129,7 @@
     const uploadLabel = el(
       "label",
       "field-label",
-      "Add an attachment (any file up to 5 MB)",
+      "Add an attachment (any file up to 5 MB; JPEG or PNG photos are shown to Claude)",
     );
     uploadLabel.htmlFor = "attachment-input";
     const input = el("input", "file-input");
@@ -1106,7 +1177,7 @@
       el(
         "p",
         "panel-muted",
-        "Kept keeps attachments on the seller's side; the AI sees names and types only.",
+        "Kept keeps attachments on the seller's side. Claude sees JPEG and PNG photos, and only the name and type of other files.",
       ),
       files,
       upload,
@@ -1445,6 +1516,7 @@
         renderHead(detail),
         state === "action" ? renderAsk(detail) : stateCard(detail, state),
         renderEvidence(detail),
+        renderPhotos(detail),
         renderRecommendation(detail),
         ...(state === "action" ? renderDraftAndApprove(detail) : []),
         renderResult(detail),
