@@ -12,6 +12,7 @@ import { basisOf } from '../store.js';
 import type { Capture, Dispute } from '../paypal/types.js';
 import type { CaseRecord } from '../../seed/seed.js';
 import type { Deps } from './app.js';
+import type { FakePayPal } from '../replay/fakePaypal.js';
 import { ACTION_KINDS } from '../paypal/dispute.js';
 import { reconcileUnknown } from '../actions.js';
 
@@ -164,6 +165,15 @@ export function registerRoutes(router: Router, deps: Deps): void {
   router.post('/api/reset', async (_req, res, next) => {
     if (deps.config.mode !== 'replay') { res.status(404).json({ error: 'not_found' }); return; }
     try { await deps.store.reset(); generations.set(deps.store, (generations.get(deps.store) ?? 0) + 1); caches.delete(deps.store); res.json({ ok: true }); } catch (error) { next(error); }
+  });
+  router.post('/api/replay/cases/:id/buyer-accepts', (req, res, next) => {
+    if (deps.config.mode !== 'replay') { res.status(404).json({ error: 'not_found' }); return; }
+    try {
+      (deps.paypal as unknown as FakePayPal).buyerAcceptsOffer(req.params.id);
+      generations.set(deps.store, (generations.get(deps.store) ?? 0) + 1);
+      caches.delete(deps.store);
+      res.json({ ok: true });
+    } catch (error) { next(error); }
   });
   router.post('/api/cases/decide-all', async (_req, res, next) => {
     try {

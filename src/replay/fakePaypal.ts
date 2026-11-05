@@ -117,6 +117,25 @@ export class FakePayPal implements Pick<PayPalClient, Used> {
     return structuredClone(d);
   }
 
+  buyerAcceptsOffer(id: string): void {
+    const d = this.dispute(id);
+    const offered = d.offer?.seller_offered_amount;
+    const target = `/v1/customer/disputes/${id}/accept-offer`;
+    if (d.status !== 'WAITING_FOR_BUYER_RESPONSE' || !offered) throw new PayPalError(`PayPal POST ${target} returned 422`, 422, null, { name: 'UNPROCESSABLE_ENTITY' }, target);
+    const at = this.now().toISOString();
+    d.status = 'RESOLVED';
+    d.dispute_state = 'RESOLVED';
+    d.dispute_outcome = { outcome_code: 'RESOLVED_BUYER_FAVOUR', outcome_reason: 'INQUIRY_OFFER_PARTIAL_REFUND', amount_refunded: offered };
+    d.fund_movements = [
+      ...(d.fund_movements ?? []),
+      { party: 'SELLER', type: 'DEBIT', reason: 'DISPUTE_SETTLEMENT', amount: offered, initiated_time: at },
+      { party: 'BUYER', type: 'CREDIT', reason: 'DISPUTE_SETTLEMENT', amount: offered, initiated_time: at },
+    ];
+    d.offer = { ...d.offer, history: [...(d.offer?.history ?? []), { offer_time: at, actor: 'BUYER', event_type: 'ACCEPTED' }] };
+    d.links = selfOnly(d);
+    d.update_time = at;
+  }
+
   private dispute(id: string): Dispute & Marked {
     const d = this.disputes.get(id);
     if (!d) throw notFound(`/v1/customer/disputes/${id}`);

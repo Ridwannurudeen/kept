@@ -182,6 +182,21 @@ describe('HTTP app', () => {
     await request(replay).post('/api/reset').set('x-kept-passcode', 'pass').expect(200, { ok: true });
   });
 
+  test('the simulated buyer acceptance is 404 in live mode and resolves the pending offer in replay', async () => {
+    const fake = new FakePayPal({ dir: './seed/replay' });
+    const B = 'PP-R-HND-00000001';
+    await fake.makeOffer(B, { note: 'Sorry.', offer_amount: { currency_code: 'USD', value: '9.00' }, offer_type: 'REFUND' });
+    const live = createApp({ config, paypal: fake as never, store, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: null });
+    await request(live).post(`/api/replay/cases/${B}/buyer-accepts`).set('x-kept-passcode', 'pass').expect(404);
+    expect((await fake.getDispute(B)).status).toBe('WAITING_FOR_BUYER_RESPONSE');
+    const replay = createApp({ config: { ...config, mode: 'replay' }, paypal: fake as never, store, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: fake.recordedOn });
+    await request(replay).post(`/api/replay/cases/${B}/buyer-accepts`).set('x-kept-passcode', 'pass').expect(200, { ok: true });
+    await request(replay).get('/api/cases?refresh=1').set('x-kept-passcode', 'pass').expect(200).expect(({ body }) => {
+      expect(body.cases.find((row: { disputeId: string }) => row.disputeId === B)).toMatchObject({ status: 'RESOLVED', open: false, outcome: { refunded: { value: '9.00' }, kept: { value: '27.00' } } });
+    });
+    await request(replay).post(`/api/replay/cases/${B}/buyer-accepts`).set('x-kept-passcode', 'pass').expect(502);
+  });
+
   test('a notes stub with no order id never asks PayPal for an order', async () => {
     await request(app).put('/api/cases/d-late/notes').set('x-kept-passcode', 'pass').send({ notes: 'call buyer' }).expect(200);
     await request(app).get('/api/cases/d-late').set('x-kept-passcode', 'pass').expect(200);

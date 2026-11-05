@@ -76,6 +76,27 @@ describe('FakePayPal replay', () => {
     await expect(paypal.provideSupportingInfo(RESOLVED, 'x')).rejects.toBeInstanceOf(PayPalError);
   });
 
+  test('buyerAcceptsOffer resolves a pending offer the way the recorded sandbox case did', async () => {
+    const paypal = fake();
+    await paypal.makeOffer(B, { note: 'Sorry.', offer_amount: { currency_code: 'USD', value: '9.00' }, offer_type: 'REFUND' });
+    paypal.buyerAcceptsOffer(B);
+    const after = await paypal.getDispute(B);
+    expect(after).toMatchObject({
+      status: 'RESOLVED', dispute_state: 'RESOLVED', update_time: at.toISOString(),
+      dispute_outcome: { outcome_code: 'RESOLVED_BUYER_FAVOUR', outcome_reason: 'INQUIRY_OFFER_PARTIAL_REFUND', amount_refunded: { currency_code: 'USD', value: '9.00' } },
+      fund_movements: [
+        { party: 'SELLER', type: 'DEBIT', reason: 'DISPUTE_SETTLEMENT', amount: { currency_code: 'USD', value: '9.00' }, initiated_time: at.toISOString() },
+        { party: 'BUYER', type: 'CREDIT', reason: 'DISPUTE_SETTLEMENT', amount: { currency_code: 'USD', value: '9.00' }, initiated_time: at.toISOString() },
+      ],
+    });
+    expect(after.offer?.history?.at(-1)).toEqual({ offer_time: at.toISOString(), actor: 'BUYER', event_type: 'ACCEPTED' });
+    expect(after.links?.map((link) => link.rel)).toEqual(['self']);
+  });
+
+  test('buyerAcceptsOffer refuses a case with no pending offer', () => {
+    expect(() => fake().buyerAcceptsOffer(B)).toThrow(PayPalError);
+  });
+
   test('unknown ids are 404s; the joined orders and captures exist', async () => {
     const paypal = fake();
     await expect(paypal.getDispute('nope')).rejects.toMatchObject({ status: 404 });
