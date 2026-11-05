@@ -57,14 +57,16 @@ export function registerRoutes(router: Router, deps: Deps): void {
       const listed = await deps.paypal.listDisputes();
       const disputes = await Promise.all(listed.map((entry) => deps.paypal.getDispute(entry.dispute_id)));
       const fresh: CachedCases = { disputes, fetchedAt: deps.now().toISOString(), at: deps.now().getTime() };
-      caches.set(deps.store, fresh);
       const cases = cachedRows(fresh, deps);
+      caches.set(deps.store, fresh);
       res.json({ cases, summary: summarize(cases), fetchedAt: fresh.fetchedAt, stale: false });
     } catch (error) {
       const cachedCases = caches.get(deps.store);
       if (cachedCases) {
-        const cases = cachedRows(cachedCases, deps);
-        res.json({ cases, summary: summarize(cases), fetchedAt: cachedCases.fetchedAt, stale: true, warning: error instanceof PayPalError ? error.message : 'PayPal unavailable' });
+        try {
+          const cases = cachedRows(cachedCases, deps);
+          res.json({ cases, summary: summarize(cases), fetchedAt: cachedCases.fetchedAt, stale: true, warning: error instanceof PayPalError ? error.message : 'PayPal unavailable' });
+        } catch (buildError) { next(buildError); }
         return;
       }
       next(error);

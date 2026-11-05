@@ -81,12 +81,20 @@ describe('HTTP app', () => {
     expect(paypal.getDispute).toHaveBeenCalledTimes(6);
   });
 
-  test('GET /api/cases rebuilds cached rows after notes change', async () => {
+  test('GET /api/cases rebuilds cached rows after policy changes', async () => {
     const auth = { 'x-settle-passcode': 'pass' };
     await request(app).get('/api/cases').set(auth).expect(200);
-    await request(app).put('/api/cases/d-late/notes').set(auth).send({ notes: 'Updated notes' }).expect(200);
+    await request(app).put('/api/policy').set(auth).send({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 12 }).expect(200);
+    const before = await request(app).get('/api/cases').set(auth).expect(200);
+    expect(before.body.cases.find((row: { disputeId: string }) => row.disputeId === 'd-early').deadline.state).toBe('ok');
+    await request(app).put('/api/policy').set(auth).send({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 400 }).expect(200);
     const { body } = await request(app).get('/api/cases').set(auth).expect(200);
-    expect(body.cases.find((row: { disputeId: string }) => row.disputeId === 'd-late').caseKey).toBe('d-late');
+    expect(body.cases.find((row: { disputeId: string }) => row.disputeId === 'd-early').deadline.state).toBe('due_soon');
+  });
+
+  test('GET /api/cases returns internal error when row building fails', async () => {
+    disputes[0] = { ...disputes[0], seller_response_due_date: 'invalid' };
+    await request(app).get('/api/cases').set('x-settle-passcode', 'pass').timeout({ response: 500 }).expect(500, { error: 'internal' });
   });
 
   test('GET /api/cases returns stale data with a warning when PayPal fails after a good fetch', async () => {
