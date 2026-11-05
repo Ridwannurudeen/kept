@@ -2338,7 +2338,11 @@
 
   function exportCsv() {
     const selected = gridApi.getSelectedRows().length;
-    const count = selected || gridRows().length;
+    let shown = 0;
+    gridApi.forEachNodeAfterFilterAndSort(() => {
+      shown += 1;
+    });
+    const count = selected || shown;
     const fileName = `kept-cases-${new Date().toLocaleDateString("en-CA")}.csv`;
     gridApi.exportDataAsCsv({
       fileName,
@@ -2397,7 +2401,6 @@
         userSized = true;
         saveView();
       },
-      singleClickEdit: false,
       stopEditingWhenCellsLoseFocus: true,
       undoRedoCellEditing: true,
       undoRedoCellEditingLimit: 20,
