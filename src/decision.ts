@@ -5,10 +5,10 @@ import type { Dispute } from './paypal/types.js';
 
 export const DecisionSchema = z.object({
   recommendation: z.enum(['FIGHT', 'SETTLE', 'ACCEPT']),
-  plain_ask: z.string().min(1).max(600),
-  evidence_have: z.array(z.string()).max(10),
-  evidence_missing: z.array(z.string()).max(10),
-  reasons: z.array(z.string().min(1)).min(1).max(6),
+  plain_ask: z.string().min(1).max(1200),
+  evidence_have: z.array(z.string().max(300)).max(10),
+  evidence_missing: z.array(z.string().max(300)).max(10),
+  reasons: z.array(z.string().min(1).max(400)).min(1).max(6),
   offer_amount: z.string().regex(/^\d+\.\d{2}$/).nullable(),
   draft_note: z.string().min(1).max(2000),
   photo_findings: z.array(z.string().min(1).max(300)).max(5).optional(),

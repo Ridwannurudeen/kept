@@ -63,9 +63,18 @@ test('the retry can still produce the decision', async () => {
   expect(result).toMatchObject({ ok: true, decision: settle, steps: 2, toolCalls: ['submit_decision'] });
 });
 
-test('reports invalid_decision when submit_decision args fail the schema', async () => {
-  const { model } = scripted(call('submit_decision', { ...settle, offer_amount: '9.001' }));
+test('retries once when submit_decision args fail the schema', async () => {
+  const { model, prompts } = scripted(call('submit_decision', { ...settle, plain_ask: 'a'.repeat(1201) }), call('submit_decision', settle));
   const result = await decideCase(input(), { model, tools: toolsWith() });
+  expect(result).toMatchObject({ ok: true, decision: settle });
+  expect(prompts).toHaveLength(2);
+  expect(JSON.stringify(prompts[1])).toContain('plain_ask is longer than 1200 characters');
+});
+
+test('returns invalid_decision after two invalid submit_decision calls', async () => {
+  const { model, prompts } = scripted(call('submit_decision', { ...settle, offer_amount: '9.001' }), call('submit_decision', { ...settle, offer_amount: '9.001' }));
+  const result = await decideCase(input(), { model, tools: toolsWith() });
+  expect(prompts).toHaveLength(2);
   expect(result).toMatchObject({ ok: false, error: 'invalid_decision', toolCalls: ['submit_decision'] });
   if (!result.ok) expect(result.detail).toContain('offer_amount');
 });

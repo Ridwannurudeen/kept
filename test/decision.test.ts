@@ -52,3 +52,12 @@ test('schema takes optional photo findings, at most 5 of at most 300 characters 
   expect(DecisionSchema.safeParse({ ...base, photo_findings: Array(6).fill('a') }).success).toBe(false);
   expect(DecisionSchema.safeParse({ ...base, photo_findings: ['a'.repeat(301)] }).success).toBe(false);
 });
+test('schema enforces the decision text limits', () => {
+  expect(DecisionSchema.safeParse({ ...base, plain_ask: 'a'.repeat(1200) }).success).toBe(true);
+  expect(DecisionSchema.safeParse({ ...base, plain_ask: 'a'.repeat(1201) }).success).toBe(false);
+  expect(DecisionSchema.safeParse({ ...base, reasons: ['a'.repeat(400)] }).success).toBe(true);
+  expect(DecisionSchema.safeParse({ ...base, reasons: ['a'.repeat(401)] }).success).toBe(false);
+  expect(DecisionSchema.safeParse({ ...base, evidence_have: ['a'.repeat(301)] }).success).toBe(false);
+  expect(DecisionSchema.safeParse({ ...base, evidence_missing: ['a'.repeat(301)] }).success).toBe(false);
+  expect(DecisionSchema.safeParse({ ...base, draft_note: 'a'.repeat(2000) }).success).toBe(true);
+});

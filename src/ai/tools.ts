@@ -2,7 +2,7 @@ import type { PayPalAgentToolkit } from '@paypal/agent-toolkit/ai-sdk';
 import { tool, type Tool } from 'ai';
 import { DecisionSchema } from '../decision.js';
 
-const SUBMIT_DESCRIPTION = 'Record your decision for this dispute. Call it exactly once, as your last step. The seller reviews it before anything is sent to PayPal.';
+const SUBMIT_DESCRIPTION = 'Record your decision for this dispute. plain_ask: at most 1200 characters; each reasons item: at most 400 characters; each evidence_have and evidence_missing item: at most 300 characters; draft_note: at most 2000 characters; each photo_findings item: at most 300 characters. Call it exactly once, as your last step. The seller reviews it before anything is sent to PayPal.';
 
 export function modelToolset(toolkit: PayPalAgentToolkit): { list_disputes: Tool; get_dispute: Tool } {
   const { list_disputes, get_dispute } = toolkit.getTools();

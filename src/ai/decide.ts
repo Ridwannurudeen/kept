@@ -15,6 +15,20 @@ export type DecideResult =
 
 const RETRY_SUFFIX = 'You did not call submit_decision. Call it now with your decision.';
 
+function validationSummary(error: unknown): string {
+  let current = error;
+  for (let depth = 0; depth < 3; depth += 1) {
+    if (current === null || typeof current !== 'object') break;
+    if ('issues' in current && Array.isArray(current.issues)) {
+      const issue = current.issues[0] as { path?: (string | number)[]; maximum?: number; code?: string } | undefined;
+      if (issue?.path?.length && issue.code === 'too_big' && issue.maximum !== undefined) return `${issue.path.join('.')} is longer than ${issue.maximum} characters`;
+      if (issue?.path?.length) return `${issue.path.join('.')} does not match the required format`;
+    }
+    current = 'cause' in current ? current.cause : null;
+  }
+  return 'submit_decision arguments did not match the required limits';
+}
+
 function errorDetail(error: unknown): { error: 'invalid_decision' | 'model_error'; detail: string; toolName: string | null } {
   const cause = RetryError.isInstance(error) ? error.lastError : error;
   if (InvalidToolArgumentsError.isInstance(cause) && cause.toolName === 'submit_decision') return { error: 'invalid_decision', detail: cause.message, toolName: cause.toolName };
@@ -27,9 +41,12 @@ export async function decideCase(input: DecideInput, deps: { model: LanguageMode
   const toolCalls: string[] = [];
   let steps = 0;
   let submitted: unknown = undefined;
+  let invalidDetail: string | null = null;
   const prompt = buildUserPrompt(input);
-  try {
-    for (const text of [prompt, `${prompt}\n\n${RETRY_SUFFIX}`]) {
+  let retryReason: string | null = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const text = attempt === 0 ? prompt : `${prompt}\n\n${retryReason ? `Your submit_decision call was rejected: ${retryReason}. Call submit_decision again with the same decision, within the limits.` : RETRY_SUFFIX}`;
+    try {
       const request = input.images.length
         ? { system: `${SYSTEM_PROMPT}\n\n${PHOTO_INSTRUCTION}`, messages: [{ role: 'user' as const, content: [{ type: 'text' as const, text }, ...input.images.map((image) => ({ type: 'image' as const, image: image.data, mimeType: image.mimeType }))] }] }
         : { system: SYSTEM_PROMPT, prompt: text };
@@ -42,17 +59,30 @@ export async function decideCase(input: DecideInput, deps: { model: LanguageMode
         onStepFinish: (step) => { steps += 1; toolCalls.push(...step.toolCalls.map((call) => call.toolName)); },
       });
       const last = result.steps.flatMap((step) => step.toolCalls).filter((call) => call.toolName === 'submit_decision').at(-1);
-      if (last) { submitted = last.args; break; }
+      if (last) {
+        const parsed = DecisionSchema.safeParse(last.args);
+        if (parsed.success) { submitted = parsed.data; invalidDetail = null; break; }
+        retryReason = validationSummary(parsed.error);
+        invalidDetail = parsed.error.message;
+      } else if (attempt === 0) {
+        retryReason = null;
+      }
+    } catch (error) {
+      const cause = RetryError.isInstance(error) ? error.lastError : error;
+      if (InvalidToolArgumentsError.isInstance(cause) && cause.toolName === 'submit_decision') {
+        if (!toolCalls.includes(cause.toolName)) toolCalls.push(cause.toolName);
+        if (attempt === 0) { retryReason = validationSummary(cause.cause); continue; }
+        return { ok: false, error: 'invalid_decision', detail: cause.message, steps, toolCalls, durationMs: Date.now() - started };
+      }
+      const failure = errorDetail(error);
+      if (failure.toolName) toolCalls.push(failure.toolName);
+      return { ok: false, error: failure.error, detail: failure.detail, steps, toolCalls, durationMs: Date.now() - started };
     }
-  } catch (error) {
-    const failure = errorDetail(error);
-    if (failure.toolName) toolCalls.push(failure.toolName);
-    return { ok: false, error: failure.error, detail: failure.detail, steps, toolCalls, durationMs: Date.now() - started };
   }
+  if (invalidDetail) return { ok: false, error: 'invalid_decision', detail: invalidDetail, steps, toolCalls, durationMs: Date.now() - started };
   if (submitted === undefined) return { ok: false, error: 'no_decision', detail: 'The model did not call submit_decision after one retry.', steps, toolCalls, durationMs: Date.now() - started };
-  const parsed = DecisionSchema.safeParse(submitted);
-  if (!parsed.success) return { ok: false, error: 'invalid_decision', detail: parsed.error.message, steps, toolCalls, durationMs: Date.now() - started };
   const amount = disputedAmount(input.dispute);
-  const validation = validateDecision(parsed.data, { disputedAmount: amount.value, allowed: new Set(input.allowed), policy: input.policy, stage: input.dispute.dispute_life_cycle_stage });
-  return { ok: true, decision: parsed.data, validation, steps, toolCalls, model: deps.model.modelId, durationMs: Date.now() - started };
+  const decision = submitted as Decision;
+  const validation = validateDecision(decision, { disputedAmount: amount.value, allowed: new Set(input.allowed), policy: input.policy, stage: input.dispute.dispute_life_cycle_stage });
+  return { ok: true, decision, validation, steps, toolCalls, model: deps.model.modelId, durationMs: Date.now() - started };
 }
