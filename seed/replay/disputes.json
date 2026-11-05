@@ -132,18 +132,6 @@
       "value": "36.00"
     },
     "dispute_state": "REQUIRED_ACTION",
-    "fund_movements": [
-      {
-        "party": "RECEIVER",
-        "amount": {
-          "currency_code": "USD",
-          "value": "34.25"
-        },
-        "initiated_time": "2026-11-04T18:25:34.000Z",
-        "type": "DEBIT",
-        "reason": "HOLD_PLACED"
-      }
-    ],
     "dispute_life_cycle_stage": "INQUIRY",
     "dispute_channel": "INTERNAL",
     "messages": [

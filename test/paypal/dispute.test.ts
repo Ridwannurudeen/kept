@@ -16,8 +16,8 @@ test('allowedActions reads link rels and ignores escalate/send_message', () => {
 
 test('holdAmount sums SELLER or RECEIVER DEBIT HOLD_PLACED movements and is null otherwise', () => {
   expect(holdAmount(fixture('dispute-chargeback-fresh'))).toEqual({ currency_code: 'USD', value: fixture('dispute-chargeback-fresh').fund_movements?.[0].amount.value });
-  expect(holdAmount(fixture('dispute-inquiry-open'))).toEqual({ currency_code: 'USD', value: '34.25' });
-  expect(holdAmount({ ...fixture('dispute-inquiry-open'), fund_movements: [] })).toBeNull();
+  expect(holdAmount(fixture('dispute-inquiry-open'))).toBeNull();
+  expect(holdAmount({ ...fixture('dispute-inquiry-open'), fund_movements: fixture('dispute-chargeback-fresh').fund_movements })).toEqual({ currency_code: 'USD', value: '18.81' });
 });
 
 test('captureIdOf returns seller_transaction_id and null when absent', () => {

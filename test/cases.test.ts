@@ -9,6 +9,7 @@ const fixture = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/pa
 const inquiry = fixture('dispute-inquiry-open');
 const resolved = fixture('dispute-inquiry-resolved');
 const chargeback = fixture('dispute-chargeback-fresh');
+const inquiryWithRecordedHold = { ...inquiry, fund_movements: chargeback.fund_movements };
 const now = new Date('2026-11-05T00:00:00.000Z');
 
 function record(captureId: string | null, key = 'B'): CaseRecord {
@@ -40,8 +41,8 @@ test('joins by capture id and keeps unmatched disputes with a null record', () =
 
 test('row carries hold, deadline, labels and the stored recommendation', () => {
   const decision: Decision = { recommendation: 'SETTLE', plain_ask: 'offer a partial refund', evidence_have: [], evidence_missing: [], reasons: ['fair'], offer_amount: '5.00', draft_note: 'Sorry.' };
-  const row = buildCaseRow(inquiry, record('CAPTUREB0000000001'), state({ decisions: { [inquiry.dispute_id]: stored(decision) } }), now);
-  expect(row).toMatchObject({ caseKey: 'B', itemName: 'Desk lamp', reasonLabel: 'Item not received', stageLabel: 'Inquiry', hold: { currency_code: 'USD', value: '34.25' }, recommendation: 'SETTLE', recommendationStale: false });
+  const row = buildCaseRow(inquiryWithRecordedHold, record('CAPTUREB0000000001'), state({ decisions: { [inquiry.dispute_id]: stored(decision) } }), now);
+  expect(row).toMatchObject({ caseKey: 'B', itemName: 'Desk lamp', reasonLabel: 'Item not received', stageLabel: 'Inquiry', hold: { currency_code: 'USD', value: '18.81' }, recommendation: 'SETTLE', recommendationStale: false });
   expect(row.deadline.state).toBe('ok');
   expect(buildCaseRow(inquiry, null, state(), now).recommendation).toBeNull();
 });
@@ -119,9 +120,9 @@ test('stale reason identifies status, amount and due date changes', () => {
 test('summarize totals in cents, takes the median days, and sums open stake and holds', () => {
   const one = { ...buildCaseRow(resolved, null, state(), now), outcome: { code: 'R', refunded: { currency_code: 'USD', value: '0.01' }, kept: { currency_code: 'USD', value: '19.99' }, daysToClose: 2 } };
   const two = { ...one, disputeId: 'two', outcome: { code: 'R', refunded: { currency_code: 'USD', value: '0.00' }, kept: { currency_code: 'USD', value: '0.01' }, daysToClose: 3 } };
-  const openRow = buildCaseRow(inquiry, null, state(), now);
+  const openRow = buildCaseRow(inquiryWithRecordedHold, null, state(), now);
   const summary = summarize([one, two, openRow]);
-  expect(summary).toMatchObject({ resolved: 2, kept: { currency_code: 'USD', value: '20.00' }, refunded: { currency_code: 'USD', value: '0.01' }, medianDaysToClose: 2, openAtStake: { currency_code: 'USD', value: '36.00' }, heldByPayPal: { currency_code: 'USD', value: '34.25' }, currency: 'USD', mixedCurrencyExcluded: 0 });
+  expect(summary).toMatchObject({ resolved: 2, kept: { currency_code: 'USD', value: '20.00' }, refunded: { currency_code: 'USD', value: '0.01' }, medianDaysToClose: 2, openAtStake: { currency_code: 'USD', value: '36.00' }, heldByPayPal: { currency_code: 'USD', value: '18.81' }, currency: 'USD', mixedCurrencyExcluded: 0 });
 });
 
 test('summarize accepts PayPal amounts without two decimal places', () => {
