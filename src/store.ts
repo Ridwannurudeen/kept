@@ -56,9 +56,9 @@ async function readSnapshot(path: string): Promise<Snapshot | null> {
   }
 }
 
-async function freshState(seedPath: string, snapshotPath: string, now: Date): Promise<State> {
+async function freshState(seedPath: string, snapshotPath: string | null, now: Date): Promise<State> {
   const { cases } = JSON.parse(await readFile(seedPath, 'utf8')) as { cases: Record<string, CaseRecord> };
-  const snapshot = await readSnapshot(snapshotPath);
+  const snapshot = snapshotPath === null ? null : await readSnapshot(snapshotPath);
   return {
     version: 1,
     startedAt: now.toISOString(),
@@ -79,16 +79,17 @@ export class Store {
   private constructor(
     private readonly dataDir: string,
     private readonly seedPath: string,
-    private readonly snapshotPath: string,
+    private readonly snapshotPath: string | null,
     private readonly now: () => Date,
+    private readonly onReset: (() => void) | undefined,
     state: State,
   ) {
     this.state = state;
   }
 
-  static async open(opts: { dataDir: string; seedPath: string; snapshotPath?: string; now?: () => Date }): Promise<Store> {
+  static async open(opts: { dataDir: string; seedPath: string; snapshotPath?: string | null; now?: () => Date; onReset?: () => void }): Promise<Store> {
     const now = opts.now ?? (() => new Date());
-    const snapshotPath = opts.snapshotPath ?? './seed/snapshot.json';
+    const snapshotPath = opts.snapshotPath === undefined ? './seed/snapshot.json' : opts.snapshotPath;
     const file = join(opts.dataDir, 'state.json');
     let text: string | null = null;
     try {
@@ -98,12 +99,12 @@ export class Store {
     }
     if (text !== null) {
       try {
-        return new Store(opts.dataDir, opts.seedPath, snapshotPath, now, JSON.parse(text) as State);
+        return new Store(opts.dataDir, opts.seedPath, snapshotPath, now, opts.onReset, JSON.parse(text) as State);
       } catch {
         await rename(file, join(opts.dataDir, `state.json.corrupt-${now().getTime()}`));
       }
     }
-    const store = new Store(opts.dataDir, opts.seedPath, snapshotPath, now, await freshState(opts.seedPath, snapshotPath, now()));
+    const store = new Store(opts.dataDir, opts.seedPath, snapshotPath, now, opts.onReset, await freshState(opts.seedPath, snapshotPath, now()));
     await store.persist(store.state);
     return store;
   }
@@ -121,7 +122,10 @@ export class Store {
   }
 
   reset(): Promise<State> {
-    return this.enqueue(() => freshState(this.seedPath, this.snapshotPath, this.now()));
+    return this.enqueue(() => {
+      this.onReset?.();
+      return freshState(this.seedPath, this.snapshotPath, this.now());
+    });
   }
 
   snapshot(): Snapshot {

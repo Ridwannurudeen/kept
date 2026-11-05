@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { FakePayPal, fakeToolkit } from './fakePaypal.js';
+import { FakePayPal, fakeToolkit } from '../../src/replay/fakePaypal.js';
 import { explainState } from '../../src/paypal/dispute.js';
 import { PayPalError } from '../../src/paypal/errors.js';
 
@@ -59,6 +59,15 @@ describe('FakePayPal replay', () => {
     const after = await paypal.getDispute(B);
     expect(after).toMatchObject({ status: 'RESOLVED', dispute_outcome: { outcome_code: 'ACCEPTED', amount_refunded: { currency_code: 'USD', value: '36.00' } } });
     expect(explainState(after, at).headline).toBe('You accepted the claim');
+  });
+
+  test('reset restores the recorded disputes after simulated actions', async () => {
+    const paypal = fake();
+    await paypal.makeOffer(B, { note: 'Sorry.', offer_amount: { currency_code: 'USD', value: '9.00' }, offer_type: 'REFUND' });
+    paypal.acceptClaim(A);
+    paypal.reset();
+    expect(await paypal.getDispute(B)).toEqual(await fake().getDispute(B));
+    expect(await paypal.getDispute(A)).toEqual(await fake().getDispute(A));
   });
 
   test('an action PayPal does not list is refused with 422, like the real API', async () => {

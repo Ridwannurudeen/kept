@@ -38,7 +38,7 @@ function check(action: ActionKind, note: string, offerAmount: string | null | un
   const listed = ctx.allowed.has(action);
   let cap: string | null = null;
   if (!listed) blockers.push(actionBlocker(action, ctx));
-  if (note.length === 0) blockers.push('Note is empty');
+  if (note.trim().length === 0) blockers.push('Note is empty');
   if (note.length > 2000) blockers.push('Note is longer than 2000 characters');
   if (action === 'make_offer') {
     if (offerAmount == null) {

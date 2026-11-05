@@ -6,6 +6,7 @@ export type Config = {
   port: number;
   dataDir: string;
   seedPath: string;
+  snapshotPath: string | null;
   mode: 'live' | 'replay';
 };
 
@@ -19,14 +20,16 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
   const port = Number(env.PORT ?? 3000);
   if (!Number.isInteger(port)) throw new Error('PORT must be a number');
   const mode = env.SETTLE_FAKE_PAYPAL === '1' ? 'replay' : 'live';
+  const replay = mode === 'replay';
   return {
-    paypalClientId: required(env, 'PAYPAL_CLIENT_ID'),
-    paypalClientSecret: required(env, 'PAYPAL_CLIENT_SECRET'),
-    anthropicApiKey: mode === 'replay' ? env.ANTHROPIC_API_KEY ?? '' : required(env, 'ANTHROPIC_API_KEY'),
+    paypalClientId: replay ? env.PAYPAL_CLIENT_ID ?? '' : required(env, 'PAYPAL_CLIENT_ID'),
+    paypalClientSecret: replay ? env.PAYPAL_CLIENT_SECRET ?? '' : required(env, 'PAYPAL_CLIENT_SECRET'),
+    anthropicApiKey: replay ? env.ANTHROPIC_API_KEY ?? '' : required(env, 'ANTHROPIC_API_KEY'),
     passcode: required(env, 'SETTLE_PASSCODE'),
     port,
-    dataDir: env.SETTLE_DATA_DIR ?? './data',
-    seedPath: env.SETTLE_SEED_PATH ?? (mode === 'replay' ? './seed/replay/cases.json' : './seed/cases.json'),
+    dataDir: env.SETTLE_DATA_DIR ?? (replay ? './data/replay' : './data'),
+    seedPath: env.SETTLE_SEED_PATH ?? (replay ? './seed/replay/cases.json' : './seed/cases.json'),
+    snapshotPath: replay ? null : './seed/snapshot.json',
     mode,
   };
 }

@@ -101,6 +101,20 @@ test('seeds decisions, actions and calls from snapshot.json when present and rec
     expect(state.policy).toEqual(defaultPolicy);
   } finally { await f.cleanup(); }
 });
+test('a null snapshotPath ignores the snapshot on open and on reset, and reset runs the onReset hook', async () => {
+  const f = await fixture();
+  try {
+    await writeFile(join(f.dir, 'snapshot.json'), JSON.stringify({ snapshotAt: '2026-11-06T00:00:00.000Z', decisions: { 'PP-D-1': { model: 'm' } }, actions: [], calls: [] }));
+    let resets = 0;
+    const store = await Store.open({ ...f.opts, snapshotPath: null, onReset: () => { resets += 1; } });
+    expect(store.get().restoredFrom).toBeNull();
+    expect(store.get().decisions).toEqual({});
+    const state = await store.reset();
+    expect(state.restoredFrom).toBeNull();
+    expect(state.decisions).toEqual({});
+    expect(resets).toBe(1);
+  } finally { await f.cleanup(); }
+});
 test('starts with empty lists and restoredFrom null when there is no snapshot', async () => {
   const f = await fixture();
   try {

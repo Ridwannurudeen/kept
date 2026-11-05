@@ -2,10 +2,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tool, type Tool } from 'ai';
 import { z } from 'zod';
-import { disputedAmount, type ActionKind } from '../../src/paypal/dispute.js';
-import { PayPalError } from '../../src/paypal/errors.js';
-import type { CallRecord, PayPalClient } from '../../src/paypal/client.js';
-import type { Capture, Dispute, DisputeListItem, Link, Money, Order } from '../../src/paypal/types.js';
+import { disputedAmount, type ActionKind } from '../paypal/dispute.js';
+import { PayPalError } from '../paypal/errors.js';
+import type { CallRecord, PayPalClient } from '../paypal/client.js';
+import type { Capture, Dispute, DisputeListItem, Link, Money, Order } from '../paypal/types.js';
 
 type Used = 'listDisputes' | 'getDispute' | 'getOrder' | 'getCapture' | 'makeOffer' | 'provideSupportingInfo' | 'provideEvidence';
 type Marked = { _replay: string };
@@ -28,20 +28,28 @@ function selfOnly(d: Dispute): Link[] {
 
 export class FakePayPal implements Pick<PayPalClient, Used> {
   readonly recordedOn: string;
-  private readonly disputes: Map<string, Dispute & Marked>;
-  private readonly orders: Map<string, Order & Marked>;
-  private readonly captures: Map<string, Capture & Marked>;
+  private readonly disputes = new Map<string, Dispute & Marked>();
+  private readonly orders = new Map<string, Order & Marked>();
+  private readonly captures = new Map<string, Capture & Marked>();
+  private readonly dir: string;
   private readonly now: () => Date;
 
   constructor(opts: { dir: string; now?: () => Date }) {
-    const disputes = load<Dispute>(opts.dir, 'disputes.json');
-    this.disputes = new Map(disputes.map((d) => [d.dispute_id, d]));
-    this.orders = new Map(load<Order>(opts.dir, 'orders.json').map((o) => [o.id, o]));
-    this.captures = new Map(load<Capture>(opts.dir, 'captures.json').map((c) => [c.id, c]));
+    this.dir = opts.dir;
     this.now = opts.now ?? (() => new Date());
-    const recordedOn = disputes[0]?._replay.match(/\d{4}-\d{2}-\d{2}/)?.[0];
+    this.reset();
+    const recordedOn = [...this.disputes.values()][0]?._replay.match(/\d{4}-\d{2}-\d{2}/)?.[0];
     if (!recordedOn) throw new Error('Replay disputes need a _replay marker with the recording date');
     this.recordedOn = recordedOn;
+  }
+
+  reset(): void {
+    this.disputes.clear();
+    this.orders.clear();
+    this.captures.clear();
+    for (const d of load<Dispute>(this.dir, 'disputes.json')) this.disputes.set(d.dispute_id, d);
+    for (const o of load<Order>(this.dir, 'orders.json')) this.orders.set(o.id, o);
+    for (const c of load<Capture>(this.dir, 'captures.json')) this.captures.set(c.id, c);
   }
 
   async listDisputes(): Promise<DisputeListItem[]> {

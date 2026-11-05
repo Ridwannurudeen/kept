@@ -37,6 +37,8 @@ test('multiple blockers are all reported', () => {
 });
 test('validateSubmission checks the seller-edited note and amount', () => {
   expect(validateSubmission({ action: 'make_offer', note: '', offerAmount: '9.00' }, ctx(inquiry))).toMatchObject({ ok: false, blockers: ['Note is empty'] });
+  expect(validateSubmission({ action: 'make_offer', note: ' \n\t ', offerAmount: '9.00' }, ctx(inquiry))).toMatchObject({ ok: false, blockers: ['Note is empty'] });
+  expect(validateDecision({ ...base, draft_note: '   ' }, ctx(inquiry))).toMatchObject({ ok: false, blockers: ['Note is empty'] });
   expect(validateSubmission({ action: 'make_offer', note: 'ok', offerAmount: '10.80' }, ctx(inquiry))).toEqual({ ok: true, action: 'make_offer', cap: '10.80' });
   expect(validateSubmission({ action: 'provide_supporting_info', note: 'x'.repeat(2001) }, ctx(claim, 'CHARGEBACK'))).toMatchObject({ ok: false, blockers: ['Note is longer than 2000 characters'] });
 });

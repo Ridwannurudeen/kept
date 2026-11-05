@@ -44,7 +44,7 @@ async function decideOne(disputeId: string, deps: Deps): Promise<DecideResult> {
 
 export function registerRoutes(router: Router, deps: Deps): void {
   const queue = createDecideQueue((disputeId) => decideOne(disputeId, deps));
-  router.get('/healthz', (_req, res) => res.json({ ok: true, startedAt: deps.store.get().startedAt, cases: Object.keys(deps.store.get().cases).length, mode: deps.config.mode, recordedOn: deps.recordedOn }));
+  router.get('/healthz', (_req, res) => res.json({ ok: true, startedAt: deps.store.get().startedAt, cases: Object.keys(deps.store.get().cases).length, mode: deps.config.mode, recordedOn: deps.recordedOn, restoredFrom: deps.store.get().restoredFrom }));
 
   router.get('/api/cases', async (req, res, next) => {
     try {

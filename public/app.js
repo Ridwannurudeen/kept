@@ -23,6 +23,7 @@
     panelClose: document.getElementById("panel-close"),
     replayBanner: document.getElementById("replay-banner"),
     confirmDialog: document.getElementById("confirm-dialog"),
+    confirmText: document.getElementById("confirm-text"),
     confirmSummary: document.getElementById("confirm-summary"),
     dialog: document.getElementById("passcode-dialog"),
     passcodeForm: document.getElementById("passcode-form"),
@@ -41,6 +42,7 @@
   let panelId = null;
   let panelDetail = null;
   let returnFocus = null;
+  let approving = false;
   const isPending = (job) =>
     job?.state === "queued" || job?.state === "running";
 
@@ -200,7 +202,7 @@
         "Resolved cases",
         "No resolved cases yet",
         "",
-        "From PayPal's dispute status and dispute_outcome: none of these disputes is RESOLVED yet",
+        "None of these disputes has been resolved yet",
       );
       empty.classList.add("stat-empty");
       items.push(empty);
@@ -350,10 +352,11 @@
       failed ? "Failed: retry" : "Decide",
     );
     button.type = "button";
+    if (failed) button.title = state.detail;
     button.setAttribute(
       "aria-label",
       failed
-        ? `Retry deciding case ${label}. Failed: ${state.detail}`
+        ? `Failed: retry deciding case ${label}. ${state.detail}`
         : `Decide case ${label}`,
     );
     button.addEventListener("click", (event) => {
@@ -412,6 +415,7 @@
   }
 
   async function pollStatus() {
+    pollTimer = null;
     try {
       const jobs = await api("/api/decide/status");
       const finished = [];
@@ -420,10 +424,7 @@
         const local = decideState.get(id);
         if (local?.posting) continue;
         if (job.state === "done") {
-          if (local) {
-            decideState.delete(id);
-            finished.push(id);
-          }
+          if (local) finished.push(id);
           continue;
         }
         if (job.state === "failed" && isPending(local))
@@ -432,15 +433,16 @@
           );
         decideState.set(id, { state: job.state, detail: job.error });
       }
-      if (panelId && finished.includes(panelId)) loadPanel(panelId);
       if (finished.length) {
         const data = await api("/api/cases");
+        for (const id of finished) decideState.delete(id);
         const rows = data.cases.filter(
           (row) =>
             finished.includes(row.disputeId) &&
             gridApi.getRowNode(row.disputeId),
         );
         gridApi.applyTransaction({ update: rows });
+        if (panelId && finished.includes(panelId)) loadPanel(panelId);
         for (const row of rows)
           notes.push(
             `Case ${row.caseKey || shortId(row.disputeId)}: Settle recommends ${row.recommendation}`,
@@ -448,12 +450,10 @@
       }
       refreshRecommendations();
       if (notes.length) announce(notes.join(". "));
-      pollTimer = null;
-      const pending = Object.values(jobs).some(isPending);
+      const pending = [...decideState.values()].some(isPending);
       els.decideAll.disabled = pending;
       if (pending) schedulePoll();
     } catch (error) {
-      pollTimer = null;
       els.decideAll.disabled = false;
       els.fetchStatus.classList.add("is-warning");
       els.fetchStatus.textContent = `Could not check decision progress. ${error.message}`;
@@ -488,12 +488,18 @@
     accept_claim: "Accepted the claim",
   };
 
-  const centsOf = (value) => Number(value.replace(".", ""));
+  const centsOf = (value) => {
+    const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(value);
+    if (!match) return null;
+    return Number(match[1]) * 100 + Number((match[2] || "").padEnd(2, "0"));
+  };
   const fromCents = (cents) =>
     `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, "0")}`;
 
   function checkOffer(offer, disputed, policy) {
     const disputedCents = centsOf(disputed);
+    if (disputedCents === null || centsOf(policy.maxOfferAbsolute) === null)
+      return { ok: false, message: "Disputed amount is not a valid amount" };
     const cap = fromCents(
       Math.min(
         Math.floor((disputedCents * policy.maxOfferPercent) / 100),
@@ -557,7 +563,8 @@
   }
 
   function staleNotice(detail) {
-    return `This case changed since Settle looked at it (${detail.staleReason}). Run Settle again before approving.`;
+    const reason = detail.staleReason ? ` (${detail.staleReason})` : "";
+    return `This case changed since Settle looked at it${reason}. Run Settle again before approving.`;
   }
 
   function approveBlockers(detail, action, note, offer) {
@@ -718,7 +725,7 @@
         el("p", "panel-error", `No decision yet. ${state.detail || ""}`.trim()),
       );
     if (decision) wrap.append(list(decision.reasons, "No reasons given"));
-    if (detail.recommendationStale && detail.staleReason)
+    if (detail.recommendationStale)
       wrap.append(el("p", "notice notice-stale", staleNotice(detail)));
     return wrap;
   }
@@ -735,7 +742,7 @@
     note.id = noteId;
     note.rows = 6;
     note.maxLength = 2000;
-    note.value = sent ? sent.submitted.note : decision?.draft_note || "";
+    note.defaultValue = sent ? sent.submitted.note : decision?.draft_note || "";
     note.readOnly = Boolean(sent);
     note.placeholder = "Write what PayPal and the buyer will read";
     const count = el("p", "field-hint");
@@ -752,7 +759,7 @@
       offer.id = "offer-amount";
       offer.inputMode = "decimal";
       offer.autocomplete = "off";
-      offer.value = sent
+      offer.defaultValue = sent
         ? sent.submitted.offerAmount || ""
         : decision?.offer_amount || "";
       offer.readOnly = Boolean(sent);
@@ -778,6 +785,8 @@
     );
     button.type = "button";
     button.setAttribute("aria-describedby", "approve-reason");
+    if (approving)
+      button.replaceChildren(spinner(), document.createTextNode("Sending…"));
     const reason = el("ul", "approve-reason");
     reason.id = "approve-reason";
     approve.append(button, reason);
@@ -798,13 +807,17 @@
         note.value,
         offer ? offer.value.trim() : null,
       );
-      button.setAttribute("aria-disabled", String(blockers.length > 0));
+      button.setAttribute(
+        "aria-disabled",
+        String(approving || blockers.length > 0),
+      );
       reason.replaceChildren(...blockers.map((text) => el("li", "", text)));
       return blockers;
     };
     note.addEventListener("input", update);
     offer?.addEventListener("input", update);
     button.addEventListener("click", () => {
+      if (approving) return;
       const blockers = update();
       if (blockers.length) {
         announce(`Not sent. ${blockers.join(". ")}`);
@@ -830,7 +843,9 @@
       const facts = el("dl", "result-facts");
       const fact = (label, value) =>
         facts.append(el("dt", "", label), el("dd", "", value));
-      fact("PayPal HTTP status", String(entry.paypal.status ?? result.status));
+      if (entry.paypal.status === null)
+        fact("PayPal status", "not reported by the toolkit");
+      else fact("PayPal HTTP status", String(entry.paypal.status));
       fact("Links on the dispute now", String(dispute.links?.length ?? 0));
       wrap.append(facts);
       wrap.append(
@@ -876,7 +891,7 @@
     notes.id = "seller-notes";
     notes.rows = 4;
     notes.maxLength = 4000;
-    notes.value = detail.record?.notes || "";
+    notes.defaultValue = detail.record?.notes || "";
     const row = el("div", "panel-row");
     const save = el("button", "button button-small", "Save notes");
     save.type = "button";
@@ -891,6 +906,7 @@
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ notes: notes.value }),
         });
+        notes.defaultValue = notes.value;
         status.textContent = `Saved ${timeFormat.format(new Date())}`;
       } catch (error) {
         status.textContent = `Not saved. ${error.message}`;
@@ -997,11 +1013,13 @@
   }
 
   function confirmAndApprove(detail, body) {
+    if (approving || els.confirmDialog.open) return;
     els.confirmSummary.textContent = `${approveLabel(body.action, detail)}${body.offerAmount ? ` (${detail.amount.currency_code} ${body.offerAmount})` : ""} for case ${panelLabel(detail)}.`;
     els.confirmDialog.returnValue = "";
     const onClose = () => {
       els.confirmDialog.removeEventListener("close", onClose);
-      if (els.confirmDialog.returnValue === "ok") approve(detail, body);
+      if (els.confirmDialog.returnValue === "ok" && !approving)
+        approve(detail, body);
     };
     els.confirmDialog.addEventListener("close", onClose);
     els.confirmDialog.showModal();
@@ -1010,6 +1028,7 @@
   async function approve(detail, body) {
     const id = detail.disputeId;
     const label = panelLabel(detail);
+    approving = true;
     const button = els.panelBody.querySelector(".button-approve");
     if (button) {
       button.setAttribute("aria-disabled", "true");
@@ -1028,11 +1047,13 @@
       const result = { status: res.status, body: await res.json() };
       if (![200, 409, 502].includes(res.status))
         throw new Error(result.body.message || `Server returned ${res.status}`);
-      resultById.set(id, result);
+      if (!(res.status === 409 && resultById.get(id)?.status === 200))
+        resultById.set(id, result);
       if (res.status === 200) {
         const { entry, detail: fresh } = result.body;
         sentById.set(id, entry);
         gridApi.applyTransaction({ update: [fresh] });
+        await loadCases({ refresh: true });
         announce(
           entry.after
             ? `Case ${label}: PayPal now reports ${entry.after.status} at ${fresh.stageLabel}`
@@ -1052,6 +1073,7 @@
       });
       announce(`Case ${label}: could not send. ${error.message}`);
     }
+    approving = false;
     if (panelId !== id) return;
     await loadPanel(id);
     document.getElementById("panel-result")?.focus();
@@ -1341,6 +1363,8 @@
     if (health.mode === "replay") {
       els.replayBanner.textContent = `Replay of recorded sandbox data from ${recordedFormat.format(new Date(health.recordedOn))}. Actions here are simulated.`;
       els.replayBanner.hidden = false;
+      els.confirmText.textContent =
+        "Replay: this simulates a sandbox action. Nothing is sent to PayPal. Continue?";
     }
     els.footer.textContent = `Demo state resets to the seed when the server restarts (Render free tier keeps no disk)${snapshot}. Started ${stampFormat.format(new Date(health.startedAt))}. Sandbox only.`;
   }
@@ -1362,6 +1386,14 @@
       els.panel.hidden ||
       els.dialog.open ||
       els.confirmDialog.open
+    )
+      return;
+    const active = document.activeElement;
+    if (
+      (active instanceof HTMLTextAreaElement ||
+        active instanceof HTMLInputElement) &&
+      els.panel.contains(active) &&
+      active.value !== active.defaultValue
     )
       return;
     closePanel();

@@ -421,6 +421,9 @@ textarea {
 
 /* Replay banner */
 .replay-banner {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   margin: 0;
   padding: 8px clamp(16px, 3vw, 32px);
   background: var(--warn-bg);
@@ -445,6 +448,11 @@ textarea {
     top: 16px;
     max-height: calc(100vh - 32px);
     overflow-y: auto;
+  }
+
+  body:has(.replay-banner:not([hidden])) .panel {
+    top: 56px;
+    max-height: calc(100vh - 72px);
   }
 }
 

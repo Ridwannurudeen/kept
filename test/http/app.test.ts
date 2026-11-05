@@ -8,7 +8,7 @@ import type { Config } from '../../src/config.js';
 import type { Dispute } from '../../src/paypal/types.js';
 import { PayPalError } from '../../src/paypal/errors.js';
 import { Store } from '../../src/store.js';
-import { FakePayPal } from '../fakes/fakePaypal.js';
+import { FakePayPal } from '../../src/replay/fakePaypal.js';
 
 const dispute = (id: string, due: string, captureId = `CAP-${id}`): Dispute => ({
   dispute_id: id,
@@ -51,7 +51,7 @@ describe('HTTP app', () => {
       getOrder: vi.fn(async () => { throw new Error('order unavailable'); }),
       getCapture: vi.fn(async () => { throw new Error('capture unavailable'); }),
     };
-    config = { paypalClientId: 'id', paypalClientSecret: 'secret', anthropicApiKey: 'key', passcode: 'pass', port: 3000, dataDir: join(dir, 'data'), seedPath, mode: 'live' };
+    config = { paypalClientId: 'id', paypalClientSecret: 'secret', anthropicApiKey: 'key', passcode: 'pass', port: 3000, dataDir: join(dir, 'data'), seedPath, snapshotPath: join(dir, 'absent.json'), mode: 'live' };
     decide = vi.fn(async () => { throw new Error('Not wired yet'); });
     act = vi.fn();
     app = createApp({ config, paypal: paypal as never, store, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: null });
@@ -60,7 +60,15 @@ describe('HTTP app', () => {
   afterEach(async () => { await rm(dir, { recursive: true, force: true }); });
 
   test('healthz needs no passcode and includes mode', async () => {
-    await request(app).get('/healthz').expect(200).expect(({ body }) => expect(body).toMatchObject({ ok: true, mode: 'live' }));
+    await request(app).get('/healthz').expect(200).expect(({ body }) => expect(body).toMatchObject({ ok: true, mode: 'live', restoredFrom: null }));
+  });
+
+  test('healthz reports when decisions were restored from a snapshot', async () => {
+    const snapshotPath = join(dir, 'snapshot.json');
+    await writeFile(snapshotPath, JSON.stringify({ snapshotAt: '2026-11-06T00:00:00.000Z', decisions: {}, actions: [], calls: [] }));
+    const restored = await Store.open({ dataDir: join(dir, 'restored'), seedPath: config.seedPath, snapshotPath });
+    const withSnapshot = createApp({ config, paypal: paypal as never, store: restored, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: null });
+    await request(withSnapshot).get('/healthz').expect(200).expect(({ body }) => expect(body.restoredFrom).toBe('2026-11-06T00:00:00.000Z'));
   });
 
   test('healthz reports replay mode and the recording date when the fake is injected', async () => {
