@@ -132,6 +132,34 @@ test('lists one page of disputes with page_size=50', async () => {
   expect(url.searchParams.get('dispute_state')).toBe('REQUIRED_ACTION');
 });
 
+test('retries a GET once on 503 and never retries make-offer', async () => {
+  const calls: CallRecord[] = [];
+  const f = fakeFetch([tokenReply(), { status: 503, json: {} }, { status: 200, json: { dispute_id: 'PP-1' } }]);
+  const client = new PayPalClient({ clientId: 'id', clientSecret: 'sec', fetch: f.fetch, onCall: (call) => calls.push(call), delay: async () => {} });
+  await client.getDispute('PP-1');
+  expect(f.requests.filter((r) => r.method === 'GET')).toHaveLength(2);
+  expect(calls.at(-1)).toMatchObject({ method: 'GET', retried: true });
+  const w = fakeFetch([tokenReply(), { status: 503, json: {} }]);
+  const writer = new PayPalClient({ clientId: 'id', clientSecret: 'sec', fetch: w.fetch, delay: async () => {} });
+  await expect(writer.makeOffer('PP-1', offer)).rejects.toMatchObject({ status: 503 });
+  expect(w.requests.filter((r) => r.method === 'POST' && !r.url.endsWith('/token'))).toHaveLength(1);
+});
+
+test('follows next links when listing disputes, at most 5 pages', async () => {
+  const { client, requests } = makeClient([tokenReply(), { status: 200, json: { items: [{ dispute_id: 'PP-1' }], links: [{ rel: 'next', href: 'https://api-m.sandbox.paypal.com/v1/customer/disputes?page=2' }] } }, { status: 200, json: { items: [{ dispute_id: 'PP-2' }] } }]);
+  const items = await client.listDisputes();
+  expect(items.map((item) => item.dispute_id)).toEqual(['PP-1', 'PP-2']);
+  expect(requests.filter((r) => r.method === 'GET')).toHaveLength(2);
+});
+
+test('stops listing disputes after five pages', async () => {
+  const replies: Reply[] = [tokenReply()];
+  for (let page = 1; page <= 5; page++) replies.push({ status: 200, json: { items: [{ dispute_id: `PP-${page}` }], links: [{ rel: 'next', href: `https://api-m.sandbox.paypal.com/v1/customer/disputes?page=${page + 1}` }] } });
+  const { client, requests } = makeClient(replies);
+  expect(await client.listDisputes()).toHaveLength(5);
+  expect(requests.filter((request) => request.method === 'GET')).toHaveLength(5);
+});
+
 test('provideSupportingInfo posts multipart with the input part', async () => {
   const { client, requests } = makeClient([tokenReply(), { status: 200, json: { links: [] } }]);
   await client.provideSupportingInfo('PP-1', 'n');

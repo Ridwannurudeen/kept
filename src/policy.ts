@@ -21,6 +21,14 @@ export function toCents(value: string): number {
   return Number(cents);
 }
 
+export function parseAmount(value: string): number {
+  if (!/^\d+(?:\.\d{1,2})?$/.test(value)) throw new Error('Invalid money amount');
+  const [whole, fraction = ''] = value.split('.');
+  const cents = BigInt(whole!) * 100n + BigInt(fraction.padEnd(2, '0'));
+  if (cents > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error('Invalid money amount');
+  return Number(cents);
+}
+
 export function fromCents(cents: number): string {
   if (!Number.isSafeInteger(cents)) throw new Error('Invalid money amount');
   const sign = cents < 0 ? '-' : '';
@@ -29,7 +37,7 @@ export function fromCents(cents: number): string {
 }
 
 export function offerCap(disputed: string, policy: Policy): string {
-  const disputedCents = BigInt(toCents(disputed));
+  const disputedCents = BigInt(parseAmount(disputed));
   const percentCents = disputedCents * BigInt(policy.maxOfferPercent) / 100n;
   const absoluteCents = BigInt(toCents(policy.maxOfferAbsolute));
   return fromCents(Number([percentCents, absoluteCents, disputedCents].reduce((lowest, value) => value < lowest ? value : lowest)));
@@ -42,7 +50,7 @@ export function checkOffer(offer: string, disputed: string, policy: Policy): Off
     return { ok: false, cap: offerCap(disputed, policy), limit: 'format', message: 'Offer must be an amount like 9.00' };
   }
   const offerCents = toCents(offer);
-  const disputedCents = toCents(disputed);
+  const disputedCents = parseAmount(disputed);
   const cap = offerCap(disputed, policy);
   if (offerCents === 0) return { ok: false, cap, limit: 'zero', message: 'Offer must be more than 0.00' };
   if (offerCents <= toCents(cap)) return { ok: true, cap };

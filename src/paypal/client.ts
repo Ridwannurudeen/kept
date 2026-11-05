@@ -25,6 +25,7 @@ export class PayPalClient {
   private readonly fetch: typeof fetch;
   private readonly onCall: (c: CallRecord) => void;
   private readonly now: () => number;
+  private readonly delay: (ms: number) => Promise<void>;
   private token: { value: string; expiresAt: number } | null = null;
 
   constructor(opts: {
@@ -34,6 +35,7 @@ export class PayPalClient {
     fetch?: typeof fetch;
     onCall?: (c: CallRecord) => void;
     now?: () => number;
+    delay?: (ms: number) => Promise<void>;
   }) {
     this.clientId = opts.clientId;
     this.clientSecret = opts.clientSecret;
@@ -41,6 +43,7 @@ export class PayPalClient {
     this.fetch = opts.fetch ?? globalThis.fetch;
     this.onCall = opts.onCall ?? (() => {});
     this.now = opts.now ?? Date.now;
+    this.delay = opts.delay ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
   }
 
   async getAccessToken(): Promise<string> {
@@ -59,8 +62,17 @@ export class PayPalClient {
     const query = new URLSearchParams({ page_size: '50' });
     if (params.disputeState) query.set('dispute_state', params.disputeState);
     if (params.updateTimeAfter) query.set('update_time_after', params.updateTimeAfter);
-    const list = (await this.request('GET', `/v1/customer/disputes?${query}`)) as DisputeList;
-    return list.items ?? [];
+    let path = `/v1/customer/disputes?${query}`;
+    const items: DisputeListItem[] = [];
+    for (let page = 0; page < 5; page++) {
+      const list = (await this.request('GET', path)) as DisputeList;
+      items.push(...(list.items ?? []));
+      const next = list.links?.find((link) => link.rel === 'next');
+      if (!next) break;
+      const url = new URL(next.href, this.baseUrl);
+      path = `${url.pathname}${url.search}`;
+    }
+    return items;
   }
 
   async getDispute(id: string): Promise<Dispute> {
@@ -118,19 +130,22 @@ export class PayPalClient {
       headers['Content-Type'] = 'application/json';
       body = JSON.stringify(write.json);
     }
-    const attempt = async () =>
-      this.send(method, path, { headers: { ...headers, Authorization: `Bearer ${await this.getAccessToken()}` }, body, requestId }, onCall);
+    const attempt = async (retried = false) =>
+      this.send(method, path, { headers: { ...headers, Authorization: `Bearer ${await this.getAccessToken()}` }, body, requestId }, onCall, retried);
     try {
       return await attempt();
     } catch (err) {
-      if (method !== 'GET' && path !== '/v1/oauth2/token') throw err;
-      if (!(err instanceof PayPalError) || err.status !== 401) throw err;
+      if (method === 'GET' && err instanceof PayPalError && (err.status === 429 || err.status >= 500)) {
+        await this.delay(1500);
+        return attempt(true);
+      }
+      if (method !== 'GET' || !(err instanceof PayPalError) || err.status !== 401) throw err;
       this.token = null;
-      return attempt();
+      return attempt(true);
     }
   }
 
-  private async send(method: string, path: string, req: Send, onCall?: (call: CallRecord) => void): Promise<unknown> {
+  private async send(method: string, path: string, req: Send, onCall?: (call: CallRecord) => void, retried = false): Promise<unknown> {
     const start = this.now();
     const record = (status: number | null, debugId: string | null, error?: string) => {
       const call = {
@@ -141,6 +156,7 @@ export class PayPalClient {
         durationMs: this.now() - start,
         requestId: req.requestId,
         debugId,
+        ...(retried ? { retried: true } : {}),
         ...(error === undefined ? {} : { error }),
       };
       this.onCall(call);

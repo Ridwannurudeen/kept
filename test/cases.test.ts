@@ -124,6 +124,13 @@ test('summarize totals in cents, takes the median days, and sums open stake and 
   expect(summary).toMatchObject({ resolved: 2, kept: { currency_code: 'USD', value: '20.00' }, refunded: { currency_code: 'USD', value: '0.01' }, medianDaysToClose: 2, openAtStake: { currency_code: 'USD', value: '36.00' }, heldByPayPal: { currency_code: 'USD', value: '34.25' }, currency: 'USD', mixedCurrencyExcluded: 0 });
 });
 
+test('summarize accepts PayPal amounts without two decimal places', () => {
+  const wholeDollar = buildCaseRow({ ...inquiry, dispute_amount: { currency_code: 'USD', value: '36' }, disputed_transactions: undefined }, null, state(), now);
+  expect(summarize([wholeDollar]).openAtStake).toEqual({ currency_code: 'USD', value: '36.00' });
+  const partialDollar = buildCaseRow({ ...inquiry, dispute_amount: { currency_code: 'USD', value: '36.5' }, disputed_transactions: undefined }, null, state(), now);
+  expect(summarize([partialDollar]).openAtStake).toEqual({ currency_code: 'USD', value: '36.50' });
+});
+
 test('summarize excludes a second currency and counts it', () => {
   const usd = buildCaseRow(resolved, null, state(), now);
   const eurDispute = { ...resolved, dispute_id: 'eur', dispute_amount: { currency_code: 'EUR', value: '5.00' }, disputed_transactions: [{ gross_amount: { currency_code: 'EUR', value: '20.00' } }] };

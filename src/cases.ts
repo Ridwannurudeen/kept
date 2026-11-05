@@ -2,7 +2,7 @@ import type { Decision } from './decision.js';
 import { isDecisionStale, type State, type StoredDecision } from './store.js';
 import type { ActionEntry } from './log.js';
 import { hasSentAction } from './log.js';
-import { deadlineStatus, fromCents, offerCap, toCents, type DeadlineStatus, type Policy } from './policy.js';
+import { deadlineStatus, fromCents, offerCap, parseAmount, type DeadlineStatus, type Policy } from './policy.js';
 import { allowedActions, captureIdOf, disputedAmount, explainState, holdAmount, isOpen, reasonLabel, stageLabel, type ActionKind, type StateExplanation } from './paypal/dispute.js';
 import type { Capture, Dispute, Money, Order } from './paypal/types.js';
 import type { CaseRecord } from '../seed/seed.js';
@@ -67,7 +67,7 @@ function outcomeOf(d: Dispute): CaseRow['outcome'] {
   const amount = disputedAmount(d);
   const suppliedRefund = d.dispute_outcome?.amount_refunded;
   const refunded = suppliedRefund ?? (code === 'RESOLVED_SELLER_FAVOUR' ? { currency_code: amount.currency_code, value: '0.00' } : null);
-  const kept = refunded && refunded.currency_code === amount.currency_code ? { currency_code: amount.currency_code, value: fromCents(toCents(amount.value) - toCents(refunded.value)) } : null;
+  const kept = refunded && refunded.currency_code === amount.currency_code ? { currency_code: amount.currency_code, value: fromCents(parseAmount(amount.value) - parseAmount(refunded.value)) } : null;
   const created = Date.parse(d.create_time);
   const updated = Date.parse(d.update_time);
   const daysToClose = Number.isFinite(created) && Number.isFinite(updated) ? Math.floor((updated - created) / 86_400_000) : null;
@@ -163,15 +163,15 @@ export function summarize(rows: CaseRow[]): OutcomeSummary {
   const included = rows.filter((row) => row.amount.currency_code === currency);
   const mixedCurrencyExcluded = rows.length - included.length;
   const resolved = included.filter((row) => row.outcome !== null);
-  const keptCents = resolved.reduce((sum, row) => sum + (row.outcome?.kept ? toCents(row.outcome.kept.value) : 0), 0);
-  const refundedCents = resolved.reduce((sum, row) => sum + (row.outcome?.refunded ? toCents(row.outcome.refunded.value) : 0), 0);
+  const keptCents = resolved.reduce((sum, row) => sum + (row.outcome?.kept ? parseAmount(row.outcome.kept.value) : 0), 0);
+  const refundedCents = resolved.reduce((sum, row) => sum + (row.outcome?.refunded ? parseAmount(row.outcome.refunded.value) : 0), 0);
   const days = resolved.flatMap((row) => row.outcome?.daysToClose === null || row.outcome?.daysToClose === undefined ? [] : [row.outcome.daysToClose]).sort((a, b) => a - b);
   const middle = Math.floor(days.length / 2);
   const medianDaysToClose = days.length === 0 ? null : days.length % 2 === 1 ? days[middle] : Math.floor((days[middle - 1] + days[middle]) / 2);
   const openRows = included.filter((row) => row.open);
   const heldRows = openRows.filter((row) => row.hold !== null);
-  const openCents = openRows.reduce((sum, row) => sum + toCents(row.amount.value), 0);
-  const holdCents = heldRows.reduce((sum, row) => sum + toCents(row.hold?.value ?? '0.00'), 0);
+  const openCents = openRows.reduce((sum, row) => sum + parseAmount(row.amount.value), 0);
+  const holdCents = heldRows.reduce((sum, row) => sum + parseAmount(row.hold?.value ?? '0.00'), 0);
   return {
     resolved: resolved.length,
     kept: resolved.length ? { currency_code: included[0]!.amount.currency_code, value: fromCents(keptCents) } : null,

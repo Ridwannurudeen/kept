@@ -56,11 +56,19 @@ export function registerRoutes(router: Router, deps: Deps): void {
         return;
       }
       const listed = await deps.paypal.listDisputes();
-      const disputes = await Promise.all(listed.map((entry) => deps.paypal.getDispute(entry.dispute_id)));
+      const warnings: string[] = [];
+      const results = await Promise.all(listed.map(async (entry) => {
+        try { return await deps.paypal.getDispute(entry.dispute_id); }
+        catch (error) {
+          if (error instanceof PayPalError && error.status === 404) { warnings.push(`Dispute ${entry.dispute_id} is no longer available`); return null; }
+          throw error;
+        }
+      }));
+      const disputes = results.filter((dispute): dispute is Dispute => dispute !== null);
       const fresh: CachedCases = { disputes, fetchedAt: deps.now().toISOString(), at: deps.now().getTime() };
       const cases = cachedRows(fresh, deps);
       caches.set(deps.store, fresh);
-      res.json({ cases, summary: summarize(cases), fetchedAt: fresh.fetchedAt, stale: false });
+      res.json({ cases, summary: summarize(cases), fetchedAt: fresh.fetchedAt, stale: false, warnings });
     } catch (error) {
       const cachedCases = caches.get(deps.store);
       if (cachedCases) {
@@ -164,6 +172,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
       const outcome = await deps.act(req.params.id, { action: body.action as (typeof ACTION_KINDS)[number], note: body.note, offerAmount: body.offerAmount as string | null | undefined, evidenceType: body.evidenceType as 'PROOF_OF_FULFILLMENT' | 'OTHER' | undefined }, { paypal: deps.paypal, toolkit: deps.toolkit, store: deps.store, now: deps.now });
       if (outcome.status === 'refused') { res.status(409).json({ blockers: outcome.blockers }); return; }
       if (outcome.status === 'failed') { res.status(502).json({ entry: outcome.entry, error: outcome.error }); return; }
+      caches.delete(deps.store);
       const state = deps.store.get();
       const captureId = captureIdOf(outcome.dispute);
       const record = Object.values(state.cases).find((entry) => entry.captureId && entry.captureId === captureId) ?? null;

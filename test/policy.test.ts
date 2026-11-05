@@ -1,4 +1,12 @@
-import { checkOffer, deadlineStatus, defaultPolicy, offerCap, parsePolicy } from '../src/policy.js';
+import { checkOffer, deadlineStatus, defaultPolicy, offerCap, parseAmount, parsePolicy, toCents } from '../src/policy.js';
+
+test('PayPal disputed amounts accept zero or one decimal while seller offers stay strict', () => {
+  expect(parseAmount('36')).toBe(3600);
+  expect(parseAmount('36.5')).toBe(3650);
+  expect(() => toCents('36')).toThrow('Invalid money amount');
+  expect(() => toCents('36.5')).toThrow('Invalid money amount');
+  expect(offerCap('36.5', defaultPolicy)).toBe('10.95');
+});
 
 test('cap is the lowest of percent, absolute and disputed, floored to cents', () => {
   expect(offerCap('36.00', defaultPolicy)).toBe('10.80');

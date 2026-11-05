@@ -200,6 +200,41 @@ describe('HTTP app', () => {
     expect(store.get().decisions['d-late']).toBeUndefined();
   });
 
+  test('POST decide on a no-links case still returns the stubbed decision', async () => {
+    disputes[0] = { ...disputes[0]!, links: [] };
+    const decision = { recommendation: 'WAIT', plain_ask: 'Wait.', evidence_have: [], evidence_missing: [], reasons: [], offer_amount: null, draft_note: 'Wait.' };
+    decide.mockResolvedValueOnce({ ok: true, decision, validation: { ok: true }, steps: 1, toolCalls: [], model: 'test', durationMs: 1 });
+    const { body } = await request(app).post('/api/cases/d-late/decide').set('x-settle-passcode', 'pass').expect(200);
+    expect(body).toMatchObject({ ok: true, decision });
+  });
+
+  test('GET /api/cases skips a listed dispute that now returns 404 and reports it', async () => {
+    paypal.getDispute.mockImplementation(async (id: string) => {
+      if (id === 'd-late') throw new PayPalError('missing', 404, null, {}, '/dispute');
+      return disputes.find((d) => d.dispute_id === id) as Dispute;
+    });
+    const { body } = await request(app).get('/api/cases').set('x-settle-passcode', 'pass').expect(200);
+    expect(body.cases.map((row: { disputeId: string }) => row.disputeId)).toEqual(['d-early', 'd-closed']);
+    expect(body.warnings).toEqual(['Dispute d-late is no longer available']);
+  });
+
+  test('POST approve on a resolved case reports PayPal missing the action', async () => {
+    act.mockResolvedValueOnce({ status: 'refused', blockers: ['PayPal does not list make_offer for this case (stage INQUIRY)'] });
+    await request(app).post('/api/cases/d-closed/approve').set('x-settle-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(409, { blockers: ['PayPal does not list make_offer for this case (stage INQUIRY)'] });
+  });
+
+  test('POST approve clears the case cache after a successful action', async () => {
+    const auth = { 'x-settle-passcode': 'pass' };
+    await request(app).get('/api/cases').set(auth).expect(200);
+    const current = disputes[1]!;
+    const entry = { id: 'action-cache', at: '2026-11-05T00:00:00.000Z', disputeId: current.dispute_id, caseKey: 'A', action: 'make_offer', recommended: null, submitted: { note: 'Sorry.', offerAmount: '2.00' }, sellerEdited: false, paypal: { ok: true, status: 200, requestId: null, debugId: null, durationMs: 1, message: null }, after: null };
+    act.mockResolvedValueOnce({ status: 'sent', entry, dispute: current });
+    await request(app).post('/api/cases/d-early/approve').set(auth).send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(200);
+    const before = paypal.getDispute.mock.calls.length;
+    await request(app).get('/api/cases').set(auth).expect(200);
+    expect(paypal.getDispute.mock.calls.length).toBeGreaterThan(before);
+  });
+
   test('POST decide-all queues every open case and GET decide/status reports them', async () => {
     decide.mockImplementation(async (input: { dispute: Dispute }) => ({ ok: false, error: 'no_decision', detail: `none for ${input.dispute.dispute_id}`, steps: 1, toolCalls: [], durationMs: 1 }));
     paypal.getOrder.mockResolvedValue({ id: 'ORDER-A', status: 'COMPLETED', purchase_units: [] });
