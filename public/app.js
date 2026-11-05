@@ -2272,7 +2272,7 @@
         {
           colId: "action",
           headerName: "Action",
-          minWidth: 86,
+          minWidth: 120,
           valueGetter: (p) => (p.node.rowPinned ? "" : actionText(p.data)),
         },
       ],

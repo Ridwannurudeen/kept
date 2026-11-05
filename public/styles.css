@@ -371,6 +371,21 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+.kept-grid .ag-cell.cell-wrap .ag-cell-wrapper {
+  align-items: center;
+}
+
+.kept-grid .ag-cell.cell-wrap .ag-cell-value {
+  display: -webkit-box;
+  height: auto;
+  max-height: 2.6em;
+  overflow: hidden;
+  line-height: 1.3;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .cell-sub {
   color: var(--muted);
   font-size: 12px;
