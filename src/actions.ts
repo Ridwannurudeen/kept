@@ -15,11 +15,11 @@ export type ActionDeps = { paypal: PayPalClient; toolkit: PayPalAgentToolkit; st
 type ActionError = { status: number | null; debugId: string | null; message: string; unknown: boolean };
 export type ActionOutcome = { status: 'sent'; entry: ActionEntry; dispute: Dispute } | { status: 'refused'; blockers: string[] } | { status: 'failed'; entry: ActionEntry; error: ActionError };
 
-const SETTLE_WINDOW_MS = 5 * 60_000;
+const UNKNOWN_OUTCOME_WINDOW_MS = 5 * 60_000;
 const inFlight = new Set<string>();
 const unlogged = new Map<string, string>();
-const unloggedMessage = 'PayPal accepted the action but Settle could not record it; do not retry, check PayPal. Restart Settle after checking PayPal.';
-const unknownUnloggedMessage = 'The outcome at PayPal is unknown and Settle could not record it; do not retry, check PayPal. Restart Settle after checking PayPal.';
+const unloggedMessage = 'PayPal accepted the action but Kept could not record it; do not retry, check PayPal. Restart Kept after checking PayPal.';
+const unknownUnloggedMessage = 'The outcome at PayPal is unknown and Kept could not record it; do not retry, check PayPal. Restart Kept after checking PayPal.';
 const unknownMessage = 'PayPal sent no answer or a server error; the outcome is unknown. Check the case before retrying.';
 const mayHaveReachedMessage = 'The last action may have reached PayPal. Check the case in PayPal before retrying.';
 const landedMessage = 'PayPal already has this action; refresh the case';
@@ -80,7 +80,7 @@ export async function reconcileUnknown(disputeId: string, fresh: Dispute, deps: 
     });
     return [landedMessage];
   }
-  if (deps.now().getTime() - Date.parse(unknown.at) < SETTLE_WINDOW_MS) return [mayHaveReachedMessage];
+  if (deps.now().getTime() - Date.parse(unknown.at) < UNKNOWN_OUTCOME_WINDOW_MS) return [mayHaveReachedMessage];
   await deps.store.update((current) => { delete current.unknownOutcomes[disputeId]; });
   return null;
 }
@@ -99,14 +99,14 @@ export async function performAction(disputeId: string, req: ApproveRequest, deps
   const stored = state.decisions[disputeId] ?? null;
   if (stored && isDecisionStale(stored, fresh)) {
     const staleReason = buildCaseRow(fresh, null, state, deps.now()).staleReason;
-    return { status: 'refused', blockers: [`Recommendation is stale: ${staleReason}. Run Settle again before approving`] };
+    return { status: 'refused', blockers: [`Recommendation is stale: ${staleReason}. Run Kept again before approving`] };
   }
   const amount = disputedAmount(fresh);
   const validation = validateSubmission(req, { disputedAmount: amount.value, allowed: allowedActions(fresh), policy: state.policy, stage: fresh.dispute_life_cycle_stage });
   if (!validation.ok) return { status: 'refused', blockers: validation.blockers };
 
   const record = Object.values(state.cases).find((entry) => entry.captureId && entry.captureId === captureIdOf(fresh)) ?? null;
-  const requestId = (body: unknown) => `settle-${disputeId}-${req.action}-${createHash('sha256').update(JSON.stringify(body)).digest('hex').slice(0, 12)}`;
+  const requestId = (body: unknown) => `kept-${disputeId}-${req.action}-${createHash('sha256').update(JSON.stringify(body)).digest('hex').slice(0, 12)}`;
   const start = deps.now().getTime();
   let failure: ActionError | null = null;
   let writeAttempted = false;
@@ -128,7 +128,7 @@ export async function performAction(disputeId: string, req: ApproveRequest, deps
       };
       let result: unknown;
       try {
-        result = await acceptTool.execute({ dispute_id: disputeId, note: req.note }, { toolCallId: 'settle-accept', messages: [] });
+        result = await acceptTool.execute({ dispute_id: disputeId, note: req.note }, { toolCallId: 'kept-accept', messages: [] });
       } catch (error) {
         recordAccept(responseError(error).status, error instanceof Error ? error.message : String(error));
         throw error;

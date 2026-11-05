@@ -39,7 +39,7 @@ describe('HTTP app', () => {
   let act: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'settle-http-'));
+    dir = await mkdtemp(join(tmpdir(), 'kept-http-'));
     const seedPath = join(dir, 'cases.json');
     await writeFile(seedPath, JSON.stringify({ cases: { A: { key: 'A', orderId: 'ORDER-A', captureId: 'CAP-a', amount: '10.00', currency: 'USD', itemName: 'A', trackingNumber: null, carrier: null, trackedAt: null, notes: 'seed', attachments: [], disputeId: null, createdAt: '2026-11-01T00:00:00.000Z', observed: null } } }));
     store = await Store.open({ dataDir: join(dir, 'data'), seedPath, snapshotPath: join(dir, 'absent.json') });
@@ -79,19 +79,19 @@ describe('HTTP app', () => {
 
   test('api routes refuse a missing or wrong passcode with 401', async () => {
     await request(app).get('/api/cases').expect(401, { error: 'passcode' });
-    await request(app).get('/api/cases').set('x-settle-passcode', 'nope').expect(401, { error: 'passcode' });
+    await request(app).get('/api/cases').set('x-kept-passcode', 'nope').expect(401, { error: 'passcode' });
   });
 
   test('passcode throttling is independent for forwarded client IPs', async () => {
     for (let i = 0; i < 5; i++) {
-      await request(app).get('/api/cases').set('x-forwarded-for', '198.51.100.10').set('x-settle-passcode', `wrong-${i}`).expect(401, { error: 'passcode' });
+      await request(app).get('/api/cases').set('x-forwarded-for', '198.51.100.10').set('x-kept-passcode', `wrong-${i}`).expect(401, { error: 'passcode' });
     }
-    await request(app).get('/api/cases').set('x-forwarded-for', '198.51.100.10').set('x-settle-passcode', 'wrong-again').expect(429, { error: 'too_many_attempts' });
-    await request(app).get('/api/cases').set('x-forwarded-for', '198.51.100.11').set('x-settle-passcode', 'wrong').expect(401, { error: 'passcode' });
+    await request(app).get('/api/cases').set('x-forwarded-for', '198.51.100.10').set('x-kept-passcode', 'wrong-again').expect(429, { error: 'too_many_attempts' });
+    await request(app).get('/api/cases').set('x-forwarded-for', '198.51.100.11').set('x-kept-passcode', 'wrong').expect(401, { error: 'passcode' });
   });
 
   test('GET /api/cases joins seeded records, sorts by due date and includes summary', async () => {
-    const { body } = await request(app).get('/api/cases').set('x-settle-passcode', 'pass').expect(200);
+    const { body } = await request(app).get('/api/cases').set('x-kept-passcode', 'pass').expect(200);
     expect(body.cases).toHaveLength(3);
     expect(body.cases.map((row: { disputeId: string }) => row.disputeId)).toEqual(['d-early', 'd-late', 'd-closed']);
     expect(body.cases.find((row: { disputeId: string }) => row.disputeId === 'd-early').caseKey).toBe('A');
@@ -100,15 +100,15 @@ describe('HTTP app', () => {
   });
 
   test('GET /api/cases serves the cache for 20 s and refresh=1 bypasses it', async () => {
-    const get = () => request(app).get('/api/cases').set('x-settle-passcode', 'pass').expect(200);
+    const get = () => request(app).get('/api/cases').set('x-kept-passcode', 'pass').expect(200);
     await get(); await get();
     expect(paypal.getDispute).toHaveBeenCalledTimes(3);
-    await request(app).get('/api/cases?refresh=1').set('x-settle-passcode', 'pass').expect(200);
+    await request(app).get('/api/cases?refresh=1').set('x-kept-passcode', 'pass').expect(200);
     expect(paypal.getDispute).toHaveBeenCalledTimes(6);
   });
 
   test('GET /api/cases rebuilds cached rows after policy changes', async () => {
-    const auth = { 'x-settle-passcode': 'pass' };
+    const auth = { 'x-kept-passcode': 'pass' };
     await request(app).get('/api/cases').set(auth).expect(200);
     await request(app).put('/api/policy').set(auth).send({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 12 }).expect(200);
     const before = await request(app).get('/api/cases').set(auth).expect(200);
@@ -120,30 +120,30 @@ describe('HTTP app', () => {
 
   test('GET /api/cases returns internal error when row building fails', async () => {
     disputes[0] = { ...disputes[0], seller_response_due_date: 'invalid' };
-    await request(app).get('/api/cases').set('x-settle-passcode', 'pass').timeout({ response: 500 }).expect(500, { error: 'internal' });
+    await request(app).get('/api/cases').set('x-kept-passcode', 'pass').timeout({ response: 500 }).expect(500, { error: 'internal' });
   });
 
   test('GET /api/cases returns stale data with a warning when PayPal fails after a good fetch', async () => {
-    await request(app).get('/api/cases').set('x-settle-passcode', 'pass').expect(200);
+    await request(app).get('/api/cases').set('x-kept-passcode', 'pass').expect(200);
     paypal.listDisputes.mockRejectedValueOnce(new PayPalError('down', 503, 'dbg', {}, '/list'));
-    const { body } = await request(app).get('/api/cases?refresh=1').set('x-settle-passcode', 'pass').expect(200);
+    const { body } = await request(app).get('/api/cases?refresh=1').set('x-kept-passcode', 'pass').expect(200);
     expect(body).toMatchObject({ stale: true, warning: expect.any(String), cases: expect.any(Array) });
     paypal.listDisputes.mockRejectedValueOnce(new Error('internal failure'));
-    const fallback = await request(app).get('/api/cases?refresh=1').set('x-settle-passcode', 'pass').expect(200);
+    const fallback = await request(app).get('/api/cases?refresh=1').set('x-kept-passcode', 'pass').expect(200);
     expect(fallback.body.warning).toBe('PayPal unavailable');
   });
 
   test('GET /api/cases/:id returns detail and warning when an order fetch fails', async () => {
-    const { body } = await request(app).get('/api/cases/d-early').set('x-settle-passcode', 'pass').expect(200);
+    const { body } = await request(app).get('/api/cases/d-early').set('x-kept-passcode', 'pass').expect(200);
     expect(body).toMatchObject({ dispute: { dispute_id: 'd-early' }, order: null, warnings: expect.any(Array) });
   });
 
   test('GET /api/cases/:id shows an UNKNOWN outcome inside the settle window and clears it after when PayPal shows no seller activity', async () => {
     await store.update((state) => { state.unknownOutcomes['d-early'] = { action: 'make_offer', at: '2026-11-04T23:58:00.000Z' }; });
-    const first = await request(app).get('/api/cases/d-early').set('x-settle-passcode', 'pass').expect(200);
+    const first = await request(app).get('/api/cases/d-early').set('x-kept-passcode', 'pass').expect(200);
     expect(first.body.unknownOutcome).toEqual({ action: 'make_offer', at: '2026-11-04T23:58:00.000Z' });
     await store.update((state) => { state.unknownOutcomes['d-early'] = { action: 'make_offer', at: '2026-11-04T23:00:00.000Z' }; });
-    const second = await request(app).get('/api/cases/d-early').set('x-settle-passcode', 'pass').expect(200);
+    const second = await request(app).get('/api/cases/d-early').set('x-kept-passcode', 'pass').expect(200);
     expect(second.body.unknownOutcome).toBeNull();
     expect(store.get().unknownOutcomes).toEqual({});
   });
@@ -151,35 +151,35 @@ describe('HTTP app', () => {
   test('GET /api/cases/:id records an UNKNOWN action as landed when PayPal shows it', async () => {
     await store.update((state) => { state.unknownOutcomes['d-early'] = { action: 'accept_claim', at: '2026-11-04T23:59:00.000Z' }; });
     disputes[1] = { ...disputes[1]!, status: 'RESOLVED', links: [] };
-    const { body } = await request(app).get('/api/cases/d-early').set('x-settle-passcode', 'pass').expect(200);
+    const { body } = await request(app).get('/api/cases/d-early').set('x-kept-passcode', 'pass').expect(200);
     expect(body).toMatchObject({ unknownOutcome: null, sent: true, actionTaken: 'accept_claim' });
     expect(store.get().actions.at(-1)).toMatchObject({ disputeId: 'd-early', action: 'accept_claim', paypal: { ok: true, message: 'PayPal shows this action landed' } });
   });
 
   test('POST /api/reset is 404 in live mode and resets in replay mode', async () => {
-    await request(app).post('/api/reset').set('x-settle-passcode', 'pass').expect(404);
+    await request(app).post('/api/reset').set('x-kept-passcode', 'pass').expect(404);
     const replay = createApp({ config: { ...config, mode: 'replay' }, paypal: paypal as never, store, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: '2026-11-04' });
-    await request(replay).post('/api/reset').set('x-settle-passcode', 'pass').expect(200, { ok: true });
+    await request(replay).post('/api/reset').set('x-kept-passcode', 'pass').expect(200, { ok: true });
   });
 
   test('a notes stub with no order id never asks PayPal for an order', async () => {
-    await request(app).put('/api/cases/d-late/notes').set('x-settle-passcode', 'pass').send({ notes: 'call buyer' }).expect(200);
-    await request(app).get('/api/cases/d-late').set('x-settle-passcode', 'pass').expect(200);
+    await request(app).put('/api/cases/d-late/notes').set('x-kept-passcode', 'pass').send({ notes: 'call buyer' }).expect(200);
+    await request(app).get('/api/cases/d-late').set('x-kept-passcode', 'pass').expect(200);
     act.mockResolvedValueOnce({ status: 'sent', entry: { id: 'e' }, dispute: disputes[0] });
-    await request(app).post('/api/cases/d-late/approve').set('x-settle-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(200);
+    await request(app).post('/api/cases/d-late/approve').set('x-kept-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(200);
     expect(paypal.getOrder).not.toHaveBeenCalled();
     expect(paypal.getCapture).toHaveBeenCalledWith('CAP-d-late');
   });
 
   test('PUT /api/policy validates and persists', async () => {
-    const auth = { 'x-settle-passcode': 'pass' };
+    const auth = { 'x-kept-passcode': 'pass' };
     await request(app).put('/api/policy').set(auth).send({ maxOfferPercent: 101, maxOfferAbsolute: '50.00', deadlineBufferHours: 48 }).expect(400);
     await request(app).put('/api/policy').set(auth).send({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 400 }).expect(200);
     await request(app).get('/api/policy').set(auth).expect(200).expect(({ body }) => expect(body.deadlineBufferHours).toBe(400));
   });
 
   test('PUT notes and POST attachments update the record and reject bad names', async () => {
-    const auth = { 'x-settle-passcode': 'pass' };
+    const auth = { 'x-kept-passcode': 'pass' };
     await request(app).put('/api/cases/d-early/notes').set(auth).send({ notes: 'Updated notes' }).expect(200);
     expect(Object.values(store.get().cases)[0].notes).toBe('Updated notes');
     await request(app).post('/api/cases/d-early/attachments?name=../x&type=text/plain').set(auth).send('body').expect(400);
@@ -190,23 +190,23 @@ describe('HTTP app', () => {
   });
 
   test('attachment uploads reject payloads above 5 MB with 413', async () => {
-    await request(app).post('/api/cases/d-early/attachments?name=proof.txt').set('x-settle-passcode', 'pass').set('Content-Type', 'application/octet-stream').send(Buffer.alloc(5 * 1024 * 1024 + 1)).expect(413);
+    await request(app).post('/api/cases/d-early/attachments?name=proof.txt').set('x-kept-passcode', 'pass').set('Content-Type', 'application/octet-stream').send(Buffer.alloc(5 * 1024 * 1024 + 1)).expect(413);
   });
 
   test('malformed JSON returns 400 and passcode runs before parsing', async () => {
     await request(app).put('/api/policy').set('Content-Type', 'application/json').send('{').expect(401);
-    await request(app).put('/api/policy').set('x-settle-passcode', 'pass').set('Content-Type', 'application/json').send('{').expect(400);
+    await request(app).put('/api/policy').set('x-kept-passcode', 'pass').set('Content-Type', 'application/json').send('{').expect(400);
   });
 
   test('attachment uploads parse raw JSON content types', async () => {
-    await request(app).post('/api/cases/d-early/attachments?name=proof.txt').set('x-settle-passcode', 'pass').set('Content-Type', 'application/json').send('{"proof":true}').expect(200);
+    await request(app).post('/api/cases/d-early/attachments?name=proof.txt').set('x-kept-passcode', 'pass').set('Content-Type', 'application/json').send('{"proof":true}').expect(200);
     expect(store.get().attachments['d-early']).toHaveLength(1);
   });
 
   test('notes stubs preserve the disputed currency and do not match null capture ids', async () => {
     disputes[0] = { ...disputes[0], dispute_amount: { currency_code: 'EUR', value: '10.00' }, disputed_transactions: [] };
     await store.update((state) => { state.cases.A!.captureId = null; });
-    await request(app).put('/api/cases/d-late/notes').set('x-settle-passcode', 'pass').send({ notes: 'No capture' }).expect(200);
+    await request(app).put('/api/cases/d-late/notes').set('x-kept-passcode', 'pass').send({ notes: 'No capture' }).expect(200);
     const stub = Object.values(store.get().cases).find((record) => record.disputeId === 'd-late');
     expect(stub).toMatchObject({ captureId: null, currency: 'EUR' });
     expect(stub?.key).toBe('d-late');
@@ -214,7 +214,7 @@ describe('HTTP app', () => {
 
   test('PayPalError maps to 502 with debugId', async () => {
     paypal.listDisputes.mockRejectedValueOnce(new PayPalError('failed', 503, 'dbg-1', {}, '/list'));
-    const { body } = await request(app).get('/api/cases').set('x-settle-passcode', 'pass').expect(502);
+    const { body } = await request(app).get('/api/cases').set('x-kept-passcode', 'pass').expect(502);
     expect(body).toMatchObject({ error: 'paypal', status: 503, debugId: 'dbg-1', message: 'failed' });
   });
 
@@ -225,7 +225,7 @@ describe('HTTP app', () => {
     paypal.getOrder.mockResolvedValueOnce({ id: 'ORDER-A', status: 'COMPLETED', purchase_units: [] });
     paypal.getCapture.mockResolvedValueOnce({ id: 'CAP-a', status: 'COMPLETED', amount: { currency_code: 'USD', value: '10.00' } });
     await store.update((state) => { state.attachments['d-early'] = [{ name: 'proof.txt', type: 'text/plain', size: 4, at: '2026-11-04T00:00:00.000Z' }]; state.cases.A!.attachments = [{ name: 'packing-slip.txt', type: 'text/plain' }]; });
-    const { body } = await request(app).post('/api/cases/d-early/decide').set('x-settle-passcode', 'pass').expect(200);
+    const { body } = await request(app).post('/api/cases/d-early/decide').set('x-kept-passcode', 'pass').expect(200);
     expect(body).toEqual({ ok: true, decision, validation, durationMs: 42 });
     const input = decide.mock.calls[0]![0];
     expect(paypal.getOrder).toHaveBeenCalledWith('ORDER-A');
@@ -236,7 +236,7 @@ describe('HTTP app', () => {
 
   test('POST decide returns 200 with ok false and stores nothing when the model gives no decision', async () => {
     decide.mockResolvedValueOnce({ ok: false, error: 'no_decision', detail: 'none', steps: 2, toolCalls: [], durationMs: 5 });
-    const { body } = await request(app).post('/api/cases/d-late/decide').set('x-settle-passcode', 'pass').expect(200);
+    const { body } = await request(app).post('/api/cases/d-late/decide').set('x-kept-passcode', 'pass').expect(200);
     expect(body).toEqual({ ok: false, decision: null, validation: null, error: 'no_decision', detail: 'none', durationMs: 5 });
     expect(store.get().decisions['d-late']).toBeUndefined();
   });
@@ -245,7 +245,7 @@ describe('HTTP app', () => {
     disputes[0] = { ...disputes[0]!, links: [] };
     const decision = { recommendation: 'WAIT', plain_ask: 'Wait.', evidence_have: [], evidence_missing: [], reasons: [], offer_amount: null, draft_note: 'Wait.' };
     decide.mockResolvedValueOnce({ ok: true, decision, validation: { ok: true }, steps: 1, toolCalls: [], model: 'test', durationMs: 1 });
-    const { body } = await request(app).post('/api/cases/d-late/decide').set('x-settle-passcode', 'pass').expect(200);
+    const { body } = await request(app).post('/api/cases/d-late/decide').set('x-kept-passcode', 'pass').expect(200);
     expect(body).toMatchObject({ ok: true, decision });
   });
 
@@ -254,18 +254,18 @@ describe('HTTP app', () => {
       if (id === 'd-late') throw new PayPalError('missing', 404, null, {}, '/dispute');
       return disputes.find((d) => d.dispute_id === id) as Dispute;
     });
-    const { body } = await request(app).get('/api/cases').set('x-settle-passcode', 'pass').expect(200);
+    const { body } = await request(app).get('/api/cases').set('x-kept-passcode', 'pass').expect(200);
     expect(body.cases.map((row: { disputeId: string }) => row.disputeId)).toEqual(['d-early', 'd-closed']);
     expect(body.warnings).toEqual(['Dispute d-late is no longer available']);
   });
 
   test('POST approve on a resolved case reports PayPal missing the action', async () => {
     act.mockResolvedValueOnce({ status: 'refused', blockers: ['PayPal does not list make_offer for this case (stage INQUIRY)'] });
-    await request(app).post('/api/cases/d-closed/approve').set('x-settle-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(409, { blockers: ['PayPal does not list make_offer for this case (stage INQUIRY)'] });
+    await request(app).post('/api/cases/d-closed/approve').set('x-kept-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(409, { blockers: ['PayPal does not list make_offer for this case (stage INQUIRY)'] });
   });
 
   test('POST approve clears the case cache after a successful action', async () => {
-    const auth = { 'x-settle-passcode': 'pass' };
+    const auth = { 'x-kept-passcode': 'pass' };
     await request(app).get('/api/cases').set(auth).expect(200);
     const current = disputes[1]!;
     const entry = { id: 'action-cache', at: '2026-11-05T00:00:00.000Z', disputeId: current.dispute_id, caseKey: 'A', action: 'make_offer', recommended: null, submitted: { note: 'Sorry.', offerAmount: '2.00' }, sellerEdited: false, paypal: { ok: true, status: 200, requestId: null, debugId: null, durationMs: 1, message: null }, after: null };
@@ -277,7 +277,7 @@ describe('HTTP app', () => {
   });
 
   test('an in-flight cases fetch cannot restore the cache after approval', async () => {
-    const auth = { 'x-settle-passcode': 'pass' };
+    const auth = { 'x-kept-passcode': 'pass' };
     let release!: (value: Awaited<ReturnType<typeof paypal.listDisputes>>) => void;
     paypal.listDisputes.mockImplementationOnce(() => new Promise((resolve) => { release = resolve; }));
     const pending = request(app).get('/api/cases').set(auth).then((response) => response);
@@ -298,7 +298,7 @@ describe('HTTP app', () => {
     decide.mockImplementation(async (input: { dispute: Dispute }) => ({ ok: false, error: 'no_decision', detail: `none for ${input.dispute.dispute_id}`, steps: 1, toolCalls: [], durationMs: 1 }));
     paypal.getOrder.mockResolvedValue({ id: 'ORDER-A', status: 'COMPLETED', purchase_units: [] });
     paypal.getCapture.mockResolvedValue({ id: 'CAP-a', status: 'COMPLETED', amount: { currency_code: 'USD', value: '10.00' } });
-    const auth = { 'x-settle-passcode': 'pass' };
+    const auth = { 'x-kept-passcode': 'pass' };
     const { body } = await request(app).post('/api/cases/decide-all').set(auth).expect(202);
     expect(body).toEqual({ queued: ['d-late', 'd-early'] });
     await vi.waitFor(() => expect(decide).toHaveBeenCalledTimes(2));
@@ -311,27 +311,27 @@ describe('HTTP app', () => {
 
   test('unknown dispute id maps PayPal 404 to 404', async () => {
     paypal.getDispute.mockRejectedValueOnce(new PayPalError('missing', 404, null, {}, '/dispute'));
-    await request(app).get('/api/cases/missing').set('x-settle-passcode', 'pass').expect(404);
+    await request(app).get('/api/cases/missing').set('x-kept-passcode', 'pass').expect(404);
   });
 
   test('POST approve returns sent entry, dispute and rebuilt detail', async () => {
     const current = disputes[1]!;
     const entry = { id: 'action-1', at: '2026-11-05T00:00:00.000Z', disputeId: current.dispute_id, caseKey: 'A', action: 'make_offer', recommended: null, submitted: { note: 'Sorry.', offerAmount: '2.00' }, sellerEdited: false, paypal: { ok: true, status: 200, requestId: null, debugId: null, durationMs: 1, message: null }, after: null };
     act.mockResolvedValueOnce({ status: 'sent', entry, dispute: current });
-    const { body } = await request(app).post('/api/cases/d-early/approve').set('x-settle-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(200);
+    const { body } = await request(app).post('/api/cases/d-early/approve').set('x-kept-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(200);
     expect(body).toMatchObject({ entry, dispute: current, detail: { dispute: current, caseKey: 'A' } });
     expect(act).toHaveBeenCalledWith('d-early', { action: 'make_offer', note: 'Sorry.', offerAmount: '2.00', evidenceType: undefined }, expect.any(Object));
   });
 
   test('POST approve returns 409 for a refused action', async () => {
     act.mockResolvedValueOnce({ status: 'refused', blockers: ['This case already has a sent action'] });
-    await request(app).post('/api/cases/d-early/approve').set('x-settle-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(409, { blockers: ['This case already has a sent action'] });
+    await request(app).post('/api/cases/d-early/approve').set('x-kept-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(409, { blockers: ['This case already has a sent action'] });
   });
 
   test('POST approve returns 502 for a failed PayPal action', async () => {
     const entry = { id: 'action-2', at: '2026-11-05T00:00:00.000Z', disputeId: 'd-early', caseKey: 'A', action: 'make_offer', recommended: null, submitted: { note: 'Sorry.', offerAmount: '2.00' }, sellerEdited: false, paypal: { ok: false, status: 422, requestId: null, debugId: 'dbg', durationMs: 1, message: 'failed' }, after: null };
     const error = { status: 422, debugId: 'dbg', message: 'failed' };
     act.mockResolvedValueOnce({ status: 'failed', entry, error });
-    await request(app).post('/api/cases/d-early/approve').set('x-settle-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(502, { entry, error });
+    await request(app).post('/api/cases/d-early/approve').set('x-kept-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(502, { entry, error });
   });
 });

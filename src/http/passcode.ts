@@ -17,7 +17,7 @@ export function requirePasscode(expected: string, now: () => number = Date.now):
       res.status(429).json({ error: 'too_many_attempts' });
       return;
     }
-    const supplied = req.get('x-settle-passcode') ?? '';
+    const supplied = req.get('x-kept-passcode') ?? '';
     const actual = Buffer.from(supplied);
     const wanted = Buffer.from(expected);
     if (actual.length !== wanted.length || !timingSafeEqual(actual, wanted)) {

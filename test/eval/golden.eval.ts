@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { PayPalAgentToolkit } from '@paypal/agent-toolkit/ai-sdk';
 import type { LanguageModelV1 } from 'ai';
 import { decideCase, type DecideInput, type DecideResult } from '../../src/ai/decide.js';
-import { createSettleModel, MODEL_ID } from '../../src/ai/provider.js';
+import { createKeptModel, MODEL_ID } from '../../src/ai/provider.js';
 import { modelToolset, submitDecisionTool, type ModelTools } from '../../src/ai/tools.js';
 import { actionFor, type Decision } from '../../src/decision.js';
 import { allowedActions, disputedAmount, type ActionKind } from '../../src/paypal/dispute.js';
@@ -120,7 +120,7 @@ function report(results: RunResult[]): string {
     '| --- | --- |',
     ...CHECKS.map((check) => `| ${check} | ${count(check)}/${total} |`),
     '',
-    'Run: SETTLE_EVAL=1 npx vitest run -c vitest.eval.config.ts',
+    'Run: KEPT_EVAL=1 npx vitest run -c vitest.eval.config.ts',
     '',
     '## Failing outputs',
     '',
@@ -128,14 +128,14 @@ function report(results: RunResult[]): string {
   ].join('\n');
 }
 
-describe.skipIf(!process.env.SETTLE_EVAL)('golden cases', () => {
+describe.skipIf(!process.env.KEPT_EVAL)('golden cases', () => {
   const results: RunResult[] = [];
   let model: LanguageModelV1;
 
   beforeAll(() => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw new Error('SETTLE_EVAL needs ANTHROPIC_API_KEY');
-    model = createSettleModel(apiKey);
+    if (!apiKey) throw new Error('KEPT_EVAL needs ANTHROPIC_API_KEY');
+    model = createKeptModel(apiKey);
   });
 
   afterAll(() => {

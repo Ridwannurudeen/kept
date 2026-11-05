@@ -1,6 +1,6 @@
 # Seeding sandbox cases
 
-Settle needs real sandbox disputes. PayPal only lets a sandbox buyer open one, by hand, in the sandbox Resolution Center, so seeding is part script and part browser. Plan for roughly 25 minutes for five cases (an estimate, not a measured time).
+Kept needs real sandbox disputes. PayPal only lets a sandbox buyer open one, by hand, in the sandbox Resolution Center, so seeding is part script and part browser. Plan for roughly 25 minutes for five cases (an estimate, not a measured time).
 
 Rules:
 
@@ -51,13 +51,13 @@ Same steps, with these keys from `seed/plan.json`:
 
 - C (Replacement blade pack, 12.00): untracked, not as described, seller notes admit the fault. Opens at `INQUIRY`.
 - D (Walnut phone stand, 29.00): untracked, item not received. The plan expects `CHARGEBACK`.
-- C2: spare of C, used by the live accept test (`SETTLE_E2E_ACCEPT_ID`).
+- C2: spare of C, used by the live accept test (`KEPT_E2E_ACCEPT_ID`).
 - REH1 (Canvas apron, 15.00): rehearsal case, not as described, `INQUIRY`.
-- E (Brass hook set, 22.00): optional item-not-received case; add tracking after filing only if it is used (`npm run seed -- track E --force --tracking-number <number> --carrier <carrier>`), for the evidence test (`SETTLE_E2E_EVIDENCE_ID`).
+- E (Brass hook set, 22.00): optional item-not-received case; add tracking after filing only if it is used (`npm run seed -- track E --force --tracking-number <number> --carrier <carrier>`), for the evidence test (`KEPT_E2E_EVIDENCE_ID`).
 
 ## With your own sandbox
 
 1. Create your own sandbox business and personal accounts and a business REST app, as in Before you start.
-2. Export `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `ANTHROPIC_API_KEY` and a `SETTLE_PASSCODE` of your choice.
+2. Export `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `ANTHROPIC_API_KEY` and a `KEPT_PASSCODE` of your choice.
 3. Run Session 1 above (any subset of keys works; A and B show the fight and settle paths).
-4. `npm run dev`, open `http://localhost:3000`, enter your passcode. The grid lists your disputes; open one and run Settle on it.
+4. `npm run dev`, open `http://localhost:3000`, enter your passcode. The grid lists your disputes; open one and run Kept on it.

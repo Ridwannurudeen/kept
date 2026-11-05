@@ -4,7 +4,7 @@ import type { LanguageModelV1 } from 'ai';
 export const MODEL_ID = 'claude-opus-5-5';
 export const EFFORT = 'high';
 
-export function settleFetch(inner: typeof fetch): typeof fetch {
+export function keptFetch(inner: typeof fetch): typeof fetch {
   return async (input, init) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     if (init?.method === 'POST' && new URL(url).pathname.endsWith('/v1/messages') && typeof init.body === 'string') {
@@ -19,6 +19,6 @@ export function settleFetch(inner: typeof fetch): typeof fetch {
   };
 }
 
-export function createSettleModel(apiKey: string, inner: typeof fetch = fetch): LanguageModelV1 {
-  return createAnthropic({ apiKey, fetch: settleFetch(inner) })(MODEL_ID);
+export function createKeptModel(apiKey: string, inner: typeof fetch = fetch): LanguageModelV1 {
+  return createAnthropic({ apiKey, fetch: keptFetch(inner) })(MODEL_ID);
 }

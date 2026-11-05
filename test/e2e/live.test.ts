@@ -6,7 +6,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { performAction } from '../../src/actions.js';
 import { decideCase } from '../../src/ai/decide.js';
-import { createSettleModel } from '../../src/ai/provider.js';
+import { createKeptModel } from '../../src/ai/provider.js';
 import { modelToolset, submitDecisionTool } from '../../src/ai/tools.js';
 import { loadConfig } from '../../src/config.js';
 import { createApp } from '../../src/http/app.js';
@@ -16,7 +16,7 @@ import type { Dispute } from '../../src/paypal/types.js';
 import { Store } from '../../src/store.js';
 import type { CaseRecord } from '../../seed/seed.js';
 
-const enabled = Boolean(process.env.SETTLE_E2E);
+const enabled = Boolean(process.env.KEPT_E2E);
 
 describe.skipIf(!enabled)('live PayPal sandbox end-to-end', () => {
   let client: PayPalClient;
@@ -32,7 +32,7 @@ describe.skipIf(!enabled)('live PayPal sandbox end-to-end', () => {
     client = new PayPalClient({ clientId: config.paypalClientId, clientSecret: config.paypalClientSecret });
     toolkit = new PayPalAgentToolkit({ clientId: config.paypalClientId, clientSecret: config.paypalClientSecret, configuration: { actions: { disputes: { list: true, get: true, create: true } }, context: { sandbox: true } } });
     cases = (JSON.parse(await readFile(config.seedPath, 'utf8')) as { cases: Record<string, CaseRecord> }).cases;
-    tempDir = await mkdtemp(join(tmpdir(), 'settle-e2e-'));
+    tempDir = await mkdtemp(join(tmpdir(), 'kept-e2e-'));
     store = await Store.open({ dataDir: tempDir, seedPath: config.seedPath, snapshotPath: join(tempDir, 'absent-snapshot.json') });
   }, 60_000);
 
@@ -80,7 +80,7 @@ describe.skipIf(!enabled)('live PayPal sandbox end-to-end', () => {
       client.getOrder(record.orderId),
       record.captureId ? client.getCapture(record.captureId) : Promise.resolve(null),
     ]);
-    const model = createSettleModel(config.anthropicApiKey);
+    const model = createKeptModel(config.anthropicApiKey);
     const tools = { ...modelToolset(toolkit), submit_decision: submitDecisionTool() };
     const result = await decideCase({ dispute, order, capture, record, attachments: record.attachments, policy: store.get().policy, allowed: [...allowedActions(dispute)], now: new Date() }, { model, tools });
     expect(result.ok).toBe(true);
@@ -89,18 +89,18 @@ describe.skipIf(!enabled)('live PayPal sandbox end-to-end', () => {
 
   test('GET /api/cases returns the seeded PayPal rows', async () => {
     const app = createApp({ config, paypal: client, toolkit, store, now: () => new Date(), decide: async () => ({ ok: false, error: 'no_decision', detail: '', steps: 0, toolCalls: [], durationMs: 0 }), act: performAction, recordedOn: null });
-    const { body } = await request(app).get('/api/cases').set('x-settle-passcode', config.passcode).expect(200);
+    const { body } = await request(app).get('/api/cases').set('x-kept-passcode', config.passcode).expect(200);
     const seededIds = Object.values(cases).flatMap((record) => record.disputeId ? [record.disputeId] : []);
     expect(seededIds.length).toBeGreaterThan(0);
     expect(body.cases.map((row: { disputeId: string }) => row.disputeId)).toEqual(expect.arrayContaining(seededIds));
   }, 60_000);
 
-  test.skipIf(!process.env.SETTLE_E2E_ACCEPT_ID)('accepts only the explicitly selected C2 dispute', async () => {
-    const disputeId = process.env.SETTLE_E2E_ACCEPT_ID;
-    if (!disputeId) throw new Error('SETTLE_E2E_ACCEPT_ID is required');
+  test.skipIf(!process.env.KEPT_E2E_ACCEPT_ID)('accepts only the explicitly selected C2 dispute', async () => {
+    const disputeId = process.env.KEPT_E2E_ACCEPT_ID;
+    if (!disputeId) throw new Error('KEPT_E2E_ACCEPT_ID is required');
     const record = cases.C2;
     if (!record?.captureId) throw new Error('Seed case C2 must have a captureId');
-    if (record.disputeId !== disputeId) throw new Error('SETTLE_E2E_ACCEPT_ID must name seeded case C2');
+    if (record.disputeId !== disputeId) throw new Error('KEPT_E2E_ACCEPT_ID must name seeded case C2');
     const before = await client.getDispute(disputeId);
     expect(before.disputed_transactions?.[0]?.seller_transaction_id).toBe(record.captureId);
     const result = await performAction(disputeId, { action: 'accept_claim', note: 'We sent the wrong size. Full refund.' }, { paypal: client, toolkit, store, now: () => new Date() });
@@ -118,11 +118,11 @@ describe.skipIf(!enabled)('live PayPal sandbox end-to-end', () => {
     expect(['ACCEPTED', 'RESOLVED_BUYER_FAVOUR']).toContain(current.dispute_outcome?.outcome_code);
   }, 90_000);
 
-  test.skipIf(!process.env.SETTLE_E2E_EVIDENCE_ID)('optionally provides E evidence with an explicit dispute id', async () => {
-    const disputeId = process.env.SETTLE_E2E_EVIDENCE_ID;
-    if (!disputeId) throw new Error('SETTLE_E2E_EVIDENCE_ID is required');
+  test.skipIf(!process.env.KEPT_E2E_EVIDENCE_ID)('optionally provides E evidence with an explicit dispute id', async () => {
+    const disputeId = process.env.KEPT_E2E_EVIDENCE_ID;
+    if (!disputeId) throw new Error('KEPT_E2E_EVIDENCE_ID is required');
     const record = cases.E;
-    if (!record?.captureId || record.disputeId !== disputeId) throw new Error('SETTLE_E2E_EVIDENCE_ID must name seeded case E');
+    if (!record?.captureId || record.disputeId !== disputeId) throw new Error('KEPT_E2E_EVIDENCE_ID must name seeded case E');
     const deps = { paypal: client, toolkit, store, now: () => new Date() };
     const input = { action: 'provide_evidence' as const, note: 'Shipped UPS 1Z999AA10123456784 to the order address.', evidenceType: 'PROOF_OF_FULFILLMENT' as const };
     let result = await performAction(disputeId, input, deps);

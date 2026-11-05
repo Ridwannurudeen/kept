@@ -9,7 +9,7 @@ import type { CaseRecord } from '../seed/seed.js';
 const record: CaseRecord = { key: 'A', orderId: 'ORDER-1', captureId: 'CAP-1', amount: '48.00', currency: 'USD', itemName: 'Ceramic pour-over set', trackingNumber: null, carrier: null, trackedAt: null, notes: 'n', attachments: [], disputeId: 'PP-D-1', createdAt: '2026-11-05T00:00:00.000Z', observed: null };
 
 async function fixture() {
-  const dir = await mkdtemp(join(tmpdir(), 'settle-'));
+  const dir = await mkdtemp(join(tmpdir(), 'kept-'));
   const seedPath = join(dir, 'cases.json');
   await writeFile(seedPath, JSON.stringify({ cases: { A: record } }));
   const opts = { dataDir: join(dir, 'data'), seedPath, snapshotPath: join(dir, 'absent-snapshot.json') };

@@ -1,6 +1,6 @@
 import { generateText, tool } from 'ai';
 import { z } from 'zod';
-import { createSettleModel } from '../src/ai/provider.js';
+import { createKeptModel } from '../src/ai/provider.js';
 
 type AnthropicMessage = { role: string; content: string | { type: string }[] };
 
@@ -28,7 +28,7 @@ function loggingFetch(inner: typeof fetch): typeof fetch {
 const apiKey = process.env.ANTHROPIC_API_KEY;
 if (!apiKey) throw new Error('Missing environment variable ANTHROPIC_API_KEY');
 
-const model = createSettleModel(apiKey, loggingFetch(fetch));
+const model = createKeptModel(apiKey, loggingFetch(fetch));
 
 const result = await generateText({
   model,

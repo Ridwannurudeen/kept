@@ -1,4 +1,4 @@
-"""THROWAWAY SPIKE: checks the PayPal sandbox can carry the Settle demo.
+"""THROWAWAY SPIKE: checks the PayPal sandbox can carry the Kept demo.
 
 Stdlib only. Reads PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET from spike/.env, or from the environment if there is no .env.
 

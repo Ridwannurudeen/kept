@@ -296,7 +296,7 @@ textarea {
   min-width: 0;
 }
 
-.grid-frame.is-tall .settle-grid {
+.grid-frame.is-tall .kept-grid {
   height: 70vh;
 }
 
@@ -305,25 +305,25 @@ textarea {
 }
 
 /* Grid cells */
-.settle-grid .ag-cell {
+.kept-grid .ag-cell {
   font-variant-numeric: tabular-nums;
 }
 
-.settle-grid .ag-header-cell-text {
+.kept-grid .ag-header-cell-text {
   overflow-wrap: normal;
   word-break: normal;
 }
 
-.settle-grid .ag-row.row-due-soon {
+.kept-grid .ag-row.row-due-soon {
   background-color: var(--danger-bg);
 }
 
-.settle-grid .ag-row.row-resolved {
+.kept-grid .ag-row.row-resolved {
   background-color: #fafafa;
   color: var(--muted);
 }
 
-.settle-grid .ag-row.row-total {
+.kept-grid .ag-row.row-total {
   background-color: #f4f4f5;
 }
 
@@ -1359,9 +1359,9 @@ textarea {
 
 /* Touch */
 @media (pointer: coarse) {
-  .settle-grid .ag-header-cell-menu-button,
-  .settle-grid .ag-header-cell-filter-button,
-  .settle-grid .ag-floating-filter-button {
+  .kept-grid .ag-header-cell-menu-button,
+  .kept-grid .ag-header-cell-filter-button,
+  .kept-grid .ag-floating-filter-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;

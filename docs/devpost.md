@@ -1,10 +1,10 @@
-# Settle: Devpost write-up
+# Kept: Devpost write-up
 
 Task 24. Paste each section into the matching Devpost field. Anything in square brackets is a placeholder for the owner to fill before submitting.
 
 ## Title
 
-Settle
+Kept
 
 ## Tagline
 
@@ -12,19 +12,19 @@ Know when to settle a PayPal dispute, then do it in a click
 
 ## Inspiration
 
-I sell online, and these are my own experiences as a seller in PayPal disputes: I waited 48 to 72 hours for answers from support and had funds held for 14 to 21 days while a case ran its course. Much of that time was my own: working out what PayPal was asking for, which evidence counted, and whether the case was worth fighting at all. Settle does not change PayPal's policies or timelines. It removes the seller's own delay and guesswork once a dispute lands, so the seller answers PayPal quickly and with the right move.
+I sell online, and these are my own experiences as a seller in PayPal disputes: I waited 48 to 72 hours for answers from support and had funds held for 14 to 21 days while a case ran its course. Much of that time was my own: working out what PayPal was asking for, which evidence counted, and whether the case was worth fighting at all. Kept does not change PayPal's policies or timelines. It removes the seller's own delay and guesswork once a dispute lands, so the seller answers PayPal quickly and with the right move.
 
 ## What it does
 
-Settle is a dispute desk for small PayPal sellers. It lists every open dispute from PayPal in one grid, sorted by PayPal's seller response deadline, with the rows inside the seller's deadline buffer shown in red. For each case it shows the amount PayPal reports holding for that dispute, says in plain words what PayPal is asking for, and recommends one of three moves:
+Kept is a dispute desk for small PayPal sellers. It lists every open dispute from PayPal in one grid, sorted by PayPal's seller response deadline, with the rows inside the seller's deadline buffer shown in red. For each case it shows the amount PayPal reports holding for that dispute, says in plain words what PayPal is asking for, and recommends one of three moves:
 
 - Fight: send a defence to PayPal, drafted from the seller's records (for example a shipment's tracking number).
 - Settle: make a partial refund offer early, at the inquiry stage, kept under a cap the seller sets.
 - Accept: refund in full when the seller's own notes show the fault was theirs.
 
-Each recommendation comes with its reasons, the evidence the seller has, the evidence missing, and a drafted note. The seller edits the draft and approves. Only then does Settle send the one PayPal call that matches the action, read the dispute again, and show the state PayPal returns. A side by side view explains why one case was fought and another settled.
+Each recommendation comes with its reasons, the evidence the seller has, the evidence missing, and a drafted note. The seller edits the draft and approves. Only then does Kept send the one PayPal call that matches the action, read the dispute again, and show the state PayPal returns. A side by side view explains why one case was fought and another settled.
 
-The settle branch is the core idea. A tool that contests every case does not help a seller who is likely to lose one. Settle can say "don't fight this one": an early, capped offer can close the case if the buyer accepts, before it escalates to a PayPal claim.
+The settle branch is the core idea. A tool that contests every case does not help a seller who is likely to lose one. Kept can say "don't fight this one": an early, capped offer can close the case if the buyer accepts, before it escalates to a PayPal claim.
 
 An outcome counter reports, from PayPal's own numbers only, what the seller kept after each resolved case (the disputed amount minus PayPal's `dispute_outcome.amount_refunded`), what was refunded, and the days to close. It never claims a result that did not happen.
 
@@ -49,7 +49,7 @@ PayPal Agent Toolkit: `@paypal/agent-toolkit` 1.11.0, its `ai-sdk` export, const
 
 AI model: Claude Opus 5.5, model id `claude-opus-5-5`, set as `MODEL_ID` in `src/ai/provider.ts` with effort `high`, through `@ai-sdk/anthropic` 1.2.12 on the Vercel AI SDK (`ai` 4.3.19). The decision loop is `decideCase` in `src/ai/decide.ts`: one `generateText` call per case, up to 6 steps per call, with one retry if the model does not submit a decision. The prompts are in `src/ai/prompt.ts`. The decision schema and its validation against the seller's policy and PayPal's allowed actions are `DecisionSchema` and `validateDecision` in `src/decision.ts`; the policy is in `src/policy.ts`. Free text is never parsed as a decision.
 
-AG Grid in Settle: AG Grid Community 36 (`ag-grid-community` 36.3.0) renders the whole case desk in `public/app.js`. It uses custom cell renderers, text, number and date column filters, the quick filter, row class rules for due-soon and resolved rows, a pinned total row for the outcome counter, tooltips, in-place row updates with `applyTransaction` after each action, and the Quartz theme.
+AG Grid in Kept: AG Grid Community 36 (`ag-grid-community` 36.3.0) renders the whole case desk in `public/app.js`. It uses custom cell renderers, text, number and date column filters, the quick filter, row class rules for due-soon and resolved rows, a pinned total row for the outcome counter, tooltips, in-place row updates with `applyTransaction` after each action, and the Quartz theme.
 
 Server: TypeScript on Node 24 with Express (`src/http/app.ts`, `src/http/routes.ts`), a passcode check on every `/api` call, and one JSON state file.
 
@@ -57,9 +57,9 @@ Render: hosted as one free web service from the blueprint in `render.yaml` (buil
 
 ## Challenges we ran into
 
-- A tracked order can only be disputed as a claim. In the sandbox, a buyer who sees the seller's tracking is offered only "Report Issue to PayPal", which opens the case straight at the claim stage. There PayPal lists supporting info, not evidence, so Settle's fight path sends whichever of the two PayPal lists for the case.
-- Sandbox timing. A new dispute is readable at once but lists its seller actions only after about 5 minutes, so Settle shows "PayPal is still opening this case" instead of offering buttons too early.
-- Refusing instead of clamping offers. Silently lowering an offer to the cap would send an amount the seller never approved. Settle blocks the approve button and names the limit the offer breaks.
+- A tracked order can only be disputed as a claim. In the sandbox, a buyer who sees the seller's tracking is offered only "Report Issue to PayPal", which opens the case straight at the claim stage. There PayPal lists supporting info, not evidence, so Kept's fight path sends whichever of the two PayPal lists for the case.
+- Sandbox timing. A new dispute is readable at once but lists its seller actions only after about 5 minutes, so Kept shows "PayPal is still opening this case" instead of offering buttons too early.
+- Refusing instead of clamping offers. Silently lowering an offer to the cap would send an amount the seller never approved. Kept blocks the approve button and names the limit the offer breaks.
 - Getting a structured decision from the model. Forced tool choice returns an error on this model, so the loop uses automatic tool choice, a prompt that ends with `submit_decision`, schema validation, and one retry.
 - One action per case. Every sandbox dispute can be acted on once, so the server refuses a second action and blocks a retry while an earlier outcome is unknown.
 
@@ -77,12 +77,12 @@ From the sandbox, before building:
 
 - Tracked orders open as PayPal claims (`CHARGEBACK`) when the buyer reports non-delivery, so the defence at that stage is supporting info.
 - Make-offer works only at the inquiry stage. Settling early is not only better for both sides, it is the only time an offer is possible.
-- Holds are visible in the dispute itself. A claim-stage dispute carries `fund_movements` with a `HOLD_PLACED` entry, so Settle can show the amount PayPal is holding for that case as PayPal reports it.
+- Holds are visible in the dispute itself. A claim-stage dispute carries `fund_movements` with a `HOLD_PLACED` entry, so Kept can show the amount PayPal is holding for that case as PayPal reports it.
 - List results omit `seller_transaction_id`, so joining a dispute to its order takes one `get_dispute` per case.
 
 And from building: let PayPal's listed actions decide which buttons exist, rather than guessing from the stage.
 
-## What's next for Settle
+## What's next for Kept
 
 - Uploading the seller's files to PayPal with the defence, not only a notes text.
 - Handling escalation and later stages.
@@ -108,12 +108,12 @@ At most one Grand Prize or one Honorable Mention, plus one Sponsor Prize, can be
 - Best Use of PayPal + AI
 - Most Impactful
 - Best Demo Delivery
-- AG Grid sponsor prize (the one Settle is built around)
+- AG Grid sponsor prize (the one Kept is built around)
 - Render sponsor prize (the rules allow entering both)
 
 ## Testing notes for judges (Devpost private testing field only)
 
-Put this in the private testing instructions field, never in the public description. Never put PayPal or Anthropic secrets anywhere in Devpost. Set `SETTLE_PASSCODE` on the hosted demo to a long random passcode (24 or more characters, for example the output of `openssl rand -base64 18`) and paste that here. After 5 wrong passcodes from one IP in 10 minutes, Settle answers 429 until the window passes.
+Put this in the private testing instructions field, never in the public description. Never put PayPal or Anthropic secrets anywhere in Devpost. Set `KEPT_PASSCODE` on the hosted demo to a long random passcode (24 or more characters, for example the output of `openssl rand -base64 18`) and paste that here. After 5 wrong passcodes from one IP in 10 minutes, Kept answers 429 until the window passes.
 
 ```
 Hosted demo: [HOSTED URL]

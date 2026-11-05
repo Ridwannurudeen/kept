@@ -7,7 +7,7 @@ import type { State, StoredDecision, UnknownOutcome } from '../src/store.js';
 const outputPath = resolve('seed/snapshot.json');
 
 async function getJson<T>(base: string, path: string, passcode: string): Promise<T> {
-  const response = await fetch(new URL(path, base), { headers: { 'x-settle-passcode': passcode } });
+  const response = await fetch(new URL(path, base), { headers: { 'x-kept-passcode': passcode } });
   if (!response.ok) throw new Error(`GET ${path} returned ${response.status}`);
   return (await response.json()) as T;
 }
@@ -40,12 +40,12 @@ async function run(): Promise<void> {
   let state: SnapshotSource;
   if (fromIndex >= 0) {
     const base = args[fromIndex + 1];
-    const passcode = process.env.SETTLE_PASSCODE;
+    const passcode = process.env.KEPT_PASSCODE;
     if (!base) throw new Error('--from-url needs a base URL');
-    if (!passcode) throw new Error('SETTLE_PASSCODE is not set');
+    if (!passcode) throw new Error('KEPT_PASSCODE is not set');
     state = await fromUrl(base, passcode);
   } else {
-    const saved = JSON.parse(await readFile(join(resolve(process.env.SETTLE_DATA_DIR ?? './data'), 'state.json'), 'utf8')) as State;
+    const saved = JSON.parse(await readFile(join(resolve(process.env.KEPT_DATA_DIR ?? './data'), 'state.json'), 'utf8')) as State;
     state = { ...saved, unknownOutcomes: saved.unknownOutcomes ?? {} };
   }
   const json = `${JSON.stringify(buildSnapshot(state, new Date()), null, 2)}\n`;

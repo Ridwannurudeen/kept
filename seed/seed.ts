@@ -147,7 +147,7 @@ async function run(): Promise<void> {
     assertNoExistingOrder(file.cases, key);
     const item = plan.find((entry) => entry.key === key);
     if (!item) throw new Error(`Unknown plan key ${key}`);
-    const order = await client.createOrder(buildOrderBody(item), `settle-${key}-${Date.now()}`);
+    const order = await client.createOrder(buildOrderBody(item), `kept-${key}-${Date.now()}`);
     file.cases[key] = {
       key,
       orderId: order.id,
@@ -173,7 +173,7 @@ async function run(): Promise<void> {
   if (command === 'capture' && key) {
     const record = file.cases[key];
     if (!record) throw new Error(`No stored order for ${key}`);
-    const order = await client.captureOrder(record.orderId, `settle-${key}-capture-${Date.now()}`);
+    const order = await client.captureOrder(record.orderId, `kept-${key}-capture-${Date.now()}`);
     record.captureId = captureId(order);
     await writeCases(file);
     console.log(`CAPTURE_ID ${record.captureId ?? 'not returned'}`);

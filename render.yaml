@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: settle
+    name: kept
     runtime: node
     plan: free
     buildCommand: npm ci --include=dev && npm run build
@@ -15,7 +15,7 @@ services:
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
-      - key: SETTLE_PASSCODE
+      - key: KEPT_PASSCODE
         sync: false
-      - key: SETTLE_DATA_DIR
-        value: /tmp/settle-data
+      - key: KEPT_DATA_DIR
+        value: /tmp/kept-data

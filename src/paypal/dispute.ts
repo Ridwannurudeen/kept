@@ -80,7 +80,7 @@ export function explainState(d: Dispute, _now: Date): StateExplanation {
   if (stage === 'CHARGEBACK' && d.supporting_info?.some((info) => info.source === 'SUBMITTED_BY_SELLER')) {
     return { headline: 'PayPal is reviewing your supporting information', detail: '', actionable: false, terminal: false };
   }
-  return { headline: `${stageLabel(d)}: ${d.status}`, detail: 'Settle does not have a plain-words note for this state yet.', actionable: actions.size > 0, terminal: false };
+  return { headline: `${stageLabel(d)}: ${d.status}`, detail: 'Kept does not have a plain-words note for this state yet.', actionable: actions.size > 0, terminal: false };
 }
 
 export function isOpen(d: Dispute): boolean {

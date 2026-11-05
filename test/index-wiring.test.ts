@@ -13,7 +13,7 @@ afterEach(async () => {
 });
 
 test('live PayPal call callback appends calls to the store', async () => {
-  dir = await mkdtemp(join(tmpdir(), 'settle-index-'));
+  dir = await mkdtemp(join(tmpdir(), 'kept-index-'));
   const seedPath = join(dir, 'cases.json');
   await writeFile(seedPath, JSON.stringify({ cases: {} }));
   const store = await Store.open({ dataDir: join(dir, 'data'), seedPath, snapshotPath: null });

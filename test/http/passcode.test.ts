@@ -10,7 +10,7 @@ function app(now: () => number) {
   return server;
 }
 
-const attempt = (server: express.Express, passcode: string, ip = '10.0.0.1') => request(server).get('/x').set('x-forwarded-for', ip).set('x-settle-passcode', passcode);
+const attempt = (server: express.Express, passcode: string, ip = '10.0.0.1') => request(server).get('/x').set('x-forwarded-for', ip).set('x-kept-passcode', passcode);
 
 test('five failures from one IP within 10 minutes lock it out with 429 until the window passes', async () => {
   let clock = 0;

@@ -1,7 +1,7 @@
 "use strict";
 
 (() => {
-  const PASSCODE_KEY = "settle.passcode";
+  const PASSCODE_KEY = "kept.passcode";
   const AUTO_HEIGHT_LIMIT = 20;
   const TOTAL_ID = "__total__";
   const POLL_MS = 2000;
@@ -187,7 +187,7 @@
     const send = () => {
       const headers = new Headers(init.headers);
       const code = sessionStorage.getItem(PASSCODE_KEY);
-      if (code) headers.set("x-settle-passcode", code);
+      if (code) headers.set("x-kept-passcode", code);
       return fetch(path, { ...init, headers });
     };
     let res = await send();
@@ -436,7 +436,7 @@
       });
       refreshRecommendations();
       announce(
-        `Case ${label}: Settle recommends ${result.decision.recommendation}`,
+        `Case ${label}: Kept recommends ${result.decision.recommendation}`,
       );
     } catch (error) {
       decideState.set(id, { state: "failed", detail: error.message });
@@ -482,7 +482,7 @@
         if (panelId && finished.includes(panelId)) loadPanel(panelId);
         for (const row of rows)
           notes.push(
-            `Case ${row.caseKey || shortId(row.disputeId)}: Settle recommends ${row.recommendation}`,
+            `Case ${row.caseKey || shortId(row.disputeId)}: Kept recommends ${row.recommendation}`,
           );
       }
       refreshRecommendations();
@@ -616,7 +616,7 @@
 
   function staleNotice(detail) {
     const reason = detail.staleReason ? ` (${detail.staleReason})` : "";
-    return `This case changed since Settle looked at it${reason}. Run Settle again before approving.`;
+    return `This case changed since Kept looked at it${reason}. Run Kept again before approving.`;
   }
 
   function approveBlockers(detail, action, note, offer) {
@@ -731,8 +731,8 @@
       have.append(list(decision.evidence_have, "None listed"));
       missing.append(list(decision.evidence_missing, "Nothing missing"));
     } else {
-      have.append(el("p", "panel-muted", "Run Settle to see"));
-      missing.append(el("p", "panel-muted", "Run Settle to see"));
+      have.append(el("p", "panel-muted", "Run Kept to see"));
+      missing.append(el("p", "panel-muted", "Run Kept to see"));
     }
     columns.append(have, missing);
     wrap.append(columns);
@@ -923,7 +923,7 @@
       );
     } else if (result.status === 409) {
       wrap.classList.add("result-refused");
-      wrap.append(el("p", "panel-lead", "Settle did not send this."));
+      wrap.append(el("p", "panel-lead", "Kept did not send this."));
       wrap.append(list(result.body.blockers, ""));
     } else if (result.status === 0) {
       wrap.classList.add("result-failed");
@@ -1066,7 +1066,7 @@
       el(
         "p",
         "panel-muted",
-        "Settle keeps attachments on the seller's side; the AI sees names and types only.",
+        "Kept keeps attachments on the seller's side; the AI sees names and types only.",
       ),
       files,
       upload,
@@ -1126,7 +1126,7 @@
         el(
           "p",
           "calls-empty",
-          "No PayPal calls recorded yet. Each request Settle makes appears here with its status and debug id.",
+          "No PayPal calls recorded yet. Each request Kept makes appears here with its status and debug id.",
         ),
       );
       return;
@@ -1557,12 +1557,12 @@
         .replace(/^[A-Z](?=[a-z])/, (first) => first.toLowerCase());
       return `${VERBS[decision.recommendation] || decision.recommendation.toLowerCase()} ${panelLabel(detail)} because ${reason}`;
     };
-    return `Settle ${part(left)} and ${part(right)}.`;
+    return `Kept ${part(left)} and ${part(right)}.`;
   }
 
   function compareEmpty(lines) {
     const box = el("div", "compare-empty");
-    box.append(el("p", "compare-empty-title", "Run Settle on both cases to compare"));
+    box.append(el("p", "compare-empty-title", "Run Kept on both cases to compare"));
     for (const line of lines) box.append(el("p", "panel-muted", line));
     els.compareBody.replaceChildren(box);
   }
@@ -1602,7 +1602,7 @@
       if (node.data.recommendation && node.data.disputeId !== left.disputeId)
         others.push(node.data);
     });
-    els.compareTitle.textContent = `Why Settle chose: case ${panelLabel(left)} side by side`;
+    els.compareTitle.textContent = `Why Kept chose: case ${panelLabel(left)} side by side`;
     els.compareSelect.replaceChildren(
       ...others.map((row) => {
         const option = el(
@@ -1850,7 +1850,7 @@
         if (p.node.rowPinned) return null;
         const row = p.data;
         if (row.recommendationStale && row.staleReason)
-          return `This case changed since Settle looked: ${row.staleReason}`;
+          return `This case changed since Kept looked: ${row.staleReason}`;
         if (row.recommendation)
           return (
             reasonsById.get(row.disputeId) ||
@@ -2075,5 +2075,5 @@
   });
   loadCases();
 
-  window.settle = { api, loadCases, renderGrid, openCase, announce };
+  window.kept = { api, loadCases, renderGrid, openCase, announce };
 })();
