@@ -2,7 +2,16 @@
 
 Settle is a dispute desk for small PayPal sellers. It reads each open dispute, says in plain words what PayPal is asking for, and recommends one of three moves: fight (file evidence), settle (make a capped partial refund offer) or accept (refund in full), then drafts the paperwork. Its headline is the settle branch: where dispute tools contest everything, Settle can tell a seller "don't fight this one", because a capped early offer saves the seller a case they would lose and saves PayPal an escalation. Nothing that touches money is sent until the seller approves it.
 
-Hosted demo: link added at submission. Screenshots: added at submission.
+Hosted demo: link added at submission.
+
+![Settle case board](docs/img/grid.png)
+The case board with the outcome strip and the pinned total row (replay of recorded sandbox data)
+
+![Case B panel](docs/img/panel.png)
+Case B, an inquiry: what PayPal is asking, evidence, draft note and refund offer under the policy cap (replay of recorded sandbox data)
+
+![Case A panel](docs/img/claim.png)
+Case A, a PayPal claim: PayPal's hold and the send supporting information action (replay of recorded sandbox data)
 
 ## PayPal APIs and AI model used, and where
 
