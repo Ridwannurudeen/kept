@@ -36,6 +36,12 @@
     policyError: document.getElementById("policy-error"),
     policySave: document.getElementById("policy-save"),
     policyCancel: document.getElementById("policy-cancel"),
+    compare: document.getElementById("compare"),
+    compareTitle: document.getElementById("compare-title"),
+    compareClose: document.getElementById("compare-close"),
+    comparePick: document.getElementById("compare-pick"),
+    compareSelect: document.getElementById("compare-select"),
+    compareBody: document.getElementById("compare-body"),
   };
 
   let gridApi = null;
@@ -50,6 +56,7 @@
   let panelDetail = null;
   let returnFocus = null;
   let approving = false;
+  let compareReturn = null;
   const isPending = (job) =>
     job?.state === "queued" || job?.state === "running";
 
@@ -745,6 +752,11 @@
       }
       top.append(button);
     }
+    const compare = el("button", "button button-small button-quiet", "Compare");
+    compare.type = "button";
+    compare.setAttribute("aria-controls", "compare");
+    compare.addEventListener("click", () => openCompare(compare));
+    top.append(compare);
     wrap.append(top);
     if (state?.state === "failed" && !isPending(state))
       wrap.append(
@@ -1183,6 +1195,7 @@
 
   function openCase(id) {
     const node = gridApi.getRowNode(id);
+    if (id !== panelId) hideCompare();
     if (els.panel.hidden) returnFocus = document.activeElement;
     panelId = id;
     panelDetail = null;
@@ -1197,12 +1210,181 @@
   }
 
   function closePanel() {
+    hideCompare();
     els.panel.hidden = true;
     els.layout.classList.remove("has-panel");
     panelId = null;
     panelDetail = null;
     if (returnFocus?.isConnected) returnFocus.focus();
     returnFocus = null;
+  }
+
+  // ---------- compare ----------
+
+  const VERBS = { FIGHT: "fought", SETTLE: "settled", ACCEPT: "accepted" };
+
+  function compareFacts(detail) {
+    const facts = el("dl", "compare-facts");
+    const fact = (label, value) =>
+      facts.append(el("dt", "", label), el("dd", "", value));
+    fact(
+      "Deadline",
+      !detail.open
+        ? "Closed"
+        : detail.dueAt
+          ? `${dayFormat.format(new Date(detail.dueAt)).replace(",", "")}, ${relativeDue(detail.deadline)}`
+          : "No date from PayPal",
+    );
+    fact("Hold", detail.hold ? money(detail.hold) : "No hold");
+    const sent = sentEntry(detail);
+    fact(
+      "Action taken",
+      sent
+        ? `${ACTION_LABELS[sent.action] || sent.action}${sent.submitted.offerAmount ? ` ${detail.amount.currency_code} ${sent.submitted.offerAmount}` : ""}, ${stampFormat.format(new Date(sent.at))}`
+        : "No action sent",
+    );
+    if (sent)
+      fact(
+        "PayPal after",
+        sent.after
+          ? `${sent.after.status} at ${sent.after.stage}${sent.after.outcome ? `, ${sent.after.outcome}` : ""}`
+          : "PayPal did not answer the follow-up read",
+      );
+    return facts;
+  }
+
+  function compareColumn(detail) {
+    const decision = detail.decision.decision;
+    const column = el("article", "compare-column");
+    const head = el("div", "compare-column-head");
+    head.append(
+      el(
+        "h3",
+        "compare-case",
+        `Case ${panelLabel(detail)}${detail.itemName ? `: ${detail.itemName}` : ""}`,
+      ),
+      el(
+        "span",
+        `badge badge-${decision.recommendation.toLowerCase()}`,
+        decision.recommendation,
+      ),
+    );
+    column.append(
+      head,
+      el("p", "compare-sub", `${detail.reasonLabel} · ${money(detail.amount)}`),
+      el("h4", "compare-label", "Top reasons"),
+    );
+    const reasons = el("ol", "compare-reasons");
+    for (const reason of decision.reasons.slice(0, 3))
+      reasons.append(el("li", "", reason));
+    column.append(reasons);
+
+    const evidence = el("div", "compare-evidence");
+    const group = (title, cls, items, empty) => {
+      const box = el("div", "");
+      const heading = el("h4", `evidence-title ${cls}`, `${title} `);
+      heading.append(el("span", "compare-count", String(items.length)));
+      box.append(heading, list(items, empty));
+      return box;
+    };
+    evidence.append(
+      group("Evidence you have", "evidence-have", decision.evidence_have, "None listed"),
+      group("Evidence missing", "evidence-missing", decision.evidence_missing, "Nothing missing"),
+    );
+    column.append(evidence, compareFacts(detail));
+    return column;
+  }
+
+  function compareSentence(left, right) {
+    const part = (detail) => {
+      const decision = detail.decision.decision;
+      const reason = (decision.reasons[0] || "")
+        .replace(/[.\s]+$/, "")
+        .replace(/^[A-Z](?=[a-z])/, (first) => first.toLowerCase());
+      return `${VERBS[decision.recommendation] || decision.recommendation.toLowerCase()} ${panelLabel(detail)} because ${reason}`;
+    };
+    return `Settle ${part(left)} and ${part(right)}.`;
+  }
+
+  function compareEmpty(lines) {
+    const box = el("div", "compare-empty");
+    box.append(el("p", "compare-empty-title", "Run Settle on both cases to compare"));
+    for (const line of lines) box.append(el("p", "panel-muted", line));
+    els.compareBody.replaceChildren(box);
+  }
+
+  async function showCompareWith(id) {
+    const left = panelDetail;
+    els.compareBody.replaceChildren(
+      el("p", "panel-muted", "Loading the case from PayPal…"),
+    );
+    try {
+      const right = await api(`/api/cases/${encodeURIComponent(id)}`);
+      if (els.compare.hidden || panelDetail !== left || els.compareSelect.value !== id)
+        return;
+      if (!right.decision) {
+        compareEmpty([`Case ${panelLabel(right)} has no decision yet.`]);
+        return;
+      }
+      const columns = el("div", "compare-columns");
+      columns.append(compareColumn(left), compareColumn(right));
+      els.compareBody.replaceChildren(
+        columns,
+        el("p", "compare-sentence", compareSentence(left, right)),
+      );
+    } catch (error) {
+      els.compareBody.replaceChildren(
+        el("p", "panel-error", `Could not load that case. ${error.message}`),
+      );
+    }
+  }
+
+  function openCompare(trigger) {
+    const left = panelDetail;
+    if (!left) return;
+    compareReturn = trigger;
+    const others = [];
+    gridApi.forEachNode((node) => {
+      if (node.data.recommendation && node.data.disputeId !== left.disputeId)
+        others.push(node.data);
+    });
+    els.compareTitle.textContent = `Why Settle chose: case ${panelLabel(left)} side by side`;
+    els.compareSelect.replaceChildren(
+      ...others.map((row) => {
+        const option = el(
+          "option",
+          "",
+          `Case ${row.caseKey || shortId(row.disputeId)}${row.itemName ? `: ${row.itemName}` : ""} (${row.recommendation})`,
+        );
+        option.value = row.disputeId;
+        return option;
+      }),
+    );
+    const ready = Boolean(left.decision) && others.length > 0;
+    els.comparePick.hidden = !ready;
+    els.compare.hidden = false;
+    if (ready) showCompareWith(els.compareSelect.value);
+    else {
+      const lines = [];
+      if (!left.decision)
+        lines.push(`Case ${panelLabel(left)} has no decision yet.`);
+      if (!others.length) lines.push("No other case has a decision yet.");
+      compareEmpty(lines);
+    }
+    els.compare.scrollIntoView({ block: "start" });
+    els.compareTitle.focus();
+  }
+
+  function hideCompare() {
+    els.compare.hidden = true;
+    els.compareBody.replaceChildren();
+  }
+
+  function closeCompare() {
+    hideCompare();
+    if (compareReturn?.isConnected) compareReturn.focus();
+    else els.panelTitle.focus();
+    compareReturn = null;
   }
 
   // ---------- policy ----------
@@ -1589,6 +1771,10 @@
   els.refresh.addEventListener("click", () => loadCases({ refresh: true }));
   els.decideAll.addEventListener("click", decideAll);
   els.policyButton.addEventListener("click", openPolicy);
+  els.compareClose.addEventListener("click", closeCompare);
+  els.compareSelect.addEventListener("change", () =>
+    showCompareWith(els.compareSelect.value),
+  );
   els.policyForm.addEventListener("submit", savePolicy);
   els.policyCancel.addEventListener("click", () => els.policyDialog.close());
   els.panelClose.addEventListener("click", closePanel);
@@ -1602,6 +1788,10 @@
     )
       return;
     const active = document.activeElement;
+    if (!els.compare.hidden && els.compare.contains(active)) {
+      closeCompare();
+      return;
+    }
     if (
       (active instanceof HTMLTextAreaElement ||
         active instanceof HTMLInputElement) &&

@@ -45,6 +45,17 @@
         <div class="grid-frame" id="grid-frame">
           <div class="settle-grid" id="grid" aria-label="Disputes"></div>
         </div>
+        <section class="compare" id="compare" aria-labelledby="compare-title" hidden>
+          <div class="compare-head">
+            <h2 class="compare-title" id="compare-title" tabindex="-1">Compare</h2>
+            <button type="button" class="button button-quiet" id="compare-close">Close compare</button>
+          </div>
+          <div class="compare-pick" id="compare-pick">
+            <label class="field-label" for="compare-select">Compare with</label>
+            <select class="field-input compare-select" id="compare-select"></select>
+          </div>
+          <div class="compare-body" id="compare-body"></div>
+        </section>
       </main>
       <aside class="panel" id="panel" aria-labelledby="panel-title" hidden>
         <div class="panel-head">
