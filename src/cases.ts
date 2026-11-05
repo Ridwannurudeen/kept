@@ -28,6 +28,7 @@ export type CaseRow = {
   open: boolean;
   headline: string;
   outcome: { code: string; refunded: Money | null; refundedReported: boolean; kept: Money | null; daysToClose: number | null } | null;
+  protection: { status: string; covers: boolean | null } | null;
 };
 
 export type CaseDetail = CaseRow & {
@@ -75,6 +76,19 @@ function outcomeOf(d: Dispute): CaseRow['outcome'] {
   return { code, refunded, refundedReported: suppliedRefund !== undefined, kept, daysToClose };
 }
 
+const PROTECTION_CATEGORIES: Record<string, string> = {
+  MERCHANDISE_OR_SERVICE_NOT_RECEIVED: 'ITEM_NOT_RECEIVED',
+  UNAUTHORISED: 'UNAUTHORIZED_TRANSACTION',
+};
+
+function protectionOf(d: Dispute, capture: Capture | null): CaseRow['protection'] {
+  const protection = capture?.seller_protection;
+  if (!protection) return null;
+  const categories = protection.dispute_categories;
+  const category = PROTECTION_CATEGORIES[d.reason];
+  return { status: protection.status, covers: categories ? category !== undefined && categories.includes(category) : null };
+}
+
 function staleReason(stored: StoredDecision, d: Dispute): string {
   if (stored.basis.stage !== d.dispute_life_cycle_stage) return `stage changed ${stageLabel({ ...d, dispute_life_cycle_stage: stored.basis.stage })} \u2192 ${stageLabel(d)}`;
   const links = (d.links ?? []).map((link) => link.rel);
@@ -85,7 +99,7 @@ function staleReason(stored: StoredDecision, d: Dispute): string {
   return 'case details changed';
 }
 
-function buildRow(d: Dispute, record: CaseRecord | null, state: State, now: Date, explanation: StateExplanation): CaseRow {
+function buildRow(d: Dispute, record: CaseRecord | null, capture: Capture | null, state: State, now: Date, explanation: StateExplanation): CaseRow {
   const stored = state.decisions[d.dispute_id] ?? null;
   const stale = stored ? isDecisionStale(stored, d) : false;
   const open = isOpen(d);
@@ -114,12 +128,13 @@ function buildRow(d: Dispute, record: CaseRecord | null, state: State, now: Date
     open,
     headline: explanation.headline,
     outcome,
+    protection: protectionOf(d, capture),
   };
   return row;
 }
 
-export function buildCaseRow(d: Dispute, record: CaseRecord | null, state: State, now: Date): CaseRow {
-  return buildRow(d, record, state, now, explainState(d, now));
+export function buildCaseRow(d: Dispute, record: CaseRecord | null, state: State, now: Date, capture: Capture | null): CaseRow {
+  return buildRow(d, record, capture, state, now, explainState(d, now));
 }
 
 export function buildCaseDetail(d: Dispute, record: CaseRecord | null, order: Order | null, capture: Capture | null, state: State, now: Date): CaseDetail {
@@ -127,7 +142,7 @@ export function buildCaseDetail(d: Dispute, record: CaseRecord | null, order: Or
   const allowed = [...allowedActions(d)];
   const policy = state.policy;
   const explanation = explainState(d, now);
-  const row = buildRow(d, record, state, now, explanation);
+  const row = buildRow(d, record, capture, state, now, explanation);
   return {
     ...row,
     dispute: d,

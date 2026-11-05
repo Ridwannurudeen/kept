@@ -9,13 +9,13 @@ import { PayPalError } from '../paypal/errors.js';
 import { allowedActions, captureIdOf, disputedAmount } from '../paypal/dispute.js';
 import { parsePolicy } from '../policy.js';
 import { basisOf } from '../store.js';
-import type { Dispute } from '../paypal/types.js';
+import type { Capture, Dispute } from '../paypal/types.js';
 import type { CaseRecord } from '../../seed/seed.js';
 import type { Deps } from './app.js';
 import { ACTION_KINDS } from '../paypal/dispute.js';
 import { reconcileUnknown } from '../actions.js';
 
-type CachedCases = { disputes: Dispute[]; fetchedAt: string; at: number; warnings: string[] };
+type CachedCases = { disputes: Dispute[]; captures: Map<string, Capture>; fetchedAt: string; at: number; warnings: string[] };
 const caches = new WeakMap<object, CachedCases>();
 const generations = new WeakMap<object, number>();
 
@@ -23,7 +23,19 @@ function requestId(res: import('express').Response): string { return String(res.
 
 function cachedRows(cached: CachedCases, deps: Deps) {
   const state = deps.store.get();
-  return sortRows(joinCases(cached.disputes, state.cases).map(({ dispute, record }) => buildCaseRow(dispute, record, state, deps.now())));
+  return sortRows(joinCases(cached.disputes, state.cases).map(({ dispute, record }) => buildCaseRow(dispute, record, state, deps.now(), cached.captures.get(record?.captureId ?? '') ?? null)));
+}
+
+async function fetchCaptures(disputes: Dispute[], deps: Deps): Promise<Map<string, Capture>> {
+  const pending = [...new Set(joinCases(disputes, deps.store.get().cases).flatMap(({ record }) => record?.captureId ? [record.captureId] : []))];
+  const captures = new Map<string, Capture>();
+  await Promise.all(Array.from({ length: Math.min(4, pending.length) }, async () => {
+    for (let id = pending.shift(); id !== undefined; id = pending.shift()) {
+      try { captures.set(id, await deps.paypal.getCapture(id)); }
+      catch (error) { console.error(`[capture ${id}]`, error); }
+    }
+  }));
+  return captures;
 }
 
 async function decideOne(disputeId: string, deps: Deps): Promise<DecideResult> {
@@ -68,7 +80,8 @@ export function registerRoutes(router: Router, deps: Deps): void {
         }
       }));
       const disputes = results.filter((dispute): dispute is Dispute => dispute !== null);
-      const fresh: CachedCases = { disputes, fetchedAt: deps.now().toISOString(), at: deps.now().getTime(), warnings };
+      const captures = await fetchCaptures(disputes, deps);
+      const fresh: CachedCases = { disputes, captures, fetchedAt: deps.now().toISOString(), at: deps.now().getTime(), warnings };
       const cases = cachedRows(fresh, deps);
       if (generation === (generations.get(deps.store) ?? 0)) caches.set(deps.store, fresh);
       res.json({ cases, summary: summarize(cases), fetchedAt: fresh.fetchedAt, stale: false, warnings });

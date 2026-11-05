@@ -98,7 +98,7 @@ export async function performAction(disputeId: string, req: ApproveRequest, deps
   if (hasSentAction(state.actions, disputeId)) return { status: 'refused', blockers: ['This case already has a sent action'] };
   const stored = state.decisions[disputeId] ?? null;
   if (stored && isDecisionStale(stored, fresh)) {
-    const staleReason = buildCaseRow(fresh, null, state, deps.now()).staleReason;
+    const staleReason = buildCaseRow(fresh, null, state, deps.now(), null).staleReason;
     return { status: 'refused', blockers: [`Recommendation is stale: ${staleReason}. Run Kept again before approving`] };
   }
   const amount = disputedAmount(fresh);

@@ -47,6 +47,7 @@ export type Capture = {
   create_time?: string;
   update_time?: string;
   status_details?: { reason?: string };
+  seller_protection?: { status: string; dispute_categories?: string[] };
 };
 
 export type Order = {

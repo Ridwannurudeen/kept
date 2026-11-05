@@ -107,6 +107,26 @@ describe('HTTP app', () => {
     expect(paypal.getDispute).toHaveBeenCalledTimes(6);
   });
 
+  test('GET /api/cases reads Seller Protection from seeded captures, cached with the disputes', async () => {
+    paypal.getCapture.mockImplementation(async (id: string) => ({ id, status: 'COMPLETED', amount: { currency_code: 'USD', value: '10.00' }, seller_protection: { status: 'ELIGIBLE', dispute_categories: ['ITEM_NOT_RECEIVED'] } }));
+    const get = (path = '/api/cases') => request(app).get(path).set('x-kept-passcode', 'pass').expect(200);
+    const { body } = await get();
+    const protection = (id: string) => body.cases.find((row: { disputeId: string }) => row.disputeId === id).protection;
+    expect(protection('d-early')).toEqual({ status: 'ELIGIBLE', covers: true });
+    expect(protection('d-late')).toBeNull();
+    expect(paypal.getCapture).toHaveBeenCalledWith('CAP-a');
+    expect(paypal.getCapture).toHaveBeenCalledTimes(1);
+    await get();
+    expect(paypal.getCapture).toHaveBeenCalledTimes(1);
+    await get('/api/cases?refresh=1');
+    expect(paypal.getCapture).toHaveBeenCalledTimes(2);
+  });
+
+  test('GET /api/cases shows no protection when a capture does not load', async () => {
+    const { body } = await request(app).get('/api/cases').set('x-kept-passcode', 'pass').expect(200);
+    expect(body.cases.find((row: { disputeId: string }) => row.disputeId === 'd-early').protection).toBeNull();
+  });
+
   test('GET /api/cases rebuilds cached rows after policy changes', async () => {
     const auth = { 'x-kept-passcode': 'pass' };
     await request(app).get('/api/cases').set(auth).expect(200);
