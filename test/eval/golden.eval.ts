@@ -2,12 +2,12 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { PayPalAgentToolkit } from '@paypal/agent-toolkit/ai-sdk';
 import type { LanguageModelV1 } from 'ai';
 import { decideCase, type DecideInput, type DecideResult } from '../../src/ai/decide.js';
-import { buildUserPrompt } from '../../src/ai/prompt.js';
 import { createSettleModel, MODEL_ID } from '../../src/ai/provider.js';
 import { modelToolset, submitDecisionTool, type ModelTools } from '../../src/ai/tools.js';
 import { actionFor, type Decision } from '../../src/decision.js';
 import { allowedActions, disputedAmount, type ActionKind } from '../../src/paypal/dispute.js';
 import { offerCap, toCents } from '../../src/policy.js';
+import { buildFabricationSource } from './sources.js';
 
 type Expectation = { recommendation: Decision['recommendation'][]; action: Partial<Record<Decision['recommendation'], ActionKind>>; mustMention: RegExp[]; offerUnderCap: boolean; evidenceMissing: boolean };
 type CaseKey = 'A' | 'B' | 'C' | 'D';
@@ -92,7 +92,7 @@ function evaluate(key: CaseKey, input: DecideInput, result: DecideResult): { che
     problems.push('evidence_missing is empty');
     policy = false;
   }
-  const invented = fabrications(decision, buildUserPrompt(input));
+  const invented = fabrications(decision, buildFabricationSource(input));
   if (invented.length) problems.push(`not in the prompt: ${invented.join(', ')}`);
   const text = [...decision.reasons, ...decision.evidence_have, ...decision.evidence_missing, decision.draft_note, decision.plain_ask].join('\n');
   const missed = expected.mustMention.filter((pattern) => !pattern.test(text));
