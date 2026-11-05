@@ -82,6 +82,14 @@ describe('HTTP app', () => {
     await request(app).get('/api/cases').set('x-settle-passcode', 'nope').expect(401, { error: 'passcode' });
   });
 
+  test('passcode throttling is independent for forwarded client IPs', async () => {
+    for (let i = 0; i < 5; i++) {
+      await request(app).get('/api/cases').set('x-forwarded-for', '198.51.100.10').set('x-settle-passcode', `wrong-${i}`).expect(401, { error: 'passcode' });
+    }
+    await request(app).get('/api/cases').set('x-forwarded-for', '198.51.100.10').set('x-settle-passcode', 'wrong-again').expect(429, { error: 'too_many_attempts' });
+    await request(app).get('/api/cases').set('x-forwarded-for', '198.51.100.11').set('x-settle-passcode', 'wrong').expect(401, { error: 'passcode' });
+  });
+
   test('GET /api/cases joins seeded records, sorts by due date and includes summary', async () => {
     const { body } = await request(app).get('/api/cases').set('x-settle-passcode', 'pass').expect(200);
     expect(body.cases).toHaveLength(3);

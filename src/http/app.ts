@@ -23,6 +23,7 @@ export type Deps = {
 
 export function createApp(deps: Deps): Express {
   const app = express();
+  app.set('trust proxy', 1);
   app.use((_req, res, next) => { res.locals.requestId = randomUUID(); next(); });
   app.use('/api', requirePasscode(deps.config.passcode));
   app.use('/api/cases/:id/attachments', express.raw({ type: '*/*', limit: '5mb' }));
