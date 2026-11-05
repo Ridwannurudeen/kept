@@ -122,6 +122,7 @@ export class PayPalClient {
     try {
       return await attempt();
     } catch (err) {
+      if (method !== 'GET' && path !== '/v1/oauth2/token') throw err;
       if (!(err instanceof PayPalError) || err.status !== 401) throw err;
       this.token = null;
       return attempt();

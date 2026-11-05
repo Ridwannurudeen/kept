@@ -68,19 +68,25 @@ test('sends Bearer auth and PayPal-Request-Id on writes', async () => {
   expect(JSON.parse(req.body)).toMatchObject({ offer_type: 'REFUND' });
 });
 
-test('retries once with a new token after 401', async () => {
+test('retries a GET once with a new token after 401', async () => {
   const { client, requests } = makeClient([
     tokenReply('old'),
     { status: 401, json: { error: 'invalid_token' } },
     tokenReply('new'),
-    { status: 200, json: { id: 'ORDER1', status: 'COMPLETED', purchase_units: [] } },
+    { status: 200, json: { dispute_id: 'PP-1' } },
   ]);
-  const order = await client.captureOrder('ORDER1', 'req-1');
-  expect(order.id).toBe('ORDER1');
+  const dispute = await client.getDispute('PP-1');
+  expect(dispute.dispute_id).toBe('PP-1');
   expect(requests.filter((r) => r.url.endsWith('/v1/oauth2/token'))).toHaveLength(2);
   expect(requests[3].headers.authorization).toBe('Bearer new');
-  expect(requests[1].headers['paypal-request-id']).toBe('req-1');
-  expect(requests[3].headers['paypal-request-id']).toBe('req-1');
+  expect(requests[1].method).toBe('GET');
+  expect(requests[3].method).toBe('GET');
+});
+
+test('does not retry a POST after 401', async () => {
+  const { client, requests } = makeClient([tokenReply('old'), { status: 401, json: { error: 'invalid_token' } }]);
+  await expect(client.makeOffer('PP-1', offer)).rejects.toMatchObject({ status: 401 });
+  expect(requests).toHaveLength(2);
 });
 
 test('gives up after a second 401', async () => {
