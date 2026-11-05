@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import { PayPalAgentToolkit } from '@paypal/agent-toolkit/ai-sdk';
 import { decideCase, type DecideResult } from './ai/decide.js';
@@ -8,15 +10,33 @@ import { loadConfig } from './config.js';
 import { Store } from './store.js';
 import { createApp } from './http/app.js';
 import { performAction } from './actions.js';
+import { appendCall } from './log.js';
+import type { CallRecord } from './paypal/client.js';
 
-const config = loadConfig(process.env);
-const replay = config.mode === 'replay' ? await import('./replay/fakePaypal.js') : null;
-const fake = replay ? new replay.FakePayPal({ dir: resolve(process.cwd(), 'seed/replay') }) : null;
-const store = await Store.open({ dataDir: config.dataDir, seedPath: config.seedPath, snapshotPath: config.snapshotPath, onReset: fake ? () => fake.reset() : undefined });
-const paypal = fake ? (fake as unknown as PayPalClient) : new PayPalClient({ clientId: config.paypalClientId, clientSecret: config.paypalClientSecret });
-const toolkit = replay && fake ? (replay.fakeToolkit(fake) as unknown as PayPalAgentToolkit) : new PayPalAgentToolkit({ clientId: config.paypalClientId, clientSecret: config.paypalClientSecret, configuration: { actions: { disputes: { list: true, get: true, create: true } }, context: { sandbox: true } } });
-const noKey: DecideResult = { ok: false, error: 'no_decision', detail: 'Replay mode has no ANTHROPIC_API_KEY, so Settle cannot decide here.', steps: 0, toolCalls: [], durationMs: 0 };
-const model = config.anthropicApiKey ? createSettleModel(config.anthropicApiKey) : null;
-const tools = { ...modelToolset(toolkit), submit_decision: submitDecisionTool() };
-const app = createApp({ config, paypal, store, toolkit, now: () => new Date(), decide: async (input) => (model ? decideCase(input, { model, tools }) : noKey), act: performAction, recordedOn: fake?.recordedOn ?? null });
-app.listen(config.port, '0.0.0.0', () => console.log(`Settle listening on :${config.port}`));
+export function recordCalls(store: Store): (call: CallRecord) => void {
+  return (call) => {
+    try {
+      void store.update((state) => {
+        state.calls = appendCall(state.calls, { ...call, id: randomUUID() });
+      }).catch((error: unknown) => console.error('Failed to record PayPal call', error));
+    } catch (error) {
+      console.error('Failed to record PayPal call', error);
+    }
+  };
+}
+
+async function startServer(): Promise<void> {
+  const config = loadConfig(process.env);
+  const replay = config.mode === 'replay' ? await import('./replay/fakePaypal.js') : null;
+  const fake = replay ? new replay.FakePayPal({ dir: resolve(process.cwd(), 'seed/replay') }) : null;
+  const store = await Store.open({ dataDir: config.dataDir, seedPath: config.seedPath, snapshotPath: config.snapshotPath, onReset: fake ? () => fake.reset() : undefined });
+  const paypal = fake ? (fake as unknown as PayPalClient) : new PayPalClient({ clientId: config.paypalClientId, clientSecret: config.paypalClientSecret, onCall: recordCalls(store) });
+  const toolkit = replay && fake ? (replay.fakeToolkit(fake) as unknown as PayPalAgentToolkit) : new PayPalAgentToolkit({ clientId: config.paypalClientId, clientSecret: config.paypalClientSecret, configuration: { actions: { disputes: { list: true, get: true, create: true } }, context: { sandbox: true } } });
+  const noKey: DecideResult = { ok: false, error: 'no_decision', detail: 'Replay mode has no ANTHROPIC_API_KEY, so Settle cannot decide here.', steps: 0, toolCalls: [], durationMs: 0 };
+  const model = config.anthropicApiKey ? createSettleModel(config.anthropicApiKey) : null;
+  const tools = { ...modelToolset(toolkit), submit_decision: submitDecisionTool() };
+  const app = createApp({ config, paypal, store, toolkit, now: () => new Date(), decide: async (input) => (model ? decideCase(input, { model, tools }) : noKey), act: performAction, recordedOn: fake?.recordedOn ?? null });
+  app.listen(config.port, '0.0.0.0', () => console.log(`Settle listening on :${config.port}`));
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) await startServer();
