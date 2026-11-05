@@ -20,5 +20,5 @@ test('never includes buyer email or full address', () => {
   shipping.address = { ...shipping.address, address_line_1: '1 Main St', postal_code: '95131' };
   const p = buildUserPrompt(inputFor('dispute-inquiry-open', recordB, order));
   expect(p).toContain('San Jose');
-  for (const leak of ['@', 'address_line_1', '1 Main St', 'Sam Buyer', 'REDACTED', '95131', 'payer_id', 'email']) expect(p).not.toContain(leak);
+  for (const leak of ['@', 'address_line_1', '1 Main St', 'Sam Buyer', 'REDACTED', 'CA', '95131', 'payer_id', 'email']) expect(p).not.toContain(leak);
 });

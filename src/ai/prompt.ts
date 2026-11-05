@@ -25,7 +25,7 @@ export function buildUserPrompt(input: DecideInput): string {
   const orderSummary = order && unit ? {
     amount: unit.amount,
     create_time: order.create_time ?? null,
-    shipping: address ? { city: address.admin_area_2 ?? null, region: address.admin_area_1 ?? null } : null,
+    shipping: address ? { city: address.admin_area_2 ?? null } : null,
     trackers: (unit.shipping?.trackers ?? []).map((tracker) => ({ id: tracker.id, status: tracker.status })),
   } : null;
   const captureSummary = capture ? { status: capture.status, amount: capture.amount } : null;
