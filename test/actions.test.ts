@@ -2,7 +2,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, vi } from 'vitest';
-import { performAction, resetActionGuards, type ActionDeps } from '../src/actions.js';
+import { performAction, reconcileUnknown, resetActionGuards, type ActionDeps } from '../src/actions.js';
 import type { Dispute } from '../src/paypal/types.js';
 import { PayPalError } from '../src/paypal/errors.js';
 import { Store } from '../src/store.js';
@@ -28,6 +28,10 @@ describe('performAction', () => {
   let execute: ReturnType<typeof vi.fn>;
   let deps: ActionDeps;
   const decision = { recommendation: 'SETTLE' as const, plain_ask: 'Offer some.', evidence_have: [], evidence_missing: [], reasons: ['weak evidence'], offer_amount: '9.00', draft_note: 'Original note.' };
+  const unknownText = 'No response from PayPal; the outcome is unknown. Check the case before retrying.';
+  const mayHaveReached = 'The last action may have reached PayPal. Check the case in PayPal before retrying.';
+  const landed = 'PayPal already has this action; refresh the case';
+  const later = (d: ActionDeps): ActionDeps => ({ ...d, now: () => new Date('2026-11-05T00:10:00.000Z') });
 
   beforeEach(async () => {
     resetActionGuards();
@@ -51,7 +55,7 @@ describe('performAction', () => {
 
   test('sends make_offer with REFUND and the seller amount, logs it, marks sellerEdited when the note changed', async () => {
     const result = await performAction('d-action', { action: 'make_offer', note: 'Changed note.', offerAmount: '5.00' }, deps);
-    expect(paypal.makeOffer).toHaveBeenCalledWith('d-action', { note: 'Changed note.', offer_amount: { currency_code: 'USD', value: '5.00' }, offer_type: 'REFUND' }, expect.any(Function));
+    expect(paypal.makeOffer).toHaveBeenCalledWith('d-action', { note: 'Changed note.', offer_amount: { currency_code: 'USD', value: '5.00' }, offer_type: 'REFUND' }, expect.any(Function), expect.stringMatching(/^settle-/));
     expect(result).toMatchObject({ status: 'sent', entry: { action: 'make_offer', sellerEdited: true, paypal: { ok: true } } });
     expect(store.get().actions).toHaveLength(1);
   });
@@ -100,15 +104,15 @@ describe('performAction', () => {
     fresh = { ...fresh, dispute_life_cycle_stage: 'CHARGEBACK', links: [{ href: '', rel: 'provide_supporting_info' }] };
     await store.update((state) => { delete state.decisions['d-action']; });
     await performAction('d-action', { action: 'provide_supporting_info', note: 'Tracking details.' }, deps);
-    expect(paypal.provideSupportingInfo).toHaveBeenCalledWith('d-action', 'Tracking details.', expect.any(Function));
+    expect(paypal.provideSupportingInfo).toHaveBeenCalledWith('d-action', 'Tracking details.', expect.any(Function), expect.stringMatching(/^settle-/));
   });
 
   test('provide_evidence uses PROOF_OF_FULFILLMENT with tracking when the record has tracking, OTHER otherwise', async () => {
     await performAction('d-action', { action: 'provide_evidence', note: 'Shipped.' }, deps);
-    expect(paypal.provideEvidence).toHaveBeenCalledWith('d-action', { evidences: [{ evidence_type: 'PROOF_OF_FULFILLMENT', evidence_info: { tracking_info: [{ carrier_name: 'UPS', tracking_number: 'TRACK-B' }] }, notes: 'Shipped.' }] }, expect.any(Function));
+    expect(paypal.provideEvidence).toHaveBeenCalledWith('d-action', { evidences: [{ evidence_type: 'PROOF_OF_FULFILLMENT', evidence_info: { tracking_info: [{ carrier_name: 'UPS', tracking_number: 'TRACK-B' }] }, notes: 'Shipped.' }] }, expect.any(Function), expect.stringMatching(/^settle-/));
     await store.update((state) => { state.actions = []; state.cases.B!.trackingNumber = null; });
     await performAction('d-action', { action: 'provide_evidence', note: 'Other proof.' }, deps);
-    expect(paypal.provideEvidence).toHaveBeenLastCalledWith('d-action', { evidences: [{ evidence_type: 'OTHER', evidence_info: undefined, notes: 'Other proof.' }] }, expect.any(Function));
+    expect(paypal.provideEvidence).toHaveBeenLastCalledWith('d-action', { evidences: [{ evidence_type: 'OTHER', evidence_info: undefined, notes: 'Other proof.' }] }, expect.any(Function), expect.stringMatching(/^settle-/));
   });
 
   test('a PayPal 422 yields failed with the debugId and an entry with paypal.ok false; the case stays unsent', async () => {
@@ -137,20 +141,119 @@ describe('performAction', () => {
     expect(await performAction('d-action', { action: 'accept_claim', note: 'We accept.' }, deps)).toMatchObject({ status: 'failed', error: { status: null, message: 'denied' } });
   });
 
-  test('blocks toolkit no-response outcomes and remembers the lost action', async () => {
+  test('a toolkit no-response marks the case UNKNOWN and refuses the immediate retry before any PayPal write', async () => {
     fresh = { ...fresh, dispute_id: 'd-toolkit-lost' };
     execute.mockResolvedValueOnce(JSON.stringify({ ok: false, code: 'PAYPAL_API_NO_RESPONSE', message: 'lost' }));
-    expect(await performAction('d-toolkit-lost', { action: 'accept_claim', note: 'We accept.' }, deps)).toMatchObject({ status: 'failed', error: { status: null, message: 'No response from PayPal; the outcome is unknown. Check the case before retrying.' } });
-    expect(await performAction('d-toolkit-lost', { action: 'accept_claim', note: 'We accept.' }, deps)).toMatchObject({ status: 'sent' });
+    expect(await performAction('d-toolkit-lost', { action: 'accept_claim', note: 'We accept.' }, deps)).toMatchObject({ status: 'failed', error: { status: null, unknown: true, message: unknownText } });
+    expect(store.get().unknownOutcomes['d-toolkit-lost']).toEqual({ action: 'accept_claim', at: '2026-11-05T00:00:00.000Z' });
+    expect(await performAction('d-toolkit-lost', { action: 'accept_claim', note: 'We accept.' }, deps)).toEqual({ status: 'refused', blockers: [mayHaveReached] });
+    expect(execute).toHaveBeenCalledTimes(1);
   });
 
-  test('checks the lost action kind before allowing a different action', async () => {
-    fresh = { ...fresh, dispute_id: 'd-lost-action-kind' };
-    paypal.makeOffer.mockRejectedValueOnce(new PayPalError('network', 0, null, null, '/offer'));
-    await performAction('d-lost-action-kind', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps);
-    fresh = { ...fresh, links: fresh.links.filter((link) => link.rel !== 'make_offer') };
-    expect(await performAction('d-lost-action-kind', { action: 'accept_claim', note: 'We accept.' }, deps)).toEqual({ status: 'refused', blockers: ['PayPal may already have this action; refresh the case'] });
+  test('toolkit ok:false without a status, or with a 5xx status, is UNKNOWN', async () => {
+    execute.mockResolvedValueOnce(JSON.stringify({ ok: false, message: 'gone' }));
+    expect(await performAction('d-action', { action: 'accept_claim', note: 'We accept.' }, deps)).toMatchObject({ status: 'failed', error: { status: null, unknown: true } });
+    await store.update((state) => { state.unknownOutcomes = {}; state.actions = []; });
+    execute.mockResolvedValueOnce(JSON.stringify({ ok: false, status: 503, code: 'PAYPAL_API_HTTP_ERROR', message: 'busy' }));
+    expect(await performAction('d-action', { action: 'accept_claim', note: 'We accept.' }, deps)).toMatchObject({ status: 'failed', error: { status: 503, unknown: true, message: unknownText } });
+    expect(store.get().unknownOutcomes['d-action']).toMatchObject({ action: 'accept_claim' });
+  });
+
+  test('a 5xx on a PayPal write is UNKNOWN and blocks a different action too', async () => {
+    paypal.makeOffer.mockRejectedValueOnce(new PayPalError('busy', 503, 'dbg-503', {}, '/offer'));
+    expect(await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps)).toMatchObject({ status: 'failed', error: { status: 503, debugId: 'dbg-503', unknown: true, message: unknownText } });
+    expect(store.get().unknownOutcomes['d-action']).toEqual({ action: 'make_offer', at: '2026-11-05T00:00:00.000Z' });
+    expect(await performAction('d-action', { action: 'accept_claim', note: 'We accept.' }, deps)).toEqual({ status: 'refused', blockers: [mayHaveReached] });
     expect(execute).not.toHaveBeenCalled();
+  });
+
+  test('a 422 is a definite failure, not UNKNOWN', async () => {
+    paypal.makeOffer.mockRejectedValueOnce(new PayPalError('invalid', 422, null, {}, '/offer'));
+    expect(await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps)).toMatchObject({ status: 'failed', error: { status: 422, unknown: false } });
+    expect(store.get().unknownOutcomes).toEqual({});
+  });
+
+  test('UNKNOWN survives a restart: a reopened Store still refuses the retry', async () => {
+    paypal.makeOffer.mockRejectedValueOnce(new PayPalError('network', 0, null, null, '/offer'));
+    await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps);
+    resetActionGuards();
+    const reopened = await Store.open({ dataDir: join(dir, 'data'), seedPath: join(dir, 'cases.json'), snapshotPath: join(dir, 'absent.json') });
+    expect(reopened.get().unknownOutcomes['d-action']).toEqual({ action: 'make_offer', at: '2026-11-05T00:00:00.000Z' });
+    expect(await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, { ...deps, store: reopened })).toEqual({ status: 'refused', blockers: [mayHaveReached] });
+    expect(paypal.makeOffer).toHaveBeenCalledTimes(1);
+  });
+
+  test('UNKNOWN then RESOLVED on PayPal: the action is logged as landed and the retry refused', async () => {
+    execute.mockResolvedValueOnce(JSON.stringify({ ok: false, code: 'PAYPAL_API_NO_RESPONSE' }));
+    await performAction('d-action', { action: 'accept_claim', note: 'We accept.' }, deps);
+    fresh = { ...fresh, status: 'RESOLVED', links: [] };
+    expect(await performAction('d-action', { action: 'accept_claim', note: 'We accept.' }, deps)).toEqual({ status: 'refused', blockers: [landed] });
+    expect(store.get().actions.at(-1)).toMatchObject({ action: 'accept_claim', submitted: { note: 'We accept.' }, paypal: { ok: true, message: 'PayPal shows this action landed' } });
+    expect(store.get().unknownOutcomes).toEqual({});
+    expect(await performAction('d-action', { action: 'accept_claim', note: 'We accept.' }, deps)).toEqual({ status: 'refused', blockers: ['This case already has a sent action'] });
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
+
+  test('UNKNOWN then a seller supporting_info entry newer than the write counts as landed', async () => {
+    paypal.provideSupportingInfo.mockRejectedValueOnce(new PayPalError('network', 0, null, null, '/psi'));
+    fresh = { ...fresh, dispute_life_cycle_stage: 'CHARGEBACK', links: [{ href: '', rel: 'provide_supporting_info' }] };
+    await store.update((state) => { delete state.decisions['d-action']; });
+    await performAction('d-action', { action: 'provide_supporting_info', note: 'Tracking.' }, deps);
+    fresh = { ...fresh, supporting_info: [{ notes: 'Tracking.', source: 'SUBMITTED_BY_SELLER', provided_time: '2026-11-05T00:00:01.000Z' }] };
+    expect(await performAction('d-action', { action: 'provide_supporting_info', note: 'Tracking.' }, later(deps))).toEqual({ status: 'refused', blockers: [landed] });
+    expect(paypal.provideSupportingInfo).toHaveBeenCalledTimes(1);
+  });
+
+  test('UNKNOWN then a seller evidence entry at the write time counts as landed', async () => {
+    paypal.provideEvidence.mockRejectedValueOnce(new PayPalError('busy', 500, null, {}, '/pe'));
+    await performAction('d-action', { action: 'provide_evidence', note: 'Shipped.' }, deps);
+    fresh = { ...fresh, evidences: [{ evidence_type: 'PROOF_OF_FULFILLMENT', source: 'SUBMITTED_BY_SELLER', date: '2026-11-05T00:00:00.000Z' }] };
+    expect(await performAction('d-action', { action: 'provide_evidence', note: 'Shipped.' }, later(deps))).toEqual({ status: 'refused', blockers: [landed] });
+    expect(paypal.provideEvidence).toHaveBeenCalledTimes(1);
+  });
+
+  test('UNKNOWN then a seller offer on the dispute counts as landed', async () => {
+    paypal.makeOffer.mockRejectedValueOnce(new PayPalError('network', 0, null, null, '/offer'));
+    await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps);
+    fresh = { ...fresh, offer: { seller_offered_amount: { currency_code: 'USD', value: '5.00' }, offer_type: 'REFUND' } };
+    expect(await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, later(deps))).toEqual({ status: 'refused', blockers: [landed] });
+    expect(store.get().actions.at(-1)).toMatchObject({ action: 'make_offer', submitted: { offerAmount: '5.00' }, paypal: { ok: true } });
+  });
+
+  test('UNKNOWN with no seller activity after the settle window is cleared and the approve goes through', async () => {
+    paypal.makeOffer.mockRejectedValueOnce(new PayPalError('network', 0, null, null, '/offer'));
+    await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps);
+    fresh = { ...fresh, supporting_info: [{ notes: 'old', source: 'SUBMITTED_BY_SELLER', provided_time: '2026-11-04T00:00:00.000Z' }], offer: { buyer_requested_amount: { currency_code: 'USD', value: '36.00' } } };
+    expect(await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, later(deps))).toMatchObject({ status: 'sent' });
+    expect(store.get().unknownOutcomes).toEqual({});
+    expect(paypal.makeOffer).toHaveBeenCalledTimes(2);
+  });
+
+  test('reconcileUnknown is a no-op for a case that is not UNKNOWN', async () => {
+    expect(await reconcileUnknown('d-action', fresh, deps)).toBeNull();
+    expect(store.get().actions).toEqual([]);
+  });
+
+  test('writes carry a stable PayPal-Request-Id per dispute, action and body', async () => {
+    paypal.makeOffer.mockRejectedValueOnce(new PayPalError('invalid', 422, null, {}, '/offer'));
+    await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps);
+    await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps);
+    const [first, second] = paypal.makeOffer.mock.calls.map((call) => call[3]);
+    expect(first).toMatch(/^settle-d-action-make_offer-[0-9a-f]{12}$/);
+    expect(second).toBe(first);
+    await store.update((state) => { state.actions = []; });
+    await performAction('d-action', { action: 'make_offer', note: 'Different.', offerAmount: '5.00' }, deps);
+    expect(paypal.makeOffer.mock.calls[2]![3]).not.toBe(first);
+  });
+
+  test('blocks retries when the outcome is unknown and recording it failed', async () => {
+    paypal.makeOffer.mockRejectedValueOnce(new PayPalError('network', 0, null, null, '/offer'));
+    const originalUpdate = store.update.bind(store);
+    vi.spyOn(store, 'update').mockRejectedValueOnce(new Error('disk failed'));
+    await expect(performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps)).rejects.toThrow('The outcome at PayPal is unknown and Settle could not record it');
+    store.update = originalUpdate;
+    expect(await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, later(deps))).toEqual({ status: 'refused', blockers: ['The outcome at PayPal is unknown and Settle could not record it; do not retry, check PayPal. Restart Settle after checking PayPal.'] });
+    expect(paypal.makeOffer).toHaveBeenCalledTimes(1);
   });
 
   test('only one concurrent action sends for a dispute', async () => {
@@ -174,25 +277,18 @@ describe('performAction', () => {
     expect(paypal.makeOffer).toHaveBeenCalledTimes(1);
   });
 
-  test('blocks retry after an unknown write outcome when fresh dispute omits action', async () => {
-    fresh = { ...fresh, dispute_id: 'd-unknown-omitted' };
-    paypal.makeOffer.mockRejectedValueOnce(new PayPalError('network', 0, null, null, '/offer'));
-    expect(await performAction('d-unknown-omitted', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps)).toMatchObject({ status: 'failed', error: { status: null, message: 'No response from PayPal; the outcome is unknown. Check the case before retrying.' } });
-    fresh = { ...fresh, links: [] };
-    expect(await performAction('d-unknown-omitted', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps)).toEqual({ status: 'refused', blockers: ['PayPal may already have this action; refresh the case'] });
-  });
-
-  test('clears unknown outcome when fresh dispute still lists requested action', async () => {
+  test('a network failure on a write refuses the retry even when PayPal still lists the action', async () => {
     fresh = { ...fresh, dispute_id: 'd-unknown-listed' };
     paypal.makeOffer.mockRejectedValueOnce(new PayPalError('network', 0, null, null, '/offer'));
-    await performAction('d-unknown-listed', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps);
-    expect(await performAction('d-unknown-listed', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps)).toMatchObject({ status: 'sent' });
+    expect(await performAction('d-unknown-listed', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps)).toMatchObject({ status: 'failed', error: { status: null, unknown: true, message: unknownText } });
+    expect(await performAction('d-unknown-listed', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps)).toEqual({ status: 'refused', blockers: [mayHaveReached] });
+    expect(paypal.makeOffer).toHaveBeenCalledTimes(1);
   });
 
   test('requires carrier as well as tracking number for evidence tracking_info', async () => {
     fresh = { ...fresh, dispute_id: 'd-carrier' };
     await store.update((state) => { state.cases.B!.carrier = null; });
     await performAction('d-carrier', { action: 'provide_evidence', note: 'Shipped.' }, deps);
-    expect(paypal.provideEvidence).toHaveBeenCalledWith('d-carrier', { evidences: [{ evidence_type: 'OTHER', evidence_info: undefined, notes: 'Shipped.' }] }, expect.any(Function));
+    expect(paypal.provideEvidence).toHaveBeenCalledWith('d-carrier', { evidences: [{ evidence_type: 'OTHER', evidence_info: undefined, notes: 'Shipped.' }] }, expect.any(Function), expect.stringMatching(/^settle-/));
   });
 });

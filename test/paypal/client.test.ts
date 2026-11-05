@@ -194,3 +194,11 @@ test('surfaces network errors as PayPalError with status null', async () => {
   expect(calls[1]).toMatchObject({ status: null, debugId: null });
   expect(calls[1].error).toContain('socket hang up');
 });
+
+test('dispute writes send the caller PayPal-Request-Id when given', async () => {
+  const { client, requests } = makeClient([tokenReply(), { status: 200, json: {} }, { status: 200, json: {} }, { status: 200, json: {} }]);
+  await client.makeOffer('PP-1', offer, undefined, 'settle-PP-1-make_offer-abc');
+  await client.provideSupportingInfo('PP-1', 'n', undefined, 'settle-PP-1-provide_supporting_info-abc');
+  await client.provideEvidence('PP-1', { evidences: [{ evidence_type: 'OTHER', notes: 'n' }] }, undefined, 'settle-PP-1-provide_evidence-abc');
+  expect(requests.slice(1).map((r) => r.headers['paypal-request-id'])).toEqual(['settle-PP-1-make_offer-abc', 'settle-PP-1-provide_supporting_info-abc', 'settle-PP-1-provide_evidence-abc']);
+});

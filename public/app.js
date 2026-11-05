@@ -616,6 +616,8 @@
 
   function approveBlockers(detail, action, note, offer) {
     if (detail.sent) return ["This case already has a sent action"];
+    if (detail.unknownOutcome)
+      return ["Outcome unknown: check PayPal before retrying"];
     if (!detail.open) return ["PayPal has closed this case"];
     if (!action) return ["PayPal lists no seller action for this case yet"];
     const blockers = [];
@@ -920,7 +922,8 @@
     } else if (result.status === 0) {
       wrap.classList.add("result-failed");
       wrap.append(
-        el("p", "panel-lead", `Could not send. ${result.body.error.message}`),
+        el("p", "panel-lead", "Outcome unknown: check PayPal before retrying"),
+        el("p", "panel-text", result.body.error.message),
       );
     } else {
       wrap.classList.add("result-failed");
@@ -929,7 +932,9 @@
         el(
           "p",
           "panel-lead",
-          `PayPal did not accept the action (HTTP ${error.status ?? result.status}).`,
+          error.unknown
+            ? "Outcome unknown: check PayPal before retrying"
+            : `PayPal did not accept the action (HTTP ${error.status ?? result.status}).`,
         ),
       );
       if (error.message) wrap.append(el("p", "panel-text", error.message));
@@ -1196,7 +1201,9 @@
       const row = el("tr");
       const status = entry.paypal.ok
         ? `Sent${entry.paypal.status ? ` (${entry.paypal.status})` : ""}`
-        : `Failed (${entry.paypal.status ?? "no response"})`;
+        : entry.paypal.status === null || entry.paypal.status >= 500
+          ? "Outcome unknown"
+          : `Failed (${entry.paypal.status})`;
       row.append(
         el("td", "", stampFormat.format(new Date(entry.at))),
         el("td", "", ACTION_LABELS[entry.action] || entry.action),
@@ -1406,7 +1413,9 @@
         announce(`Case ${label}: not sent. ${result.body.blockers.join(". ")}`);
       } else {
         announce(
-          `Case ${label}: PayPal did not accept the action. ${result.body.error?.message || ""}`,
+          result.body.error?.unknown
+            ? `Case ${label}: outcome unknown. Check PayPal before retrying.`
+            : `Case ${label}: PayPal did not accept the action. ${result.body.error?.message || ""}`,
         );
       }
     } catch (error) {
@@ -1414,7 +1423,9 @@
         status: 0,
         body: { error: { status: null, message: error.message } },
       });
-      announce(`Case ${label}: could not send. ${error.message}`);
+      announce(
+        `Case ${label}: outcome unknown. Check PayPal before retrying. ${error.message}`,
+      );
     }
     approving = false;
     if (panelId !== id) return;

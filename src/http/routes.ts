@@ -13,6 +13,7 @@ import type { Dispute } from '../paypal/types.js';
 import type { CaseRecord } from '../../seed/seed.js';
 import type { Deps } from './app.js';
 import { ACTION_KINDS } from '../paypal/dispute.js';
+import { reconcileUnknown } from '../actions.js';
 
 type CachedCases = { disputes: Dispute[]; fetchedAt: string; at: number; warnings: string[] };
 const caches = new WeakMap<object, CachedCases>();
@@ -87,6 +88,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
   router.get('/api/cases/:id', async (req, res, next) => {
     try {
       const dispute = await deps.paypal.getDispute(req.params.id);
+      await reconcileUnknown(req.params.id, dispute, deps);
       const warnings: string[] = [];
       const record = Object.values(deps.store.get().cases).find((entry) => entry.captureId && entry.captureId === captureIdOf(dispute)) ?? null;
       const orderPromise = record ? deps.paypal.getOrder(record.orderId).catch((error: unknown) => { warnings.push(error instanceof Error ? error.message : String(error)); return null; }) : Promise.resolve(null);

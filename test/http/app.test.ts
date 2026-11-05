@@ -130,6 +130,24 @@ describe('HTTP app', () => {
     expect(body).toMatchObject({ dispute: { dispute_id: 'd-early' }, order: null, warnings: expect.any(Array) });
   });
 
+  test('GET /api/cases/:id shows an UNKNOWN outcome inside the settle window and clears it after when PayPal shows no seller activity', async () => {
+    await store.update((state) => { state.unknownOutcomes['d-early'] = { action: 'make_offer', at: '2026-11-04T23:58:00.000Z' }; });
+    const first = await request(app).get('/api/cases/d-early').set('x-settle-passcode', 'pass').expect(200);
+    expect(first.body.unknownOutcome).toEqual({ action: 'make_offer', at: '2026-11-04T23:58:00.000Z' });
+    await store.update((state) => { state.unknownOutcomes['d-early'] = { action: 'make_offer', at: '2026-11-04T23:00:00.000Z' }; });
+    const second = await request(app).get('/api/cases/d-early').set('x-settle-passcode', 'pass').expect(200);
+    expect(second.body.unknownOutcome).toBeNull();
+    expect(store.get().unknownOutcomes).toEqual({});
+  });
+
+  test('GET /api/cases/:id records an UNKNOWN action as landed when PayPal shows it', async () => {
+    await store.update((state) => { state.unknownOutcomes['d-early'] = { action: 'accept_claim', at: '2026-11-04T23:59:00.000Z' }; });
+    disputes[1] = { ...disputes[1]!, status: 'RESOLVED', links: [] };
+    const { body } = await request(app).get('/api/cases/d-early').set('x-settle-passcode', 'pass').expect(200);
+    expect(body).toMatchObject({ unknownOutcome: null, sent: true, actionTaken: 'accept_claim' });
+    expect(store.get().actions.at(-1)).toMatchObject({ disputeId: 'd-early', action: 'accept_claim', paypal: { ok: true, message: 'PayPal shows this action landed' } });
+  });
+
   test('PUT /api/policy validates and persists', async () => {
     const auth = { 'x-settle-passcode': 'pass' };
     await request(app).put('/api/policy').set(auth).send({ maxOfferPercent: 101, maxOfferAbsolute: '50.00', deadlineBufferHours: 48 }).expect(400);

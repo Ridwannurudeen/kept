@@ -5,6 +5,7 @@ import type { Decision, Validation } from './decision.js';
 import { disputedAmount } from './paypal/dispute.js';
 import type { Dispute } from './paypal/types.js';
 import type { ActionEntry, CallEntry } from './log.js';
+import type { ActionKind } from './paypal/dispute.js';
 import type { CaseRecord } from '../seed/seed.js';
 import { buildSnapshot } from './snapshot.js';
 
@@ -12,7 +13,8 @@ export type DecisionBasis = { stage: string; status: string; disputeState: strin
 export type StoredDecision = { decision: Decision; validation: Validation; at: string; model: string; steps: number; toolCalls: string[]; durationMs: number; basis: DecisionBasis };
 export type SnapshotAction = Omit<ActionEntry, 'recommended'>;
 export type SnapshotCall = Pick<CallEntry, 'id' | 'at' | 'method' | 'path' | 'status' | 'durationMs' | 'requestId' | 'debugId' | 'retried'>;
-export type Snapshot = { snapshotAt: string; decisions: Record<string, StoredDecision>; actions: SnapshotAction[]; calls: SnapshotCall[] };
+export type UnknownOutcome = { action: ActionKind; at: string };
+export type Snapshot = { snapshotAt: string; decisions: Record<string, StoredDecision>; actions: SnapshotAction[]; calls: SnapshotCall[]; unknownOutcomes: Record<string, UnknownOutcome> };
 export type State = {
   version: 1;
   startedAt: string;
@@ -22,6 +24,7 @@ export type State = {
   decisions: Record<string, StoredDecision>;
   actions: ActionEntry[];
   calls: CallEntry[];
+  unknownOutcomes: Record<string, UnknownOutcome>;
   attachments: Record<string, { name: string; type: string; size: number; at: string }[]>;
 };
 
@@ -68,6 +71,7 @@ async function freshState(seedPath: string, snapshotPath: string | null, now: Da
     decisions: snapshot?.decisions ?? {},
     actions: (snapshot?.actions ?? []).map((action) => ({ ...action, recommended: null })),
     calls: snapshot?.calls ?? [],
+    unknownOutcomes: snapshot?.unknownOutcomes ?? {},
     attachments: {},
   };
 }
@@ -99,7 +103,9 @@ export class Store {
     }
     if (text !== null) {
       try {
-        return new Store(opts.dataDir, opts.seedPath, snapshotPath, now, opts.onReset, JSON.parse(text) as State);
+        const state = JSON.parse(text) as State;
+        state.unknownOutcomes ??= {};
+        return new Store(opts.dataDir, opts.seedPath, snapshotPath, now, opts.onReset, state);
       } catch {
         await rename(file, join(opts.dataDir, `state.json.corrupt-${now().getTime()}`));
       }

@@ -20,7 +20,7 @@ function state(overrides: Partial<State> = {}): State {
   return {
     version: 1, startedAt: now.toISOString(), restoredFrom: null,
     policy: { maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 48 }, cases: {},
-    decisions: {}, actions: [], calls: [], attachments: {}, ...overrides,
+    decisions: {}, actions: [], calls: [], unknownOutcomes: {}, attachments: {}, ...overrides,
   };
 }
 

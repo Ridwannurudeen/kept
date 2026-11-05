@@ -71,6 +71,7 @@ test('reset returns to the seed and a new startedAt', async () => {
       s.actions.push({} as never);
       s.calls.push({} as never);
       s.decisions.x = {} as never;
+      s.unknownOutcomes.x = { action: 'make_offer', at: 'now' };
       s.attachments.x = [{ name: 'a.txt', type: 'text/plain', size: 1, at: 'now' }];
       s.policy.maxOfferPercent = 5;
       delete s.cases.A;
@@ -79,6 +80,7 @@ test('reset returns to the seed and a new startedAt', async () => {
     expect(state.actions).toEqual([]);
     expect(state.calls).toEqual([]);
     expect(state.decisions).toEqual({});
+    expect(state.unknownOutcomes).toEqual({});
     expect(state.attachments).toEqual({});
     expect(state.policy).toEqual(defaultPolicy);
     expect(Object.keys(state.cases)).toEqual(['A']);
@@ -124,13 +126,14 @@ test('starts with empty lists and restoredFrom null when there is no snapshot', 
     expect(s.actions).toEqual([]);
     expect(s.calls).toEqual([]);
     expect(s.attachments).toEqual({});
+    expect(s.unknownOutcomes).toEqual({});
   } finally { await f.cleanup(); }
 });
 test('snapshot() returns only decisions, actions, calls and a timestamp', async () => {
   const f = await fixture();
   try {
     const s = (await Store.open(f.opts)).snapshot();
-    expect(Object.keys(s).sort()).toEqual(['actions', 'calls', 'decisions', 'snapshotAt']);
+    expect(Object.keys(s).sort()).toEqual(['actions', 'calls', 'decisions', 'snapshotAt', 'unknownOutcomes']);
   } finally { await f.cleanup(); }
 });
 test('isDecisionStale is true when stage, links, amount or due date changed and false otherwise', () => {
@@ -142,4 +145,25 @@ test('isDecisionStale is true when stage, links, amount or due date changed and 
   expect(isDecisionStale(stored, { ...d, links: [{ href: '', rel: 'a' }] })).toBe(true);
   expect(isDecisionStale(stored, { ...d, dispute_amount: { currency_code: 'USD', value: '6.00' } })).toBe(true);
   expect(isDecisionStale(stored, { ...d, seller_response_due_date: 'later' })).toBe(true);
+});
+test('a state.json written before unknownOutcomes existed loads with none', async () => {
+  const f = await fixture();
+  try {
+    const store = await Store.open(f.opts);
+    const file = join(f.opts.dataDir, 'state.json');
+    const old = JSON.parse(await readFile(file, 'utf8'));
+    delete old.unknownOutcomes;
+    await writeFile(file, JSON.stringify(old));
+    expect((await Store.open(f.opts)).get().unknownOutcomes).toEqual({});
+    expect(store.get().unknownOutcomes).toEqual({});
+  } finally { await f.cleanup(); }
+});
+test('unknownOutcomes are restored from the snapshot', async () => {
+  const f = await fixture();
+  try {
+    const snapshotPath = join(f.dir, 'snapshot.json');
+    await writeFile(snapshotPath, JSON.stringify({ snapshotAt: '2026-11-06T00:00:00.000Z', decisions: {}, actions: [], calls: [], unknownOutcomes: { 'PP-D-1': { action: 'make_offer', at: '2026-11-05T00:00:00.000Z' } } }));
+    const store = await Store.open({ ...f.opts, snapshotPath });
+    expect(store.get().unknownOutcomes).toEqual({ 'PP-D-1': { action: 'make_offer', at: '2026-11-05T00:00:00.000Z' } });
+  } finally { await f.cleanup(); }
 });

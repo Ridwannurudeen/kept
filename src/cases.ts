@@ -1,5 +1,5 @@
 import type { Decision } from './decision.js';
-import { isDecisionStale, type State, type StoredDecision } from './store.js';
+import { isDecisionStale, type State, type StoredDecision, type UnknownOutcome } from './store.js';
 import type { ActionEntry } from './log.js';
 import { hasSentAction } from './log.js';
 import { deadlineStatus, fromCents, offerCap, parseAmount, type DeadlineStatus, type Policy } from './policy.js';
@@ -41,6 +41,7 @@ export type CaseDetail = CaseRow & {
   explanation: StateExplanation;
   actions: ActionEntry[];
   sent: boolean;
+  unknownOutcome: UnknownOutcome | null;
   policy: Policy;
   cap: string | null;
 };
@@ -139,6 +140,7 @@ export function buildCaseDetail(d: Dispute, record: CaseRecord | null, order: Or
     explanation,
     actions,
     sent: hasSentAction(actions, d.dispute_id),
+    unknownOutcome: state.unknownOutcomes[d.dispute_id] ?? null,
     policy,
     cap: allowed.includes('make_offer') ? offerCap(disputedAmount(d).value, policy) : null,
   };

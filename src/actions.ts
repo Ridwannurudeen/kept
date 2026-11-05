@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { buildCaseRow } from './cases.js';
 import type { ActionEntry } from './log.js';
 import { appendAction, hasSentAction } from './log.js';
@@ -12,18 +12,25 @@ import type { PayPalAgentToolkit } from '@paypal/agent-toolkit/ai-sdk';
 
 export type ApproveRequest = { action: ActionKind; note: string; offerAmount?: string | null; evidenceType?: 'PROOF_OF_FULFILLMENT' | 'OTHER' };
 export type ActionDeps = { paypal: PayPalClient; toolkit: PayPalAgentToolkit; store: Store; now: () => Date };
-export type ActionOutcome = { status: 'sent'; entry: ActionEntry; dispute: Dispute } | { status: 'refused'; blockers: string[] } | { status: 'failed'; entry: ActionEntry; error: { status: number | null; debugId: string | null; message: string } };
+type ActionError = { status: number | null; debugId: string | null; message: string; unknown: boolean };
+export type ActionOutcome = { status: 'sent'; entry: ActionEntry; dispute: Dispute } | { status: 'refused'; blockers: string[] } | { status: 'failed'; entry: ActionEntry; error: ActionError };
 
+const SETTLE_WINDOW_MS = 5 * 60_000;
 const inFlight = new Set<string>();
-const unlogged = new Set<string>();
-const unknownOutcome = new Map<string, ActionKind>();
+const unlogged = new Map<string, string>();
 const unloggedMessage = 'PayPal accepted the action but Settle could not record it; do not retry, check PayPal. Restart Settle after checking PayPal.';
+const unknownUnloggedMessage = 'The outcome at PayPal is unknown and Settle could not record it; do not retry, check PayPal. Restart Settle after checking PayPal.';
 const unknownMessage = 'No response from PayPal; the outcome is unknown. Check the case before retrying.';
+const mayHaveReachedMessage = 'The last action may have reached PayPal. Check the case in PayPal before retrying.';
+const landedMessage = 'PayPal already has this action; refresh the case';
 
 export function resetActionGuards(): void {
   inFlight.clear();
   unlogged.clear();
-  unknownOutcome.clear();
+}
+
+function isUnknownStatus(status: number | null): boolean {
+  return status === null || status >= 500;
 }
 
 function responseError(error: unknown): { status: number | null; debugId: string | null; message: string } {
@@ -33,7 +40,7 @@ function responseError(error: unknown): { status: number | null; debugId: string
   return { status, debugId: null, message: error instanceof Error ? error.message : String(error) };
 }
 
-function toolkitError(result: unknown): { status: number | null; debugId: string | null; message: string; unknown: boolean } | null {
+function toolkitError(result: unknown): ActionError | null {
   if (typeof result !== 'string') return { status: null, debugId: null, message: 'PayPal rejected the request', unknown: true };
   let parsed: unknown;
   try { parsed = JSON.parse(result); } catch { return { status: null, debugId: null, message: 'PayPal rejected the request', unknown: true }; }
@@ -41,18 +48,53 @@ function toolkitError(result: unknown): { status: number | null; debugId: string
   const value = parsed as { ok?: unknown; status?: unknown; code?: unknown; error?: { message?: unknown }; message?: unknown };
   if (value.ok !== false && !('error' in value) && value.code !== 'PAYPAL_API_NO_RESPONSE') return null;
   const status = typeof value.status === 'number' ? value.status : null;
-  return { status, debugId: null, message: typeof value.message === 'string' ? value.message : typeof value.error?.message === 'string' ? value.error.message : 'PayPal rejected the request', unknown: value.code === 'PAYPAL_API_NO_RESPONSE' || (value.ok === false && status === null) };
+  return { status, debugId: null, message: typeof value.message === 'string' ? value.message : typeof value.error?.message === 'string' ? value.error.message : 'PayPal rejected the request', unknown: value.code === 'PAYPAL_API_NO_RESPONSE' || (value.ok === false && isUnknownStatus(status)) || (status !== null && status >= 500) };
+}
+
+function sellerActivitySince(d: Dispute, at: string): boolean {
+  if (d.status === 'RESOLVED') return true;
+  const since = Date.parse(at);
+  const notBefore = (time: string | undefined) => { const value = Date.parse(time ?? ''); return !Number.isFinite(value) || value >= since; };
+  if ((d.supporting_info ?? []).some((entry) => entry.source === 'SUBMITTED_BY_SELLER' && notBefore(entry.provided_time))) return true;
+  if ((d.evidences ?? []).some((entry) => entry.source === 'SUBMITTED_BY_SELLER' && notBefore(entry.date))) return true;
+  if (d.offer?.seller_offered_amount) return true;
+  return (d.offer?.history ?? []).some((entry) => (entry as { actor?: unknown }).actor === 'SELLER');
+}
+
+export async function reconcileUnknown(disputeId: string, fresh: Dispute, deps: Pick<ActionDeps, 'store' | 'now'>): Promise<string[] | null> {
+  const unknown = deps.store.get().unknownOutcomes[disputeId];
+  if (!unknown) return null;
+  if (sellerActivitySince(fresh, unknown.at)) {
+    await deps.store.update((current) => {
+      if (!current.unknownOutcomes[disputeId]) return;
+      const lost = current.actions.filter((entry) => entry.disputeId === disputeId && entry.action === unknown.action).at(-1);
+      current.actions = appendAction(current.actions, {
+        id: randomUUID(), at: deps.now().toISOString(), disputeId, caseKey: lost?.caseKey ?? null, action: unknown.action,
+        recommended: lost?.recommended ?? null,
+        submitted: lost?.submitted ?? { note: '', offerAmount: null },
+        sellerEdited: lost?.sellerEdited ?? false,
+        paypal: { ok: true, status: null, requestId: lost?.paypal.requestId ?? null, debugId: null, durationMs: 0, message: 'PayPal shows this action landed' },
+        after: { status: fresh.status, stage: fresh.dispute_life_cycle_stage, outcome: fresh.dispute_outcome?.outcome_code ?? null },
+      });
+      delete current.unknownOutcomes[disputeId];
+    });
+    return [landedMessage];
+  }
+  if (deps.now().getTime() - Date.parse(unknown.at) < SETTLE_WINDOW_MS) return [mayHaveReachedMessage];
+  await deps.store.update((current) => { delete current.unknownOutcomes[disputeId]; });
+  return null;
 }
 
 export async function performAction(disputeId: string, req: ApproveRequest, deps: ActionDeps): Promise<ActionOutcome> {
-  if (unlogged.has(disputeId)) return { status: 'refused', blockers: [unloggedMessage] };
+  const unloggedBlocker = unlogged.get(disputeId);
+  if (unloggedBlocker) return { status: 'refused', blockers: [unloggedBlocker] };
   if (inFlight.has(disputeId)) return { status: 'refused', blockers: ['An action for this case is already in progress'] };
   inFlight.add(disputeId);
   try {
   const fresh = await deps.paypal.getDispute(disputeId);
+  const unknownBlockers = await reconcileUnknown(disputeId, fresh, deps);
+  if (unknownBlockers) return { status: 'refused', blockers: unknownBlockers };
   const state = deps.store.get();
-  const lostAction = unknownOutcome.get(disputeId);
-  if (lostAction && !allowedActions(fresh).has(lostAction)) return { status: 'refused', blockers: ['PayPal may already have this action; refresh the case'] };
   if (hasSentAction(state.actions, disputeId)) return { status: 'refused', blockers: ['This case already has a sent action'] };
   const stored = state.decisions[disputeId] ?? null;
   if (stored && isDecisionStale(stored, fresh)) {
@@ -64,36 +106,36 @@ export async function performAction(disputeId: string, req: ApproveRequest, deps
   if (!validation.ok) return { status: 'refused', blockers: validation.blockers };
 
   const record = Object.values(state.cases).find((entry) => entry.captureId && entry.captureId === captureIdOf(fresh)) ?? null;
-  if (lostAction) unknownOutcome.delete(disputeId);
+  const requestId = (body: unknown) => `settle-${disputeId}-${req.action}-${createHash('sha256').update(JSON.stringify(body)).digest('hex').slice(0, 12)}`;
   const start = deps.now().getTime();
-  let failure: { status: number | null; debugId: string | null; message: string } | null = null;
+  let failure: ActionError | null = null;
   let writeAttempted = false;
   const writeCall: { value: CallRecord | null } = { value: null };
   try {
     if (req.action === 'make_offer') {
+      const body = { note: req.note, offer_amount: { currency_code: amount.currency_code, value: req.offerAmount! }, offer_type: 'REFUND' as const };
       writeAttempted = true;
-      await deps.paypal.makeOffer(disputeId, { note: req.note, offer_amount: { currency_code: amount.currency_code, value: req.offerAmount! }, offer_type: 'REFUND' }, (call) => { writeCall.value = call; });
+      await deps.paypal.makeOffer(disputeId, body, (call) => { writeCall.value = call; }, requestId(body));
     } else if (req.action === 'accept_claim') {
       const acceptTool = deps.toolkit.getTools().accept_dispute_claim;
       if (!acceptTool?.execute) throw new Error('Accept claim tool is unavailable');
       writeAttempted = true;
       const result = await acceptTool.execute({ dispute_id: disputeId, note: req.note }, { toolCallId: 'settle-accept', messages: [] });
       const toolFailure = toolkitError(result);
-      if (toolFailure) {
-        failure = { status: toolFailure.status, debugId: toolFailure.debugId, message: toolFailure.unknown ? unknownMessage : toolFailure.message };
-        if (toolFailure.unknown) unknownOutcome.set(disputeId, req.action);
-      }
+      if (toolFailure) failure = { ...toolFailure, message: toolFailure.unknown ? unknownMessage : toolFailure.message };
     } else if (req.action === 'provide_supporting_info') {
       writeAttempted = true;
-      await deps.paypal.provideSupportingInfo(disputeId, req.note, (call) => { writeCall.value = call; });
+      await deps.paypal.provideSupportingInfo(disputeId, req.note, (call) => { writeCall.value = call; }, requestId(req.note));
     } else {
       const tracked = record?.trackingNumber && record.carrier ? { tracking_info: [{ carrier_name: record.carrier, tracking_number: record.trackingNumber }] } : undefined;
+      const body = { evidences: [{ evidence_type: req.evidenceType ?? (tracked ? 'PROOF_OF_FULFILLMENT' : 'OTHER'), evidence_info: tracked, notes: req.note }] };
       writeAttempted = true;
-      await deps.paypal.provideEvidence(disputeId, { evidences: [{ evidence_type: req.evidenceType ?? (tracked ? 'PROOF_OF_FULFILLMENT' : 'OTHER'), evidence_info: tracked, notes: req.note }] }, (call) => { writeCall.value = call; });
+      await deps.paypal.provideEvidence(disputeId, body, (call) => { writeCall.value = call; }, requestId(body));
     }
   } catch (error) {
-    failure = responseError(error);
-    if (failure.status === null && writeAttempted) { failure.message = unknownMessage; unknownOutcome.set(disputeId, req.action); }
+    const response = responseError(error);
+    const unknown = writeAttempted && isUnknownStatus(response.status);
+    failure = { ...response, message: unknown ? unknownMessage : response.message, unknown };
   }
 
   const reFetched = await deps.paypal.getDispute(disputeId).then((dispute) => dispute, () => null);
@@ -108,9 +150,13 @@ export async function performAction(disputeId: string, req: ApproveRequest, deps
     after,
   };
   try {
-    await deps.store.update((current) => { current.actions = appendAction(current.actions, entry); });
+    await deps.store.update((current) => {
+      current.actions = appendAction(current.actions, entry);
+      if (failure?.unknown) current.unknownOutcomes[disputeId] = { action: req.action, at: new Date(start).toISOString() };
+    });
   } catch (error) {
-    if (failure === null) { unlogged.add(disputeId); throw new Error(unloggedMessage, { cause: error }); }
+    if (failure === null) { unlogged.set(disputeId, unloggedMessage); throw new Error(unloggedMessage, { cause: error }); }
+    if (failure.unknown) { unlogged.set(disputeId, unknownUnloggedMessage); throw new Error(unknownUnloggedMessage, { cause: error }); }
     throw error;
   }
   if (failure) return { status: 'failed', entry, error: failure };

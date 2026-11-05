@@ -103,12 +103,12 @@ export class PayPalClient {
     return (await this.request('POST', `/v2/checkout/orders/${encodeURIComponent(orderId)}/track`, { json: body })) as Order;
   }
 
-  async makeOffer(id: string, body: { note: string; offer_amount: Money; offer_type: 'REFUND' }, onCall?: (call: CallRecord) => void): Promise<{ links?: Link[] }> {
-    return (await this.request('POST', `/v1/customer/disputes/${encodeURIComponent(id)}/make-offer`, { json: body }, onCall)) as { links?: Link[] };
+  async makeOffer(id: string, body: { note: string; offer_amount: Money; offer_type: 'REFUND' }, onCall?: (call: CallRecord) => void, requestId?: string): Promise<{ links?: Link[] }> {
+    return (await this.request('POST', `/v1/customer/disputes/${encodeURIComponent(id)}/make-offer`, { json: body, requestId }, onCall)) as { links?: Link[] };
   }
 
-  async provideSupportingInfo(id: string, notes: string, onCall?: (call: CallRecord) => void): Promise<{ links?: Link[] }> {
-    return (await this.request('POST', `/v1/customer/disputes/${encodeURIComponent(id)}/provide-supporting-info`, { multipart: { notes } }, onCall)) as {
+  async provideSupportingInfo(id: string, notes: string, onCall?: (call: CallRecord) => void, requestId?: string): Promise<{ links?: Link[] }> {
+    return (await this.request('POST', `/v1/customer/disputes/${encodeURIComponent(id)}/provide-supporting-info`, { multipart: { notes }, requestId }, onCall)) as {
       links?: Link[];
     };
   }
@@ -117,8 +117,9 @@ export class PayPalClient {
     id: string,
     body: { evidences: { evidence_type: string; evidence_info?: { tracking_info: { carrier_name: string; tracking_number: string }[] }; notes: string }[] },
     onCall?: (call: CallRecord) => void,
+    requestId?: string,
   ): Promise<{ links?: Link[] }> {
-    return (await this.request('POST', `/v1/customer/disputes/${encodeURIComponent(id)}/provide-evidence`, { multipart: body }, onCall)) as { links?: Link[] };
+    return (await this.request('POST', `/v1/customer/disputes/${encodeURIComponent(id)}/provide-evidence`, { multipart: body, requestId }, onCall)) as { links?: Link[] };
   }
 
   private async request(method: 'GET' | 'POST', path: string, write?: Write, onCall?: (call: CallRecord) => void): Promise<unknown> {

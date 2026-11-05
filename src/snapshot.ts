@@ -1,7 +1,7 @@
-import type { Snapshot, SnapshotAction, SnapshotCall, State, StoredDecision } from './store.js';
+import type { Snapshot, SnapshotAction, SnapshotCall, State, StoredDecision, UnknownOutcome } from './store.js';
 
 export const SNAPSHOT_ALLOWLIST: Record<string, string[]> = {
-  Snapshot: ['snapshotAt', 'decisions', 'actions', 'calls'],
+  Snapshot: ['snapshotAt', 'decisions', 'actions', 'calls', 'unknownOutcomes'],
   decision: ['recommendation', 'plain_ask', 'evidence_have', 'evidence_missing', 'reasons', 'offer_amount', 'draft_note'],
   validation: ['ok', 'action', 'cap', 'blockers'],
   StoredDecision: ['decision', 'validation', 'at', 'model', 'steps', 'toolCalls', 'durationMs', 'basis'],
@@ -11,6 +11,7 @@ export const SNAPSHOT_ALLOWLIST: Record<string, string[]> = {
   paypal: ['ok', 'status', 'requestId', 'debugId', 'durationMs', 'message'],
   after: ['status', 'stage', 'outcome'],
   SnapshotCall: ['id', 'at', 'method', 'path', 'status', 'durationMs', 'requestId', 'debugId', 'retried'],
+  UnknownOutcome: ['action', 'at'],
 };
 
 const FORBIDDEN = ['@', 'example.com', 'payer_id', 'address_line', 'full_name', 'email'];
@@ -26,7 +27,7 @@ function pick<T>(source: object, kind: string): T {
   return Object.fromEntries(SNAPSHOT_ALLOWLIST[kind].filter((key) => key in record).map((key) => [key, record[key]])) as T;
 }
 
-export function buildSnapshot(state: Pick<State, 'decisions' | 'actions' | 'calls'>, now: Date): Snapshot {
+export function buildSnapshot(state: Pick<State, 'decisions' | 'actions' | 'calls' | 'unknownOutcomes'>, now: Date): Snapshot {
   const decisions: Record<string, StoredDecision> = {};
   for (const [id, stored] of Object.entries(state.decisions)) {
     decisions[id] = {
@@ -46,7 +47,8 @@ export function buildSnapshot(state: Pick<State, 'decisions' | 'actions' | 'call
     };
   });
   const calls = state.calls.map((call) => pick<SnapshotCall>(call, 'SnapshotCall'));
-  return { snapshotAt: now.toISOString(), decisions, actions, calls };
+  const unknownOutcomes = Object.fromEntries(Object.entries(state.unknownOutcomes).map(([id, unknown]) => [id, pick<UnknownOutcome>(unknown, 'UnknownOutcome')]));
+  return { snapshotAt: now.toISOString(), decisions, actions, calls, unknownOutcomes };
 }
 
 export function checkSnapshot(json: string): { ok: true } | { ok: false; problems: string[] } {
@@ -108,7 +110,7 @@ export function checkSnapshot(json: string): { ok: true } | { ok: false; problem
       for (const [id, stored] of Object.entries(child)) {
         const found = forbiddenIn(id);
         if (found) problems.push(`${path} key '${id}' contains forbidden text '${found}'`);
-        shape(stored, `${path}.${id}`, 'StoredDecision');
+        shape(stored, `${path}.${id}`, key === 'decisions' ? 'StoredDecision' : 'UnknownOutcome');
       }
     }
   }

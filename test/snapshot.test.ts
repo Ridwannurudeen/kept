@@ -17,6 +17,7 @@ function valid() {
     },
     actions: [{ id: 'a', at: 'at', disputeId: 'PP-D-1', caseKey: 'B', action: 'make_offer', submitted: { note: 'n', offerAmount: '5.00' }, sellerEdited: true, paypal: { ok: true, status: 200, requestId: 'r', debugId: 'd', durationMs: 1, message: null as string | null }, after: { status: 'OPEN', stage: 'INQUIRY', outcome: null } }],
     calls: [{ id: 'c', at: 'at', method: 'GET', path: '/v1/customer/disputes', status: 200, durationMs: 1, requestId: null, debugId: 'd', retried: false }],
+    unknownOutcomes: { 'PP-D-1': { action: 'make_offer', at: 'at' } } as Record<string, { action: string; at: string }>,
   };
 }
 
@@ -27,6 +28,7 @@ test('buildSnapshot drops recommended, error text and every non-allowlisted key'
     decisions: { 'PP-D-1': { ...base.decisions['PP-D-1'], decision: { ...base.decisions['PP-D-1'].decision, extra: 'hidden' }, secret: 'hidden' } },
     actions: [{ ...base.actions[0], recommended: { recommendation: 'FIGHT' }, submitted: { note: 'n', offerAmount: null, extra: 'hidden' }, paypal: { ...base.actions[0].paypal, ok: false, message: rawBody, extra: 'hidden' }, secret: 'hidden' }],
     calls: [{ ...base.calls[0], error: 'hidden', secret: 'hidden' }],
+    unknownOutcomes: { 'PP-D-1': { action: 'make_offer', at: 'at', secret: 'hidden' } },
   } as unknown as State;
   const snapshot = buildSnapshot(state, new Date('2026-11-07T00:00:00.000Z'));
   const json = JSON.stringify(snapshot);
@@ -35,6 +37,7 @@ test('buildSnapshot drops recommended, error text and every non-allowlisted key'
   expect(json).not.toContain('past-the-cap');
   expect(snapshot.actions[0].paypal.message).toBe(rawBody.slice(0, 200));
   expect(snapshot.snapshotAt).toBe('2026-11-07T00:00:00.000Z');
+  expect(snapshot.unknownOutcomes).toEqual({ 'PP-D-1': { action: 'make_offer', at: 'at' } });
   expect(checkSnapshot(json)).toEqual({ ok: true });
 });
 test('checkSnapshot accepts a well-formed snapshot', () => {
@@ -53,6 +56,8 @@ test('checkSnapshot rejects an email, example.com, payer_id, address_line, full_
     [(s) => { (s.calls[0] as Record<string, unknown>).error = 'e'; }, '$.calls[0].error', 'not allowlisted'],
     [(s) => { s.actions[0].paypal.message = 'm'.repeat(201); }, '$.actions[0].paypal.message', 'longer than 200'],
     [(s) => { (s.actions as unknown[])[0] = 'x'; }, '$.actions[0]', 'not an object'],
+    [(s) => { (s.unknownOutcomes['PP-D-1'] as Record<string, unknown>).note = 'n'; }, '$.unknownOutcomes.PP-D-1.note', 'not allowlisted'],
+    [(s) => { s.unknownOutcomes['a@b'] = { action: 'make_offer', at: 'at' }; }, '$.unknownOutcomes', "'@'"],
   ];
   for (const [mutate, path, words] of cases) {
     const s = valid();
