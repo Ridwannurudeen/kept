@@ -20,7 +20,7 @@ const inFlight = new Set<string>();
 const unlogged = new Map<string, string>();
 const unloggedMessage = 'PayPal accepted the action but Settle could not record it; do not retry, check PayPal. Restart Settle after checking PayPal.';
 const unknownUnloggedMessage = 'The outcome at PayPal is unknown and Settle could not record it; do not retry, check PayPal. Restart Settle after checking PayPal.';
-const unknownMessage = 'No response from PayPal; the outcome is unknown. Check the case before retrying.';
+const unknownMessage = 'PayPal sent no answer or a server error; the outcome is unknown. Check the case before retrying.';
 const mayHaveReachedMessage = 'The last action may have reached PayPal. Check the case in PayPal before retrying.';
 const landedMessage = 'PayPal already has this action; refresh the case';
 

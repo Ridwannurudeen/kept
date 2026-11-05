@@ -28,7 +28,7 @@ describe('performAction', () => {
   let execute: ReturnType<typeof vi.fn>;
   let deps: ActionDeps;
   const decision = { recommendation: 'SETTLE' as const, plain_ask: 'Offer some.', evidence_have: [], evidence_missing: [], reasons: ['weak evidence'], offer_amount: '9.00', draft_note: 'Original note.' };
-  const unknownText = 'No response from PayPal; the outcome is unknown. Check the case before retrying.';
+  const unknownText = 'PayPal sent no answer or a server error; the outcome is unknown. Check the case before retrying.';
   const mayHaveReached = 'The last action may have reached PayPal. Check the case in PayPal before retrying.';
   const landed = 'PayPal already has this action; refresh the case';
   const later = (d: ActionDeps): ActionDeps => ({ ...d, now: () => new Date('2026-11-05T00:10:00.000Z') });
