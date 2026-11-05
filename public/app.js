@@ -65,6 +65,8 @@
   };
 
   let gridApi = null;
+  let pendingLoad = false;
+  let pendingRefresh = false;
   let summaryText = null;
   let passcodePrompt = null;
   let pollTimer = null;
@@ -489,7 +491,7 @@
       });
       refreshRecommendations();
       announce(
-        `Case ${label}: Kept recommends ${result.decision.recommendation}`,
+        `Case ${label}: Claude recommends ${result.decision.recommendation}`,
       );
     } catch (error) {
       decideState.set(id, { state: "failed", detail: error.message });
@@ -535,7 +537,7 @@
         if (panelId && finished.includes(panelId)) loadPanel(panelId);
         for (const row of rows)
           notes.push(
-            `Case ${row.caseKey || shortId(row.disputeId)}: Kept recommends ${row.recommendation}`,
+            `Case ${row.caseKey || shortId(row.disputeId)}: Claude recommends ${row.recommendation}`,
           );
       }
       refreshRecommendations();
@@ -1962,6 +1964,7 @@
       headerName,
       type: "rightAligned",
       minWidth: 90,
+      flex: 0.8,
       valueGetter: (p) => toCents(read(p.data)),
       valueFormatter: (p) => money(read(p.data)),
       getQuickFilterText: (p) => money(read(p.data)),
@@ -2031,7 +2034,11 @@
       input.defaultValue = value;
       input.value = value;
       input.dispatchEvent(new Event("input"));
-    } else if (!input && !panelHasEdits()) {
+    } else if (
+      !input &&
+      !panelHasEdits() &&
+      !document.getElementById("attachment-input")?.disabled
+    ) {
       renderPanel(panelDetail);
     }
   }
@@ -2051,7 +2058,7 @@
         value
           ? `${row.amount.currency_code} ${value}`
           : canEditOffer(row)
-            ? "None"
+            ? "Add offer"
             : "",
       ),
     );
@@ -2112,13 +2119,20 @@
       headerName: "Item",
       field: "itemName",
       minWidth: 90,
+      flex: 1.2,
       tooltipField: "itemName",
+      wrapText: true,
+      cellClass: "cell-wrap",
     },
     {
       colId: "reason",
       headerName: "Buyer reason",
       field: "reasonLabel",
       minWidth: 90,
+      flex: 1.2,
+      tooltipField: "reasonLabel",
+      wrapText: true,
+      cellClass: "cell-wrap",
       filter: "agTextColumnFilter",
     },
     {
@@ -2164,11 +2178,13 @@
           headerName: "Stage",
           field: "stageLabel",
           minWidth: 90,
+          flex: 0.8,
         },
         {
           colId: "status",
           headerName: "Status",
           minWidth: 110,
+          flex: 1.4,
           enableCellChangeFlash: true,
           valueGetter: (p) =>
             p.node.rowPinned
@@ -2182,6 +2198,7 @@
           colId: "due",
           headerName: "Seller response due",
           minWidth: 130,
+          flex: 1.2,
           sort: "asc",
           valueGetter: (p) =>
             p.node.rowPinned || !p.data.dueAt ? null : new Date(p.data.dueAt),
@@ -2197,13 +2214,13 @@
     },
     {
       groupId: "keptRecommends",
-      headerName: "Kept recommends",
+      headerName: "Claude recommends",
       marryChildren: true,
       children: [
         {
           colId: "recommendation",
           headerName: "Recommendation",
-          minWidth: 150,
+          minWidth: 130,
           valueGetter: (p) =>
             p.node.rowPinned ? "" : p.data.recommendation || "",
           cellRenderer: recommendationCell,
@@ -2224,7 +2241,8 @@
         {
           colId: "offer",
           headerName: "Offer",
-          minWidth: 120,
+          minWidth: 105,
+          flex: 0.9,
           valueGetter: (p) => (p.node.rowPinned ? null : offerValue(p.data)),
           valueSetter: setOffer,
           editable: (p) => !p.node.rowPinned && canEditOffer(p.data),
@@ -2241,7 +2259,7 @@
             const refusal = offerRefusals.get(p.data.disputeId);
             if (refusal) return `${refusal.value} refused. ${refusal.message}`;
             if (canEditOffer(p.data))
-              return `Press Enter to edit. Your policy caps this offer at ${p.data.amount.currency_code} ${offerCap(p.data.amount.value, policy)}. Approve it in the case panel.`;
+              return `Press Enter to edit. Ctrl+Z undoes, Ctrl+Y redoes. Your policy caps this offer at ${p.data.amount.currency_code} ${offerCap(p.data.amount.value, policy)}. Approve it in the case panel.`;
             return null;
           },
         },
@@ -2278,7 +2296,11 @@
   function readView() {
     try {
       const view = JSON.parse(localStorage.getItem(VIEW_KEY));
-      if (view?.version !== VIEW_VERSION || typeof view.state !== "object")
+      if (
+        view?.version !== VIEW_VERSION ||
+        !view.state ||
+        typeof view.state !== "object"
+      )
         return null;
       return view;
     } catch (error) {
@@ -2310,9 +2332,11 @@
       console.warn("Kept could not clear the saved grid view", error);
     }
     userSized = false;
-    gridApi.resetColumnState();
-    gridApi.setFilterModel(null);
-    gridApi.sizeColumnsToFit();
+    if (gridApi) {
+      gridApi.resetColumnState();
+      gridApi.setFilterModel(null);
+      gridApi.sizeColumnsToFit();
+    }
     announce("Grid view reset: default columns, widths, sort and no filters.");
   }
 
@@ -2337,16 +2361,17 @@
   };
 
   function exportCsv() {
-    const selected = gridApi.getSelectedRows().length;
+    let selectedShown = 0;
     let shown = 0;
-    gridApi.forEachNodeAfterFilterAndSort(() => {
+    gridApi.forEachNodeAfterFilterAndSort((node) => {
       shown += 1;
+      if (node.isSelected()) selectedShown += 1;
     });
-    const count = selected || shown;
+    const count = selectedShown || shown;
     const fileName = `kept-cases-${new Date().toLocaleDateString("en-CA")}.csv`;
     gridApi.exportDataAsCsv({
       fileName,
-      onlySelected: selected > 0,
+      onlySelected: selectedShown > 0,
       columnKeys: Object.keys(CSV_COLUMNS),
       skipColumnGroupHeaders: true,
       skipPinnedBottom: true,
@@ -2356,7 +2381,7 @@
       },
     });
     announce(
-      `Exported ${selected ? plural(count, "selected case") : `all ${plural(count, "case")}`} to ${fileName}`,
+      `Exported ${selectedShown ? plural(count, "selected case") : `all ${plural(count, "case")}`} to ${fileName}`,
     );
   }
 
@@ -2411,6 +2436,12 @@
             columns: ["offer"],
             force: true,
           });
+        if (pendingLoad && p.api.getEditingCells().length === 0) {
+          const refresh = pendingRefresh;
+          pendingLoad = false;
+          pendingRefresh = false;
+          loadCases({ refresh });
+        }
       },
       rowHeight: 56,
       getRowId: (p) => p.data.disputeId,
@@ -2487,6 +2518,11 @@
   }
 
   async function loadCases({ refresh } = {}) {
+    if (gridApi.getEditingCells().length > 0) {
+      pendingLoad = true;
+      pendingRefresh = pendingRefresh || Boolean(refresh);
+      return;
+    }
     gridApi.setGridOption("loading", true);
     els.refresh.disabled = true;
     const callsLoaded = loadCalls();
@@ -2497,6 +2533,21 @@
         api("/api/policy"),
       ]);
       policy = current;
+      for (const [id, value] of offerDrafts) {
+        const row = data.cases.find((candidate) => candidate.disputeId === id);
+        if (!row) continue;
+        const check = checkOffer(value, row.amount.value, policy);
+        if (check.ok) {
+          offerRefusals.delete(id);
+        } else {
+          offerRefusals.set(id, {
+            value,
+            message: check.message,
+            cap: check.cap,
+            over: centsOf(value) !== null && centsOf(value) > centsOf(check.cap),
+          });
+        }
+      }
       sentById.clear();
       for (const entry of log.entries)
         if (entry.paypal.ok) sentById.set(entry.disputeId, entry);
@@ -2664,6 +2715,12 @@
   els.policyCancel.addEventListener("click", () => els.policyDialog.close());
   els.panelClose.addEventListener("click", closePanel);
   document.addEventListener("keydown", (event) => {
+    if (
+      event.key === "Escape" &&
+      event.target instanceof Element &&
+      event.target.closest(".ag-popup, .ag-menu, .ag-filter, select")
+    )
+      return;
     if (
       event.key !== "Escape" ||
       els.panel.hidden ||

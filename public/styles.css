@@ -366,6 +366,11 @@ textarea {
   white-space: nowrap;
 }
 
+.cell-wrap {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .cell-sub {
   color: var(--muted);
   font-size: 12px;
