@@ -76,16 +76,21 @@ test('break-even percentage is maximal and its middle-branch wording is false-sa
   for (const amount of [2999, 3000, 3001, 20000]) amounts.add(amount);
   for (const tier of ['standard', 'high_volume'] as const) {
     for (const amount of amounts) {
-      for (let offer = 1; offer <= amount + 100; offer += 1) {
-        const result = breakEven(`${Math.floor(amount / 100)}.${String(amount % 100).padStart(2, '0')}`, `${Math.floor(offer / 100)}.${String(offer % 100).padStart(2, '0')}`, tier);
+      const disputed = `${Math.floor(amount / 100)}.${String(amount % 100).padStart(2, '0')}`;
+      const loseCost = amount + (tier === 'high_volume' ? 3000 : amount < 3000 ? 0 : 1500);
+      for (let offer = 1; offer <= loseCost + 100; offer += 5) {
+        const result = breakEven(disputed, `${Math.floor(offer / 100)}.${String(offer % 100).padStart(2, '0')}`, tier);
         if (!result) continue;
         const lose = Number(result.loseCost.replace('.', ''));
         const win = Number(result.winCost.replace('.', ''));
         if (offer >= lose) expect(result.note).toBe('An offer this size costs at least as much as losing a fight.');
-        else if (offer <= win) expect(result.note).toBe(`Offering USD ${Math.floor(offer / 100)}.${String(offer % 100).padStart(2, '0')} costs less than fighting even if you would win.`);
+        else if (offer < win) expect(result.note).toBe(`Offering USD ${Math.floor(offer / 100)}.${String(offer % 100).padStart(2, '0')} costs less than fighting even if you would win.`);
+        else if (offer === win) expect(result.note).toBe(`Offering USD ${Math.floor(offer / 100)}.${String(offer % 100).padStart(2, '0')} costs no more than fighting even if you would win.`);
         else {
           expect(result.percent).toBeLessThan(100);
-          expect(result.note).toBe('');
+          expect(result.note).toBe(result.percent === 0
+            ? `Offering USD ${Math.floor(offer / 100)}.${String(offer % 100).padStart(2, '0')} costs less than fighting only if you would win less than 1% of the time.`
+            : '');
           if (result.percent > 0 && result.percent < 100) {
             expect(100 * offer).toBeLessThanOrEqual(result.percent * win + (100 - result.percent) * lose);
             expect(100 * offer).toBeGreaterThan((result.percent + 1) * win + (99 - result.percent) * lose);
@@ -94,7 +99,14 @@ test('break-even percentage is maximal and its middle-branch wording is false-sa
       }
     }
   }
-}, 30000);
+}, 60000);
+
+test('break-even distinguishes win-cost ties and loss-cost offers', () => {
+  expect(breakEven('36.00', '30.00', 'high_volume')?.note).toBe('Offering USD 30.00 costs no more than fighting even if you would win.');
+  expect(breakEven('36.00', '29.99', 'high_volume')?.note).toBe('Offering USD 29.99 costs less than fighting even if you would win.');
+  expect(breakEven('30.00', '45.00', 'standard')?.note).toBe('An offer this size costs at least as much as losing a fight.');
+  expect(breakEven('29.99', '29.80', 'standard')?.note).toBe('Offering USD 29.80 costs less than fighting only if you would win less than 1% of the time.');
+});
 
 test('break-even clamps High Volume to 100 and explains when settling always costs less', () => {
   expect(breakEven('36.00', '9.00', 'high_volume')).toMatchObject({

@@ -56,9 +56,13 @@ export function breakEven(disputed: string, offer: string, tier: DisputeFeeTier)
   const percent = Math.max(0, Math.min(100, Math.floor(((loseCents - offerCents) * 100) / (loseCents - winCents))));
   const note = offerCents >= loseCents
     ? 'An offer this size costs at least as much as losing a fight.'
-    : offerCents <= winCents || percent >= 100
+    : offerCents === winCents
+      ? `Offering USD ${fromCents(offerCents)} costs no more than fighting even if you would win.`
+      : offerCents < winCents || percent >= 100
       ? `Offering USD ${fromCents(offerCents)} costs less than fighting even if you would win.`
-      : '';
+      : percent === 0
+        ? `Offering USD ${fromCents(offerCents)} costs less than fighting only if you would win less than 1% of the time.`
+        : '';
   return {
     percent: offerCents >= loseCents ? 0 : percent,
     loseCost: fromCents(loseCents),

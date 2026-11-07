@@ -1036,7 +1036,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
           const tier = detail.policy.disputeFeeTier || "standard";
           if (detail.amount.currency_code !== "USD") {
             const currency = detail.amount.currency_code;
-            breakEvenLine.textContent = `Kept computes break-even from PayPal's USD fee table only; this dispute is in ${currency}.`;
+            if (breakEvenLine) breakEvenLine.textContent = `Kept computes break-even from PayPal's USD fee table only; this dispute is in ${currency}.`;
           } else {
             const { percent, loseCost, winCost } = breakEvenPercent(disputedCents, offerCents, tier);
             const protectionClause = detail.protectionChecklist?.applies
@@ -1044,10 +1044,12 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
               : "";
             if (breakEvenLine && offerCents >= loseCost) {
               breakEvenLine.textContent = "An offer this size costs at least as much as losing a fight.";
-            } else if (breakEvenLine && (offerCents <= winCost || percent >= 100)) {
+            } else if (breakEvenLine && offerCents === winCost) {
+              breakEvenLine.textContent = `Offering ${detail.amount.currency_code} ${fromCents(offerCents)} costs no more than fighting even if you would win.`;
+            } else if (breakEvenLine && (offerCents < winCost || percent >= 100)) {
               breakEvenLine.textContent = `Offering ${detail.amount.currency_code} ${fromCents(offerCents)} costs less than fighting even if you would win.`;
             } else if (breakEvenLine && percent === 0) {
-              breakEvenLine.textContent = `Offering ${detail.amount.currency_code} ${fromCents(offerCents)} costs less than fighting only if you would lose.`;
+              breakEvenLine.textContent = `Offering ${detail.amount.currency_code} ${fromCents(offerCents)} costs less than fighting only if you would win less than 1% of the time.`;
             } else if (breakEvenLine) {
               breakEvenLine.textContent = `Offering ${detail.amount.currency_code} ${fromCents(offerCents)} costs less than fighting unless you would win at least ${percent}% of the time. Kept does not know that number; you do.${protectionClause}`;
             }
