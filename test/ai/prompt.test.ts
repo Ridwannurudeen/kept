@@ -39,6 +39,6 @@ test('includes the capture Seller Protection status and categories, and the syst
 });
 test('includes the Seller Protection checklist states, and the system prompt says protection is PayPal\'s decision', () => {
   const p = buildUserPrompt({ ...inputFor('dispute-chargeback-fresh', null, fixture<Order>('order-92U413849D170012F')), capture: fixture<Capture>('capture-1VS093774J460400T') });
-  expect(p).toContain('Seller Protection checklist: {"applies_to_this_reason":true,"items":[{"item":"Shipped to the address on PayPal\'s transaction details","state":"in_paypal_data"},{"item":"Online, verifiable tracking number","state":"in_paypal_data"},{"item":"\'Delivered\' status with a delivery date","state":"missing"},{"item":"Recipient address matches the transaction details","state":"not_visible"}]}');
+  expect(p).toContain('Seller Protection checklist: {"applies_to_this_reason":true,"items":[{"item":"Shipped to the address on PayPal\'s transaction details","state":"not_visible"},{"item":"Online, verifiable tracking number","state":"in_paypal_data"},{"item":"\'Delivered\' status with a delivery date","state":"missing"},{"item":"Recipient address matches the transaction details","state":"not_visible"}]}');
   expect(SYSTEM_PROMPT).toContain("whether protection applies is PayPal's decision");
 });

@@ -223,7 +223,7 @@ test('checklist for the recorded item-not-received claim with a SHIPPED tracker'
   const checklist = buildCaseDetail(chargeback, null, shippedOrder, eligibleCapture, state(), now).protectionChecklist!;
   expect(checklist).toMatchObject({ applies: true, source: SOURCE, summary: 'PayPal lists this payment as eligible for item not received. PayPal decides whether Seller Protection applies; this is what Kept can see.' });
   expect(checklist.items.map((item) => [item.label, item.state])).toEqual([
-    ["Shipped to the address on PayPal's transaction details", 'in_paypal_data'],
+    ["Shipped to the address on PayPal's transaction details", 'not_visible'],
     ['Online, verifiable tracking number', 'in_paypal_data'],
     ["'Delivered' status with a delivery date", 'missing'],
     ['Recipient address matches the transaction details', 'not_visible'],
@@ -235,7 +235,7 @@ test('checklist for the recorded item-not-received claim with a SHIPPED tracker'
 test('checklist marks delivery in PayPal data only for a DELIVERED tracker', () => {
   const unit = shippedOrder.purchase_units[0]!;
   const delivered: Order = { ...shippedOrder, purchase_units: [{ ...unit, shipping: { ...unit.shipping, trackers: [{ id: 'T-1', status: 'DELIVERED' }] } }] };
-  expect(states(buildCaseDetail(chargeback, null, delivered, eligibleCapture, state(), now))).toEqual(['in_paypal_data', 'in_paypal_data', 'in_paypal_data', 'not_visible']);
+  expect(states(buildCaseDetail(chargeback, null, delivered, eligibleCapture, state(), now))).toEqual(['not_visible', 'in_paypal_data', 'in_paypal_data', 'not_visible']);
 });
 
 test('checklist for an order with an address but no tracker, and for a case with no order', () => {

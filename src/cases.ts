@@ -122,7 +122,7 @@ function itemNotReceivedItems(order: Order | null): ChecklistItem[] {
   const delivered = trackers.some((tracker) => tracker.status === 'DELIVERED');
   const noOrder = "Kept could not load PayPal's order for this payment.";
   const shipped: Omit<ChecklistItem, 'label'> = shipping?.address && trackers.length
-    ? { state: 'in_paypal_data', detail: "PayPal's order has a shipping address and a tracker added to it. Kept cannot see where the carrier took the parcel." }
+    ? { state: 'not_visible', detail: "PayPal's order has a shipping address and a tracker on it; whether they match is PayPal's check." }
     : { state: 'not_visible', detail: order ? "PayPal's order does not show both a shipping address and a tracker." : noOrder };
   const tracking: Omit<ChecklistItem, 'label'> = !order ? { state: 'not_visible', detail: noOrder }
     : trackers.length ? { state: 'in_paypal_data', detail: `Tracker ${trackers[0]!.id} on PayPal's order.` }
