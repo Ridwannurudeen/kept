@@ -128,7 +128,7 @@ function itemNotReceivedItems(order: Order | null): ChecklistItem[] {
     : trackers.length ? { state: 'in_paypal_data', detail: `Tracker ${trackers[0]!.id} on PayPal's order.` }
     : { state: 'missing', detail: "PayPal's order has no tracker." };
   const delivery: Omit<ChecklistItem, 'label'> = !order ? { state: 'not_visible', detail: noOrder }
-    : delivered ? { state: 'in_paypal_data', detail: "PayPal's record shows DELIVERED." }
+    : delivered ? { state: 'not_visible', detail: 'PayPal shows DELIVERED; the delivery date is not in the data Kept can read' }
     : trackers.length ? { state: 'missing', detail: `PayPal's record shows ${trackers[0]!.status}, not delivered` }
     : { state: 'missing', detail: "PayPal's order has no tracker, so no delivery status." };
   return [

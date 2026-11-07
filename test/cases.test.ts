@@ -232,10 +232,21 @@ test('checklist for the recorded item-not-received claim with a SHIPPED tracker'
   expect(checklist.items[1]!.detail).toContain('1VS093774J460400T-1Z999AA10123456784');
 });
 
-test('checklist marks delivery in PayPal data only for a DELIVERED tracker', () => {
+test('delivery item: a DELIVERED tracker with no delivery date is not visible to Kept', () => {
   const unit = shippedOrder.purchase_units[0]!;
   const delivered: Order = { ...shippedOrder, purchase_units: [{ ...unit, shipping: { ...unit.shipping, trackers: [{ id: 'T-1', status: 'DELIVERED' }] } }] };
-  expect(states(buildCaseDetail(chargeback, null, delivered, eligibleCapture, state(), now))).toEqual(['not_visible', 'in_paypal_data', 'in_paypal_data', 'not_visible']);
+  const item = buildCaseDetail(chargeback, null, delivered, eligibleCapture, state(), now).protectionChecklist!.items[2]!;
+  expect(item).toEqual({ label: "'Delivered' status with a delivery date", state: 'not_visible', detail: 'PayPal shows DELIVERED; the delivery date is not in the data Kept can read' });
+});
+
+test('delivery item: a SHIPPED tracker is missing', () => {
+  const item = buildCaseDetail(chargeback, null, shippedOrder, eligibleCapture, state(), now).protectionChecklist!.items[2]!;
+  expect(item).toMatchObject({ state: 'missing', detail: "PayPal's record shows SHIPPED, not delivered" });
+});
+
+test('delivery item: an order with no tracker is missing', () => {
+  const item = buildCaseDetail(resolved, null, untrackedOrder, resolvedCapture, state(), now).protectionChecklist!.items[2]!;
+  expect(item).toMatchObject({ state: 'missing', detail: "PayPal's order has no tracker, so no delivery status." });
 });
 
 test('checklist for an order with an address but no tracker, and for a case with no order', () => {
