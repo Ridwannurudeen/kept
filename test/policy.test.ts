@@ -70,6 +70,32 @@ test('break-even uses the Standard fee rules in integer cents', () => {
   expect(breakEven('100.00', '21.16', 'standard')?.percent).toBe(81);
 });
 
+test('break-even percentage is maximal and its middle-branch wording is false-safe', () => {
+  const amounts = new Set<number>();
+  for (let amount = 1; amount <= 20000; amount += 1000) amounts.add(amount);
+  for (const amount of [2999, 3000, 3001, 20000]) amounts.add(amount);
+  for (const tier of ['standard', 'high_volume'] as const) {
+    for (const amount of amounts) {
+      for (let offer = 1; offer <= amount + 100; offer += 1) {
+        const result = breakEven(`${Math.floor(amount / 100)}.${String(amount % 100).padStart(2, '0')}`, `${Math.floor(offer / 100)}.${String(offer % 100).padStart(2, '0')}`, tier);
+        if (!result) continue;
+        const lose = Number(result.loseCost.replace('.', ''));
+        const win = Number(result.winCost.replace('.', ''));
+        if (offer >= lose) expect(result.note).toBe('An offer this size costs at least as much as losing a fight.');
+        else if (offer <= win) expect(result.note).toBe(`Offering USD ${Math.floor(offer / 100)}.${String(offer % 100).padStart(2, '0')} costs less than fighting even if you would win.`);
+        else {
+          expect(result.percent).toBeLessThan(100);
+          expect(result.note).toBe('');
+          if (result.percent > 0 && result.percent < 100) {
+            expect(100 * offer).toBeLessThanOrEqual(result.percent * win + (100 - result.percent) * lose);
+            expect(100 * offer).toBeGreaterThan((result.percent + 1) * win + (99 - result.percent) * lose);
+          }
+        }
+      }
+    }
+  }
+}, 30000);
+
 test('break-even clamps High Volume to 100 and explains when settling always costs less', () => {
   expect(breakEven('36.00', '9.00', 'high_volume')).toMatchObject({
     percent: 100,

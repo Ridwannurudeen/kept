@@ -85,6 +85,12 @@ test('detail break-even uses its recommended offer only when make_offer is allow
   expect(buildCaseDetail(claimWithOffer, null, null, null, state({ decisions: { [inquiry.dispute_id]: stored(decision) } }), now).breakEven).toBeNull();
 });
 
+test('detail omits break-even for non-USD inquiry offers', () => {
+  const decision: Decision = { recommendation: 'SETTLE', plain_ask: 'offer', evidence_have: [], evidence_missing: [], reasons: ['fair'], offer_amount: '9.00', draft_note: 'Sorry.' };
+  const euroInquiry = { ...inquiry, dispute_amount: { ...inquiry.dispute_amount, currency_code: 'EUR' }, disputed_transactions: undefined };
+  expect(buildCaseDetail(euroInquiry, null, null, null, state({ decisions: { [inquiry.dispute_id]: stored(decision) } }), now).breakEven).toBeNull();
+});
+
 test('detail with no record has empty notes and no attachments', () => {
   const detail = buildCaseDetail(chargeback, null, null, null, state(), now);
   expect(detail.record).toBeNull();

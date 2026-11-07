@@ -1,5 +1,13 @@
 "use strict";
 
+function breakEvenPercent(disputedCents, offerCents, tier) {
+  const winCost = tier === "high_volume" ? 3000 : 0;
+  const fee = tier === "high_volume" ? 3000 : disputedCents < 3000 ? 0 : 1500;
+  const loseCost = disputedCents + fee;
+  const percent = Math.max(0, Math.min(100, Math.floor(((loseCost - offerCents) * 100) / (loseCost - winCost))));
+  return { percent: offerCents >= loseCost ? 0 : percent, loseCost, winCost };
+}
+
 (() => {
   const PASSCODE_KEY = "kept.passcode";
   const AUTO_HEIGHT_LIMIT = 20;
@@ -992,7 +1000,7 @@
       protection.href = "https://www.paypal.com/us/legalhub/paypal/seller-protection";
       protection.target = "_blank";
       protection.rel = "noopener noreferrer";
-      feeLine.append(feeText, agreement, protectionLead, protection, document.createTextNode(detail.policy.disputeFeeTier === "high_volume" ? " is met." : " met, losing carries no fee."));
+      feeLine.append(feeText, agreement, protectionLead, protection, document.createTextNode(detail.policy.disputeFeeTier === "high_volume" ? " is met." : " met, you may keep the full purchase amount and pay no fee."));
       draft.append(breakEvenLine, feeLine);
     }
 
@@ -1026,16 +1034,23 @@
         if (breakEvenLine) breakEvenLine.textContent = "";
         if (!offer.readOnly && detail.dispute.dispute_life_cycle_stage === "INQUIRY" && /^\d+\.\d{2}$/.test(offer.value.trim()) && offerCents !== null && offerCents > 0 && disputedCents !== null) {
           const tier = detail.policy.disputeFeeTier || "standard";
-          const winCost = tier === "high_volume" ? 3000 : 0;
-          const fee = tier === "high_volume" ? 3000 : disputedCents < 3000 ? 0 : 1500;
-          const loseCost = disputedCents + fee;
-          const percent = Math.max(0, Math.min(100, Math.floor(((loseCost - offerCents) * 100) / (loseCost - winCost))));
-          if (breakEvenLine && offerCents >= loseCost) {
-            breakEvenLine.textContent = "An offer this size costs at least as much as losing a fight.";
-          } else if (breakEvenLine && (offerCents <= winCost || percent >= 100)) {
-            breakEvenLine.textContent = `Offering ${detail.amount.currency_code} ${fromCents(offerCents)} costs less than fighting even if you would win.`;
-          } else if (breakEvenLine) {
-            breakEvenLine.textContent = `Offering ${detail.amount.currency_code} ${fromCents(offerCents)} costs less than fighting unless you would win more than ${percent}% of the time. Kept does not know that number; you do.`;
+          if (detail.amount.currency_code !== "USD") {
+            const currency = detail.amount.currency_code;
+            breakEvenLine.textContent = `Kept computes break-even from PayPal's USD fee table only; this dispute is in ${currency}.`;
+          } else {
+            const { percent, loseCost, winCost } = breakEvenPercent(disputedCents, offerCents, tier);
+            const protectionClause = detail.protectionChecklist?.applies
+              ? ` This assumes PayPal does not find Seller Protection met. If it does, you may keep the full purchase amount${tier === "standard" ? " and pay no fee." : "."}`
+              : "";
+            if (breakEvenLine && offerCents >= loseCost) {
+              breakEvenLine.textContent = "An offer this size costs at least as much as losing a fight.";
+            } else if (breakEvenLine && (offerCents <= winCost || percent >= 100)) {
+              breakEvenLine.textContent = `Offering ${detail.amount.currency_code} ${fromCents(offerCents)} costs less than fighting even if you would win.`;
+            } else if (breakEvenLine && percent === 0) {
+              breakEvenLine.textContent = `Offering ${detail.amount.currency_code} ${fromCents(offerCents)} costs less than fighting only if you would lose.`;
+            } else if (breakEvenLine) {
+              breakEvenLine.textContent = `Offering ${detail.amount.currency_code} ${fromCents(offerCents)} costs less than fighting unless you would win at least ${percent}% of the time. Kept does not know that number; you do.${protectionClause}`;
+            }
           }
         }
       }
