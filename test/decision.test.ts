@@ -21,6 +21,17 @@ test('SETTLE above the cap is refused, not clamped', () => {
 test('SETTLE without an amount is refused', () => {
   expect(validateDecision({ ...base, offer_amount: null }, ctx(inquiry)).blockers).toEqual(['SETTLE needs an offer amount']);
 });
+test('schema normalizes an omitted offer amount to null for a FIGHT decision', () => {
+  const parsed = DecisionSchema.parse({ ...base, recommendation: 'FIGHT', offer_amount: undefined });
+  expect(parsed.offer_amount).toBeNull();
+  expect(validateDecision(parsed, ctx(inquiry))).toMatchObject({ ok: true, action: 'provide_evidence' });
+});
+test('SETTLE without an offer_amount key still reports the amount blocker', () => {
+  const withoutOffer = Object.fromEntries(Object.entries(base).filter(([key]) => key !== 'offer_amount'));
+  const parsed = DecisionSchema.parse(withoutOffer);
+  expect(parsed.offer_amount).toBeNull();
+  expect(validateDecision(parsed, ctx(inquiry)).blockers).toEqual(['SETTLE needs an offer amount']);
+});
 test('SETTLE at the claim stage is refused because PayPal does not list make_offer', () => {
   expect(validateDecision(base, ctx(claim, 'CHARGEBACK'))).toEqual({ ok: false, action: null, cap: '10.80', blockers: ['PayPal does not list make_offer for this case (stage PayPal claim)'] });
 });
@@ -53,8 +64,8 @@ test('schema takes optional photo findings, at most 5 of at most 300 characters 
   expect(DecisionSchema.safeParse({ ...base, photo_findings: ['a'.repeat(301)] }).success).toBe(false);
 });
 test('schema enforces the decision text limits', () => {
-  expect(DecisionSchema.safeParse({ ...base, plain_ask: 'a'.repeat(1200) }).success).toBe(true);
-  expect(DecisionSchema.safeParse({ ...base, plain_ask: 'a'.repeat(1201) }).success).toBe(false);
+  expect(DecisionSchema.safeParse({ ...base, plain_ask: 'a'.repeat(2000) }).success).toBe(true);
+  expect(DecisionSchema.safeParse({ ...base, plain_ask: 'a'.repeat(2001) }).success).toBe(false);
   expect(DecisionSchema.safeParse({ ...base, reasons: ['a'.repeat(400)] }).success).toBe(true);
   expect(DecisionSchema.safeParse({ ...base, reasons: ['a'.repeat(401)] }).success).toBe(false);
   expect(DecisionSchema.safeParse({ ...base, evidence_have: ['a'.repeat(301)] }).success).toBe(false);

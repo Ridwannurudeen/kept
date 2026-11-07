@@ -130,7 +130,7 @@ Sandbox disputes can only be opened by a sandbox buyer in the Resolution Center,
 - `npm test`: unit and HTTP tests (Vitest), using recorded PayPal fixtures in `test/fixtures/paypal/`. No network, no keys.
 - `npm run typecheck`: TypeScript with no emit.
 - `npm run test:e2e`: live sandbox tests in `test/e2e/live.test.ts`. Needs `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `KEPT_PASSCODE` and seeded cases in `seed/cases.json`; the model check skips without `ANTHROPIC_API_KEY`. The accept and evidence tests run only when `KEPT_E2E_ACCEPT_ID` or `KEPT_E2E_EVIDENCE_ID` names the seeded case, because each one spends a case.
-- `KEPT_EVAL=1 npm run eval`: the golden-case evaluation in `test/eval/golden.eval.ts` (four cases, three runs each, against the real model). Needs `ANTHROPIC_API_KEY`; without `KEPT_EVAL` every case skips. Results go to [docs/eval.md](docs/eval.md).
+- `KEPT_EVAL=1 npm run eval`: the golden-case evaluation in `test/eval/golden.eval.ts` (6 hand-built cases, 3 runs each; this checks the specific behaviours listed, it is not a measure of real-world accuracy). Needs `ANTHROPIC_API_KEY`; without `KEPT_EVAL` every case skips. Results go to [docs/eval.md](docs/eval.md).
 
 The `test:e2e` script uses a POSIX `KEPT_E2E=1` prefix; on PowerShell set `$env:KEPT_E2E='1'` and run `npx vitest run -c vitest.e2e.config.ts`.
 

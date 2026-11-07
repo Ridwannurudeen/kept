@@ -48,6 +48,13 @@ test('returns the validated decision from the last submit_decision call', async 
   expect(result.durationMs).toBeGreaterThanOrEqual(0);
 });
 
+test('accepts a FIGHT decision when the model omits offer_amount', async () => {
+  const fight = { ...settle, recommendation: 'FIGHT', offer_amount: undefined };
+  const { model } = scripted(call('submit_decision', fight));
+  const result = await decideCase(input(), { model, tools: toolsWith() });
+  expect(result).toMatchObject({ ok: true, decision: { recommendation: 'FIGHT', offer_amount: null }, validation: { ok: true, action: 'provide_evidence' } });
+});
+
 test('retries once when the model never calls submit_decision, then reports no_decision', async () => {
   const { model, prompts } = scripted(text('I think you should settle.'), text('Still thinking.'));
   const result = await decideCase(input(), { model, tools: toolsWith() });
@@ -64,11 +71,11 @@ test('the retry can still produce the decision', async () => {
 });
 
 test('retries once when submit_decision args fail the schema', async () => {
-  const { model, prompts } = scripted(call('submit_decision', { ...settle, plain_ask: 'a'.repeat(1201) }), call('submit_decision', settle));
+  const { model, prompts } = scripted(call('submit_decision', { ...settle, plain_ask: 'a'.repeat(2001) }), call('submit_decision', settle));
   const result = await decideCase(input(), { model, tools: toolsWith() });
   expect(result).toMatchObject({ ok: true, decision: settle });
   expect(prompts).toHaveLength(2);
-  expect(JSON.stringify(prompts[1])).toContain('plain_ask is longer than 1200 characters');
+  expect(JSON.stringify(prompts[1])).toContain('plain_ask is longer than 2000 characters');
 });
 
 test('returns invalid_decision after two invalid submit_decision calls', async () => {

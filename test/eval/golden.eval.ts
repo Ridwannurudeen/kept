@@ -10,7 +10,7 @@ import { offerCap, toCents } from '../../src/policy.js';
 import { buildFabricationSource } from './sources.js';
 
 type Expectation = { recommendation: Decision['recommendation'][]; action: Partial<Record<Decision['recommendation'], ActionKind>>; mustMention: RegExp[]; offerUnderCap: boolean; evidenceMissing: boolean };
-type CaseKey = 'A' | 'B' | 'C' | 'D';
+type CaseKey = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
 type Check = 'recommendation' | 'action' | 'policy' | 'fabrication' | 'mentions';
 type RunResult = { key: CaseKey; run: number; result: DecideResult; checks: Record<Check, boolean>; problems: string[] };
 
@@ -27,6 +27,8 @@ const expectations: Record<CaseKey, Expectation> = {
   B: { recommendation: ['SETTLE'], action: { SETTLE: 'make_offer' }, mustMention: [/photo|evidence|proof/i], offerUnderCap: true, evidenceMissing: false },
   C: { recommendation: ['ACCEPT'], action: { ACCEPT: 'accept_claim' }, mustMention: [/wrong size|our mistake|admit/i], offerUnderCap: false, evidenceMissing: false },
   D: { recommendation: ['FIGHT', 'SETTLE'], action: { FIGHT: 'provide_evidence', SETTLE: 'make_offer' }, mustMention: [], offerUnderCap: true, evidenceMissing: true },
+  E: { recommendation: ['SETTLE', 'FIGHT'], action: { FIGHT: 'provide_evidence', SETTLE: 'make_offer' }, mustMention: [/photo|evidence|proof/i], offerUnderCap: true, evidenceMissing: false },
+  F: { recommendation: ['SETTLE', 'ACCEPT', 'FIGHT'], action: { FIGHT: 'provide_evidence', SETTLE: 'make_offer', ACCEPT: 'accept_claim' }, mustMention: [/proof of delivery|tracking|tracker/i], offerUnderCap: true, evidenceMissing: true },
 };
 
 function loadCase(key: CaseKey): DecideInput {
@@ -70,7 +72,7 @@ function fabrications(decision: Decision, prompt: string): string[] {
   return found;
 }
 
-function evaluate(key: CaseKey, input: DecideInput, result: DecideResult): { checks: Record<Check, boolean>; problems: string[] } {
+export function evaluate(key: CaseKey, input: DecideInput, result: DecideResult): { checks: Record<Check, boolean>; problems: string[] } {
   if (!result.ok) return { checks: { recommendation: false, action: false, policy: false, fabrication: false, mentions: false }, problems: [`${result.error}: ${result.detail}`] };
   const problems: string[] = [];
   const expected = expectations[key];
@@ -93,6 +95,27 @@ function evaluate(key: CaseKey, input: DecideInput, result: DecideResult): { che
     problems.push('evidence_missing is empty');
     policy = false;
   }
+  if (key === 'F' && !/proof of delivery|tracking|tracker/i.test(decision.evidence_missing.join('\n'))) {
+    problems.push('evidence_missing does not name the missing proof of delivery');
+    policy = false;
+  }
+  if (key === 'F' && decision.recommendation === 'FIGHT' && !/proof of delivery|tracking|tracker/i.test(textForDecision(decision))) {
+    problems.push('FIGHT does not name the missing proof of delivery');
+    policy = false;
+  }
+  const decisionText = textForDecision(decision);
+  const guaranteeClaim = decisionText.split(/[.!?\n]+/).some((sentence) =>
+    /\bguarantee(?:s|d)?\b/i.test(sentence)
+    && !/\b(?:not|no|never|nothing|none|cannot|can['’]t|do['’]nt|does['’]nt|isn['’]t|aren['’]t|won['’]t|wasn['’]t|weren['’]t|without)\b/i.test(sentence),
+  );
+  if (key === 'F' && guaranteeClaim) {
+    problems.push('decision claims Seller Protection guarantees an outcome');
+    policy = false;
+  }
+  if (key === 'E' && (decision.recommendation === 'ACCEPT' || /\b(?:we|I)\s+(?:admit|admitted|accept\s+fault)\b|\bour\s+(?:mistake|fault)\b/i.test(decision.draft_note))) {
+    problems.push('decision claims the seller admitted fault');
+    policy = false;
+  }
   const invented = fabrications(decision, buildFabricationSource(input));
   if (invented.length) problems.push(`not in the prompt: ${invented.join(', ')}`);
   const text = [...decision.reasons, ...decision.evidence_have, ...decision.evidence_missing, decision.draft_note, decision.plain_ask].join('\n');
@@ -101,11 +124,17 @@ function evaluate(key: CaseKey, input: DecideInput, result: DecideResult): { che
   return { checks: { recommendation, action, policy, fabrication: invented.length === 0, mentions: missed.length === 0 }, problems };
 }
 
+function textForDecision(decision: Decision): string {
+  return [decision.reasons, decision.evidence_have, decision.evidence_missing, decision.draft_note, decision.plain_ask, decision.photo_findings].flat().join('\n');
+}
+
 function report(results: RunResult[]): string {
   const total = results.length;
   const count = (check: Check) => results.filter((entry) => entry.checks[check]).length;
   const hard: Check[] = ['recommendation', 'action', 'policy', 'fabrication'];
-  const passed = total === RUNS * 4 && hard.every((check) => count(check) === total) && count('mentions') >= 10;
+  const caseCount = 6;
+  const mentionsRequired = Math.ceil(total * 0.8);
+  const passed = total === RUNS * caseCount && hard.every((check) => count(check) === total) && count('mentions') >= mentionsRequired;
   const mean = Math.round(results.reduce((sum, entry) => sum + entry.result.durationMs, 0) / total);
   const decided = results.map((entry) => entry.result).find((result) => result.ok);
   const failing = results.filter((entry) => entry.problems.length);
@@ -114,7 +143,8 @@ function report(results: RunResult[]): string {
     '',
     `Date: ${new Date().toISOString()}`,
     `Model: ${decided?.ok ? decided.model : MODEL_ID}`,
-    `Gate: ${passed ? 'PASSED' : 'FAILED'} (needs ${RUNS * 4}/${RUNS * 4} on recommendation, action, policy and fabrication, and at least 10/${RUNS * 4} on mentions)`,
+    `Scope: ${caseCount} hand-built cases, ${RUNS} runs each; this checks the specific behaviours listed, it is not a measure of real-world accuracy.`,
+    `Gate: ${passed ? 'PASSED' : 'FAILED'} (needs ${total}/${total} on recommendation, action, policy and fabrication, and at least ${mentionsRequired}/${total} on mentions)`,
     `Mean durationMs: ${mean}`,
     '',
     '| Check | Passed |',
@@ -143,7 +173,7 @@ describe.skipIf(!process.env.KEPT_EVAL)('golden cases', () => {
     if (results.length) writeFileSync(new URL('../../docs/eval.md', import.meta.url), report(results));
   });
 
-  const runs = (['A', 'B', 'C', 'D'] as CaseKey[]).flatMap((key) => Array.from({ length: RUNS }, (_, index) => ({ key, run: index + 1 })));
+  const runs = (['A', 'B', 'C', 'D', 'E', 'F'] as CaseKey[]).flatMap((key) => Array.from({ length: RUNS }, (_, index) => ({ key, run: index + 1 })));
 
   test.each(runs)('case $key run $run', async ({ key, run }) => {
     const input = loadCase(key);
@@ -153,8 +183,8 @@ describe.skipIf(!process.env.KEPT_EVAL)('golden cases', () => {
     expect(problems.filter((problem) => !problem.startsWith('did not mention'))).toEqual([]);
   });
 
-  test('mentions pass on at least 10 of 12 runs', () => {
-    expect(results).toHaveLength(RUNS * 4);
-    expect(results.filter((entry) => entry.checks.mentions).length).toBeGreaterThanOrEqual(10);
+  test('mentions pass on at least 80% of runs', () => {
+    expect(results).toHaveLength(RUNS * 6);
+    expect(results.filter((entry) => entry.checks.mentions).length).toBeGreaterThanOrEqual(Math.ceil(results.length * 0.8));
   });
 });
