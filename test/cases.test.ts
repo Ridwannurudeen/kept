@@ -77,6 +77,8 @@ test('detail break-even uses its recommended offer only when make_offer is allow
   const detail = buildCaseDetail(inquiry, record('CAPTUREB0000000001'), null, null, state({ decisions: { [inquiry.dispute_id]: stored(decision) } }), now);
   expect(detail.breakEven).toMatchObject({ percent: 82 });
   expect(buildCaseDetail(chargeback, null, null, null, state(), now).breakEven).toBeNull();
+  const claimWithOffer = { ...inquiry, dispute_life_cycle_stage: 'CHARGEBACK' };
+  expect(buildCaseDetail(claimWithOffer, null, null, null, state({ decisions: { [inquiry.dispute_id]: stored(decision) } }), now).breakEven).toBeNull();
 });
 
 test('detail with no record has empty notes and no attachments', () => {

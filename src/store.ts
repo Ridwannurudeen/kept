@@ -110,7 +110,8 @@ export class Store {
       try {
         const state = JSON.parse(text) as State;
         state.unknownOutcomes ??= {};
-        state.policy = parsePolicy(state.policy);
+        try { state.policy = parsePolicy(state.policy); }
+        catch { state.policy = { ...defaultPolicy }; }
         return new Store(opts.dataDir, opts.seedPath, snapshotPath, now, opts.onReset, state);
       } catch {
         await rename(file, join(opts.dataDir, `state.json.corrupt-${now().getTime()}`));

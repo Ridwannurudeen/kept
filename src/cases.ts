@@ -197,7 +197,7 @@ export function buildCaseDetail(d: Dispute, record: CaseRecord | null, order: Or
     unknownOutcome: state.unknownOutcomes[d.dispute_id] ?? null,
     policy,
     cap: allowed.includes('make_offer') ? offerCap(disputedAmount(d).value, policy) : null,
-    breakEven: allowed.includes('make_offer') && breakEvenOffer
+    breakEven: d.dispute_life_cycle_stage === 'INQUIRY' && allowed.includes('make_offer') && breakEvenOffer
       ? calculateBreakEven(disputedAmount(d).value, breakEvenOffer, policy.disputeFeeTier)
       : null,
     timeline: timelineOf(d),

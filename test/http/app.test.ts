@@ -216,6 +216,8 @@ describe('HTTP app', () => {
     await request(app).put('/api/policy').set(auth).send({ maxOfferPercent: 101, maxOfferAbsolute: '50.00', deadlineBufferHours: 48 }).expect(400);
     await request(app).put('/api/policy').set(auth).send({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 400 }).expect(200);
     await request(app).get('/api/policy').set(auth).expect(200).expect(({ body }) => expect(body.deadlineBufferHours).toBe(400));
+    await request(app).put('/api/policy').set(auth).send({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 400, disputeFeeTier: 'high_volume' }).expect(200);
+    await request(app).get('/api/policy').set(auth).expect(200).expect(({ body }) => expect(body.disputeFeeTier).toBe('high_volume'));
   });
 
   test('PUT notes and POST attachments update the record and reject bad names', async () => {

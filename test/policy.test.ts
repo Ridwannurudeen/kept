@@ -63,8 +63,10 @@ test('parsePolicy bounds maxOfferAbsolute at 1000000.00 so offerCap cannot throw
 
 test('break-even uses the Standard fee rules in integer cents', () => {
   expect(breakEven('20.00', '5.00', 'standard')).toMatchObject({ percent: 75, loseCost: '20.00', winCost: '0.00', feeApplied: '0.00' });
+  expect(breakEven('30.00', '5.00', 'standard')).toMatchObject({ loseCost: '45.00', feeApplied: '15.00' });
   expect(breakEven('36.00', '9.00', 'standard')?.percent).toBe(82);
   expect(breakEven('100.00', '10.00', 'standard')?.percent).toBe(91);
+  expect(breakEven('100.00', '21.16', 'standard')?.percent).toBe(81);
 });
 
 test('break-even clamps High Volume to 100 and explains when settling always costs less', () => {
@@ -73,12 +75,13 @@ test('break-even clamps High Volume to 100 and explains when settling always cos
     loseCost: '66.00',
     winCost: '30.00',
     feeApplied: '30.00',
-    note: 'Under the High Volume fee, offering 9.00 costs less than fighting even if you would win.',
+    note: 'Offering 9.00 costs less than fighting even if you would win.',
   });
 });
 
 test('break-even rejects invalid, zero and over-loss offers while explaining equal-cost offers', () => {
   expect(breakEven('36.00', 'bad', 'standard')).toBeNull();
+  expect(breakEven('36.00', '9', 'standard')).toBeNull();
   expect(breakEven('36.00', '0.00', 'standard')).toBeNull();
   expect(breakEven('36.00', '51.00', 'standard')).toMatchObject({ percent: 0, note: 'An offer this size costs at least as much as losing a fight.' });
   expect(breakEven('36.00', '50.99', 'standard')?.percent).toBe(0);

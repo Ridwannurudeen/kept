@@ -51,6 +51,18 @@ test('loads a stored policy from before dispute fee tiers were added', async () 
     expect((await Store.open(f.opts)).get().policy.disputeFeeTier).toBe('standard');
   } finally { await f.cleanup(); }
 });
+test('uses the default policy for an invalid stored policy and keeps the rest of state', async () => {
+  const f = await fixture();
+  try {
+    const store = await Store.open(f.opts);
+    await store.update((state) => { state.policy.disputeFeeTier = 'invalid' as never; state.startedAt = 'preserved'; });
+    const reopened = await Store.open(f.opts);
+    expect(reopened.get().policy).toEqual(defaultPolicy);
+    expect(reopened.get().startedAt).toBe('preserved');
+    expect(reopened.get().cases).toHaveProperty('A');
+    expect((await readdir(f.opts.dataDir)).some((name) => name.startsWith('state.json.corrupt-'))).toBe(false);
+  } finally { await f.cleanup(); }
+});
 test('quarantines a corrupt file and restarts from seed', async () => {
   const f = await fixture();
   try {

@@ -45,7 +45,7 @@ export function breakEven(disputed: string, offer: string, tier: DisputeFeeTier)
   let offerCents: number;
   try {
     amountCents = parseAmount(disputed);
-    offerCents = parseAmount(offer);
+    offerCents = toCents(offer);
   } catch {
     return null;
   }
@@ -53,13 +53,14 @@ export function breakEven(disputed: string, offer: string, tier: DisputeFeeTier)
   const winCents = tier === 'high_volume' ? 3000 : 0;
   const feeCents = tier === 'high_volume' ? 3000 : amountCents < 3000 ? 0 : 1500;
   const loseCents = amountCents + feeCents;
+  const percent = Math.max(0, Math.min(100, Math.floor(((loseCents - offerCents) / (loseCents - winCents)) * 100)));
   const note = offerCents >= loseCents
     ? 'An offer this size costs at least as much as losing a fight.'
-    : tier === 'high_volume' && offerCents < winCents
-      ? `Under the High Volume fee, offering ${fromCents(offerCents)} costs less than fighting even if you would win.`
+    : offerCents <= winCents || percent >= 100
+      ? `Offering ${fromCents(offerCents)} costs less than fighting even if you would win.`
       : '';
   return {
-    percent: offerCents >= loseCents ? 0 : Math.max(0, Math.min(100, Math.round(((loseCents - offerCents) / (loseCents - winCents)) * 100))),
+    percent: offerCents >= loseCents ? 0 : percent,
     loseCost: fromCents(loseCents),
     winCost: fromCents(winCents),
     feeApplied: fromCents(feeCents),
