@@ -1,5 +1,5 @@
 import { ZodError } from 'zod';
-import { checkOffer, deadlineStatus, defaultPolicy, offerCap, parseAmount, parsePolicy, toCents } from '../src/policy.js';
+import { breakEven, checkOffer, deadlineStatus, defaultPolicy, offerCap, parseAmount, parsePolicy, toCents } from '../src/policy.js';
 
 test('PayPal disputed amounts accept zero or one decimal while seller offers stay strict', () => {
   expect(parseAmount('36')).toBe(3600);
@@ -51,7 +51,7 @@ test('parsePolicy rejects out-of-range and malformed settings', () => {
   expect(() => parsePolicy({ maxOfferPercent: 101, maxOfferAbsolute: '50.00', deadlineBufferHours: 48 })).toThrow();
   expect(() => parsePolicy({ maxOfferPercent: 30, maxOfferAbsolute: '50', deadlineBufferHours: 48 })).toThrow();
   expect(() => parsePolicy({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: -1 })).toThrow();
-  expect(parsePolicy({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 400 })).toEqual({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 400 });
+  expect(parsePolicy({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 400 })).toEqual({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 400, disputeFeeTier: 'standard' });
 });
 
 test('parsePolicy bounds maxOfferAbsolute at 1000000.00 so offerCap cannot throw', () => {
@@ -59,4 +59,34 @@ test('parsePolicy bounds maxOfferAbsolute at 1000000.00 so offerCap cannot throw
   expect(parsePolicy({ ...base, maxOfferAbsolute: '1000000.00' }).maxOfferAbsolute).toBe('1000000.00');
   expect(() => parsePolicy({ ...base, maxOfferAbsolute: '1000000.01' })).toThrow(ZodError);
   expect(() => parsePolicy({ ...base, maxOfferAbsolute: '99999999999999999999.00' })).toThrow(ZodError);
+});
+
+test('break-even uses the Standard fee rules in integer cents', () => {
+  expect(breakEven('20.00', '5.00', 'standard')).toMatchObject({ percent: 75, loseCost: '20.00', winCost: '0.00', feeApplied: '0.00' });
+  expect(breakEven('36.00', '9.00', 'standard')?.percent).toBe(82);
+  expect(breakEven('100.00', '10.00', 'standard')?.percent).toBe(91);
+});
+
+test('break-even clamps High Volume to 100 and explains when settling always costs less', () => {
+  expect(breakEven('36.00', '9.00', 'high_volume')).toMatchObject({
+    percent: 100,
+    loseCost: '66.00',
+    winCost: '30.00',
+    feeApplied: '30.00',
+    note: 'Under the High Volume fee, offering 9.00 costs less than fighting even if you would win.',
+  });
+});
+
+test('break-even rejects invalid, zero and over-loss offers while explaining equal-cost offers', () => {
+  expect(breakEven('36.00', 'bad', 'standard')).toBeNull();
+  expect(breakEven('36.00', '0.00', 'standard')).toBeNull();
+  expect(breakEven('36.00', '51.00', 'standard')).toMatchObject({ percent: 0, note: 'An offer this size costs at least as much as losing a fight.' });
+  expect(breakEven('36.00', '50.99', 'standard')?.percent).toBe(0);
+});
+
+test('parsePolicy defaults a missing fee tier and validates supplied tiers', () => {
+  expect(defaultPolicy.disputeFeeTier).toBe('standard');
+  expect(parsePolicy({ maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 48 })).toMatchObject({ disputeFeeTier: 'standard' });
+  expect(parsePolicy({ ...defaultPolicy, disputeFeeTier: 'high_volume' }).disputeFeeTier).toBe('high_volume');
+  expect(() => parsePolicy({ ...defaultPolicy, disputeFeeTier: 'premium' })).toThrow();
 });

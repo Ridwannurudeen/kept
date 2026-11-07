@@ -40,6 +40,17 @@ test('persists updates atomically and reloads them', async () => {
     expect(await readdir(f.opts.dataDir)).not.toContain('state.json.tmp');
   } finally { await f.cleanup(); }
 });
+test('loads a stored policy from before dispute fee tiers were added', async () => {
+  const f = await fixture();
+  try {
+    await Store.open(f.opts);
+    const statePath = join(f.opts.dataDir, 'state.json');
+    const state = JSON.parse(await readFile(statePath, 'utf8')) as { policy: Record<string, unknown> };
+    delete state.policy.disputeFeeTier;
+    await writeFile(statePath, JSON.stringify(state));
+    expect((await Store.open(f.opts)).get().policy.disputeFeeTier).toBe('standard');
+  } finally { await f.cleanup(); }
+});
 test('quarantines a corrupt file and restarts from seed', async () => {
   const f = await fixture();
   try {

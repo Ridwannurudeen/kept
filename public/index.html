@@ -113,6 +113,15 @@
           <input type="number" id="policy-buffer" class="field-input field-number" name="deadlineBufferHours" inputmode="numeric" min="0" max="2000" step="1" required aria-describedby="policy-buffer-error" />
           <p class="field-error" id="policy-buffer-error" hidden></p>
         </div>
+        <div class="field" data-field="disputeFeeTier">
+          <label class="field-label" for="policy-tier">Dispute fee tier</label>
+          <select id="policy-tier" class="field-input" name="disputeFeeTier">
+            <option value="standard">Standard</option>
+            <option value="high_volume">High Volume</option>
+          </select>
+          <p class="field-error" id="policy-tier-error" hidden></p>
+          <p class="field-hint">PayPal sets this from your last three months; check your PayPal account.</p>
+        </div>
         <p class="dialog-error" id="policy-error" role="alert" hidden></p>
         <div class="dialog-actions">
           <button type="button" class="button" id="policy-cancel">Cancel</button>

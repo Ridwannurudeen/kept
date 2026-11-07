@@ -72,6 +72,13 @@ test('detail sent flag reflects an accepted action in the log and cap is null un
   expect(buildCaseDetail(chargeback, null, null, null, state(), now).cap).toBeNull();
 });
 
+test('detail break-even uses its recommended offer only when make_offer is allowed', () => {
+  const decision: Decision = { recommendation: 'SETTLE', plain_ask: 'offer a partial refund', evidence_have: [], evidence_missing: [], reasons: ['fair'], offer_amount: '9.00', draft_note: 'Sorry.' };
+  const detail = buildCaseDetail(inquiry, record('CAPTUREB0000000001'), null, null, state({ decisions: { [inquiry.dispute_id]: stored(decision) } }), now);
+  expect(detail.breakEven).toMatchObject({ percent: 82 });
+  expect(buildCaseDetail(chargeback, null, null, null, state(), now).breakEven).toBeNull();
+});
+
 test('detail with no record has empty notes and no attachments', () => {
   const detail = buildCaseDetail(chargeback, null, null, null, state(), now);
   expect(detail.record).toBeNull();

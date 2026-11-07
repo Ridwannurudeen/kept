@@ -1,13 +1,15 @@
 import { z } from 'zod';
 
-export type Policy = { maxOfferPercent: number; maxOfferAbsolute: string; deadlineBufferHours: number };
+export type DisputeFeeTier = 'standard' | 'high_volume';
+export type Policy = { maxOfferPercent: number; maxOfferAbsolute: string; deadlineBufferHours: number; disputeFeeTier: DisputeFeeTier };
 
-export const defaultPolicy: Policy = { maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 48 };
+export const defaultPolicy: Policy = { maxOfferPercent: 30, maxOfferAbsolute: '50.00', deadlineBufferHours: 48, disputeFeeTier: 'standard' };
 
 const policySchema = z.object({
   maxOfferPercent: z.number().int().min(0).max(100),
   maxOfferAbsolute: z.string().regex(/^\d+\.\d{2}$/).refine((value) => Number(value) <= 1_000_000, 'At most 1000000.00'),
   deadlineBufferHours: z.number().int().min(0).max(2000),
+  disputeFeeTier: z.enum(['standard', 'high_volume']).default('standard'),
 });
 
 export function parsePolicy(input: unknown): Policy {
@@ -34,6 +36,35 @@ export function fromCents(cents: number): string {
   const sign = cents < 0 ? '-' : '';
   const absolute = BigInt(Math.abs(cents));
   return `${sign}${absolute / 100n}.${String(absolute % 100n).padStart(2, '0')}`;
+}
+
+export type BreakEven = { percent: number; loseCost: string; winCost: string; feeApplied: string; note: string };
+
+export function breakEven(disputed: string, offer: string, tier: DisputeFeeTier): BreakEven | null {
+  let amountCents: number;
+  let offerCents: number;
+  try {
+    amountCents = parseAmount(disputed);
+    offerCents = parseAmount(offer);
+  } catch {
+    return null;
+  }
+  if (offerCents <= 0) return null;
+  const winCents = tier === 'high_volume' ? 3000 : 0;
+  const feeCents = tier === 'high_volume' ? 3000 : amountCents < 3000 ? 0 : 1500;
+  const loseCents = amountCents + feeCents;
+  const note = offerCents >= loseCents
+    ? 'An offer this size costs at least as much as losing a fight.'
+    : tier === 'high_volume' && offerCents < winCents
+      ? `Under the High Volume fee, offering ${fromCents(offerCents)} costs less than fighting even if you would win.`
+      : '';
+  return {
+    percent: offerCents >= loseCents ? 0 : Math.max(0, Math.min(100, Math.round(((loseCents - offerCents) / (loseCents - winCents)) * 100))),
+    loseCost: fromCents(loseCents),
+    winCost: fromCents(winCents),
+    feeApplied: fromCents(feeCents),
+    note,
+  };
 }
 
 export function offerCap(disputed: string, policy: Policy): string {

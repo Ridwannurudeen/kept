@@ -1,6 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { defaultPolicy, type Policy } from './policy.js';
+import { defaultPolicy, parsePolicy, type Policy } from './policy.js';
 import type { Decision, Validation } from './decision.js';
 import { disputedAmount } from './paypal/dispute.js';
 import type { Dispute } from './paypal/types.js';
@@ -110,6 +110,7 @@ export class Store {
       try {
         const state = JSON.parse(text) as State;
         state.unknownOutcomes ??= {};
+        state.policy = parsePolicy(state.policy);
         return new Store(opts.dataDir, opts.seedPath, snapshotPath, now, opts.onReset, state);
       } catch {
         await rename(file, join(opts.dataDir, `state.json.corrupt-${now().getTime()}`));

@@ -953,6 +953,7 @@
     draft.append(noteLabel, note, count);
 
     let offer = null;
+    let breakEvenLine = null;
     const offerHint = el("p", "field-hint");
     offerHint.id = "offer-hint";
     if (action === "make_offer") {
@@ -979,6 +980,20 @@
       field.append(offer, cap);
       row.append(label, field, offerHint);
       draft.append(row);
+      breakEvenLine = el("p", "field-hint");
+      const feeLine = el("p", "field-hint");
+      const feeText = document.createTextNode("Fee rules: ");
+      const agreement = el("a", "", "PayPal User Agreement");
+      agreement.href = "https://www.paypal.com/us/legalhub/paypal/useragreement-full";
+      agreement.target = "_blank";
+      agreement.rel = "noopener noreferrer";
+      const protectionLead = document.createTextNode(", Dispute fees (Standard USD 15.00, waived under USD 30.00; High Volume USD 30.00). If PayPal finds ");
+      const protection = el("a", "", "Seller Protection");
+      protection.href = "https://www.paypal.com/us/legalhub/paypal/seller-protection";
+      protection.target = "_blank";
+      protection.rel = "noopener noreferrer";
+      feeLine.append(feeText, agreement, protectionLead, protection, document.createTextNode(" met, losing carries no fee."));
+      draft.append(breakEvenLine, feeLine);
     }
 
     const approve = section("Approve");
@@ -1006,6 +1021,23 @@
         offerHint.textContent = check.ok ? "Within your policy" : check.message;
         offerHint.classList.toggle("is-error", !check.ok);
         offer.setAttribute("aria-invalid", String(!check.ok));
+        const offerCents = centsOf(offer.value.trim());
+        const disputedCents = centsOf(detail.amount.value);
+        if (breakEvenLine) breakEvenLine.textContent = "";
+        if (/^\d+\.\d{2}$/.test(offer.value.trim()) && offerCents !== null && offerCents > 0 && disputedCents !== null) {
+          const tier = detail.policy.disputeFeeTier || "standard";
+          const winCost = tier === "high_volume" ? 3000 : 0;
+          const fee = tier === "high_volume" ? 3000 : disputedCents < 3000 ? 0 : 1500;
+          const loseCost = disputedCents + fee;
+          if (breakEvenLine && offerCents >= loseCost) {
+            breakEvenLine.textContent = "An offer this size costs at least as much as losing a fight.";
+          } else if (breakEvenLine && tier === "high_volume" && offerCents < winCost) {
+            breakEvenLine.textContent = `Under the High Volume fee, offering ${fromCents(offerCents)} costs less than fighting even if you would win.`;
+          } else if (breakEvenLine) {
+            const percent = Math.max(0, Math.min(100, Math.round(((loseCost - offerCents) / (loseCost - winCost)) * 100)));
+            breakEvenLine.textContent = `Offering ${detail.amount.currency_code} ${fromCents(offerCents)} costs less than fighting unless you would win more than ${percent}% of the time. Kept does not know that number; you do.`;
+          }
+        }
       }
       const blockers = approveBlockers(
         detail,
@@ -1855,6 +1887,7 @@
     maxOfferPercent: "policy-percent",
     maxOfferAbsolute: "policy-absolute",
     deadlineBufferHours: "policy-buffer",
+    disputeFeeTier: "policy-tier",
   };
 
   function setFieldError(name, message) {
@@ -1914,6 +1947,7 @@
       maxOfferPercent: number(read("maxOfferPercent")),
       maxOfferAbsolute: read("maxOfferAbsolute"),
       deadlineBufferHours: number(read("deadlineBufferHours")),
+      disputeFeeTier: read("disputeFeeTier"),
     };
     els.policySave.disabled = true;
     try {

@@ -2,7 +2,7 @@ import type { Decision } from './decision.js';
 import { isDecisionStale, type State, type StoredDecision, type UnknownOutcome } from './store.js';
 import type { ActionEntry } from './log.js';
 import { hasSentAction } from './log.js';
-import { deadlineStatus, fromCents, offerCap, parseAmount, type DeadlineStatus, type Policy } from './policy.js';
+import { breakEven as calculateBreakEven, deadlineStatus, fromCents, offerCap, parseAmount, type BreakEven, type DeadlineStatus, type Policy } from './policy.js';
 import { allowedActions, captureIdOf, disputedAmount, explainState, holdAmount, isOpen, reasonLabel, stageLabel, type ActionKind, type StateExplanation } from './paypal/dispute.js';
 import type { Capture, Dispute, Money, Order } from './paypal/types.js';
 import type { CaseRecord } from '../seed/seed.js';
@@ -47,6 +47,7 @@ export type CaseDetail = CaseRow & {
   unknownOutcome: UnknownOutcome | null;
   policy: Policy;
   cap: string | null;
+  breakEven: BreakEven | null;
   timeline: TimelineEntry[];
 };
 
@@ -180,6 +181,7 @@ export function buildCaseDetail(d: Dispute, record: CaseRecord | null, order: Or
   const policy = state.policy;
   const explanation = explainState(d, now);
   const row = buildRow(d, record, capture, state, now, explanation);
+  const breakEvenOffer = row.offerAmount;
   return {
     ...row,
     dispute: d,
@@ -195,6 +197,9 @@ export function buildCaseDetail(d: Dispute, record: CaseRecord | null, order: Or
     unknownOutcome: state.unknownOutcomes[d.dispute_id] ?? null,
     policy,
     cap: allowed.includes('make_offer') ? offerCap(disputedAmount(d).value, policy) : null,
+    breakEven: allowed.includes('make_offer') && breakEvenOffer
+      ? calculateBreakEven(disputedAmount(d).value, breakEvenOffer, policy.disputeFeeTier)
+      : null,
     timeline: timelineOf(d),
   };
 }
