@@ -1,7 +1,7 @@
 {
     "_derived":  [
                      "dispute, order, capture and record derived from test/eval/cases/D.json, reusing its recorded seller_response_due_date and PayPal fixture dates.",
-                     "order tracker removed to model missing proof of delivery while the recorded capture Seller Protection status remains ELIGIBLE.",
+                     "order has no tracker and seller notes say only that the item was packed and shipped, so no proof of delivery is recorded; the capture Seller Protection status remains ELIGIBLE.",
                      "case ids changed to distinguish this evaluation case."
                  ],
     "dispute":  {
@@ -232,7 +232,7 @@
                    "trackingNumber":  null,
                    "carrier":  null,
                    "trackedAt":  null,
-                   "notes":  "The Walnut phone stand was packed and shipped by UPS, tracking 1Z999AA10123456785.",
+                   "notes":  "The Walnut phone stand was packed and shipped.",
                    "attachments":  [
 
                                    ],

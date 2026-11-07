@@ -17,7 +17,7 @@ Rules from the hackathon: under 3 minutes, public on YouTube, English, no third-
 - CAMERA: static. No zoom, no pan, no crop, no scale in the edit. If text is too small at 125 %, change the browser zoom and re-record.
 - MOTION: only the cursor and the app move. The cursor travels to an action, clicks, then goes still at least 0.5 s (15 frames) before the result appears. It never moves while a caption or a result line is being read, and never crosses the text being read. Every `PayPal now reports` line and the resolved panel stay in frame and still for at least 4 s (120 frames).
 - EDIT CONTRACT (the render contract for a screen recording): OBS records constant 30 fps, so every output frame is a real captured frame. Only hard cuts. No speed change, no frame blending, no dissolves, no freeze frames presented as live. Trimming the start or end of a take is allowed; stretching or reordering time inside a click and its result is not. The edit decision list (take file, in frame, out frame per shot) is written in `NOTES.md` beside the footage, so any shot can be rebuilt exactly.
-- BANNED: music (unless CC0, section 9), SFX, pasted logos, DevTools, the bookmarks bar, the taskbar, any other tab, the passcode typed on camera, notifications, the buyer's sandbox screen, the cursor parked over text, a cut between a click and its result, speeding up any wait that ends in a PayPal response (cut the wait instead, section 7), and these words in captions or narration: odds, chance as Kept's estimate, "earned", "saved", "only entry", "12/12", "beat the buyer", "donation", "PayPal released funds", any claim an outcome is better than fighting.
+- BANNED: music (unless CC0, section 9), SFX, pasted logos, DevTools, the bookmarks bar, the taskbar, any other tab, the passcode typed on camera, notifications, the buyer's sandbox screen, the cursor parked over text, a cut between a click and its result, speeding up any wait that ends in a PayPal response (cut the wait instead, section 7), and these words in captions or narration: odds, chance as Kept's estimate, "earned", "saved", "only entry", "12/12", "18/18", "beat the buyer", "donation", "PayPal released funds", any claim an outcome is better than fighting.
 - CUT from the film: a dedicated photo beat (at most one spoken clause while B's panel is open, from recorded output, never a live photo call), the grid feature tour (undo, CSV, saved views), any win or acceptance estimate, the tools footer.
 - QA: section 11, the lab loop and the ship gate.
 
@@ -146,7 +146,7 @@ This part is recorded sandbox data, as the banner says. The simulate button stan
 
 Word count, spoken lines only (the Shot, Optional, Fallback and Replay headings are not spoken): 410 for every line above including the optional, fallback and replay lines (limit 420); 350 for the main script, shots 1 to 7. Recount the total after any edit with `awk '/^```$/{f=!f;next} f' docs/video.md | grep -v "^Shot [0-9]$\|^Optional\|^Fallback\|^Replay" | wc -w`, and the main script with `awk '/^```$/{f=!f;next} f' docs/video.md | sed '/^Optional/,$d' | grep -v "^Shot [0-9]$" | wc -w`.
 
-Never say: that PayPal support is slow, "beat the buyer", that PayPal released funds, that an outcome is better than fighting, any chance of winning as Kept's figure, "earned", "saved", "only entry", "12/12".
+Never say: that PayPal support is slow, "beat the buyer", that PayPal released funds, that an outcome is better than fighting, any chance of winning as Kept's figure, "earned", "saved", "only entry", "12/12", "18/18".
 
 ## 9. Audio
 
