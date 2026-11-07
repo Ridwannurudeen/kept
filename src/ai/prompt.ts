@@ -1,3 +1,4 @@
+import { protectionChecklistOf } from '../cases.js';
 import { disputedAmount } from '../paypal/dispute.js';
 import { offerCap } from '../policy.js';
 import type { DecideInput } from './decide.js';
@@ -14,6 +15,7 @@ Rules:
 - Never claim a legal outcome, and never say how PayPal will rule.
 - Never promise that PayPal will release held funds.
 - Weigh the capture's seller_protection status and dispute_categories against the dispute reason, and say in reasons whether PayPal lists this reason for the payment; never say Seller Protection guarantees an outcome.
+- The Seller Protection checklist marks each item in_paypal_data, not_visible (Kept cannot see it) or missing; reason with those states, and remember that whether protection applies is PayPal's decision, not yours or the seller's.
 - Only recommend actions PayPal lists for this case.
 - Call get_dispute with the dispute id first. Do not call list_disputes unless get_dispute fails.
 - End by calling submit_decision exactly once with your decision. Do not write the decision as text.`;
@@ -37,6 +39,8 @@ export function buildUserPrompt(input: DecideInput): string {
     trackers: (unit.shipping?.trackers ?? []).map((tracker) => ({ id: tracker.id, status: tracker.status })),
   } : null;
   const captureSummary = capture ? { status: capture.status, amount: capture.amount, seller_protection: capture.seller_protection ?? null } : null;
+  const checklist = protectionChecklistOf(dispute, order, capture);
+  const checklistSummary = { applies_to_this_reason: checklist.applies, items: checklist.items.map((item) => ({ item: item.label, state: item.state })) };
   const notes = record?.notes ? `Seller notes: ${record.notes}` : 'Seller notes: none recorded for this case.';
   const files = attachments.length ? `Attachments: ${attachments.map((file) => `${file.name} (${file.type})`).join(', ')}` : 'Attachments: none';
   const cap = allowed.includes('make_offer') ? `Largest offer the policy allows for this case: ${amount.currency_code} ${offerCap(amount.value, policy)}` : 'PayPal does not list make_offer for this case.';
@@ -47,6 +51,7 @@ export function buildUserPrompt(input: DecideInput): string {
     `Dispute id: ${dispute.dispute_id}. Call get_dispute with this id first.`,
     `Order: ${JSON.stringify(orderSummary)}`,
     `Capture: ${JSON.stringify(captureSummary)}`,
+    `Seller Protection checklist: ${JSON.stringify(checklistSummary)}`,
     notes,
     files,
     `Policy: max offer ${policy.maxOfferPercent}% or ${amount.currency_code} ${policy.maxOfferAbsolute}, whichever is lower; deadline buffer ${policy.deadlineBufferHours} h`,

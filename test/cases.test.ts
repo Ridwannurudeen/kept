@@ -2,11 +2,15 @@ import { readFileSync } from 'node:fs';
 import type { Decision } from '../src/decision.js';
 import type { State, StoredDecision } from '../src/store.js';
 import type { CaseRecord } from '../seed/seed.js';
-import type { Capture, Dispute } from '../src/paypal/types.js';
+import type { ActionEntry } from '../src/log.js';
+import type { Capture, Dispute, Order } from '../src/paypal/types.js';
 import { buildCaseDetail, buildCaseRow, joinCases, sortRows, summarize } from '../src/cases.js';
 
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/paypal/${name}.json`, import.meta.url), 'utf8')) as Dispute;
 const eligibleCapture = JSON.parse(readFileSync(new URL('./fixtures/paypal/capture-1VS093774J460400T.json', import.meta.url), 'utf8')) as Capture;
+const shippedOrder = JSON.parse(readFileSync(new URL('./fixtures/paypal/order-92U413849D170012F.json', import.meta.url), 'utf8')) as Order;
+const untrackedOrder = JSON.parse(readFileSync(new URL('./fixtures/paypal/order-205118069H056835L.json', import.meta.url), 'utf8')) as Order;
+const resolvedCapture = JSON.parse(readFileSync(new URL('./fixtures/paypal/capture-7FH08202AN770703L.json', import.meta.url), 'utf8')) as Capture;
 const inquiry = fixture('dispute-inquiry-open');
 const resolved = fixture('dispute-inquiry-resolved');
 const chargeback = fixture('dispute-chargeback-fresh');
@@ -210,4 +214,76 @@ test('timeline shows adjudications and unknown values as PayPal sent them, and p
 
 test('timeline of an open inquiry with no history is empty', () => {
   expect(buildCaseDetail(inquiry, null, null, null, state(), now).timeline).toEqual([]);
+});
+
+const SOURCE = 'https://www.paypal.com/us/legalhub/paypal/seller-protection';
+const states = (detail: ReturnType<typeof buildCaseDetail>) => detail.protectionChecklist?.items.map((item) => item.state);
+
+test('checklist for the recorded item-not-received claim with a SHIPPED tracker', () => {
+  const checklist = buildCaseDetail(chargeback, null, shippedOrder, eligibleCapture, state(), now).protectionChecklist!;
+  expect(checklist).toMatchObject({ applies: true, source: SOURCE, summary: 'PayPal lists this payment as eligible for item not received. PayPal decides whether Seller Protection applies; this is what Kept can see.' });
+  expect(checklist.items.map((item) => [item.label, item.state])).toEqual([
+    ["Shipped to the address on PayPal's transaction details", 'in_paypal_data'],
+    ['Online, verifiable tracking number', 'in_paypal_data'],
+    ["'Delivered' status with a delivery date", 'missing'],
+    ['Recipient address matches the transaction details', 'not_visible'],
+  ]);
+  expect(checklist.items[2]!.detail).toBe("PayPal's record shows SHIPPED, not delivered");
+  expect(checklist.items[1]!.detail).toContain('1VS093774J460400T-1Z999AA10123456784');
+});
+
+test('checklist marks delivery in PayPal data only for a DELIVERED tracker', () => {
+  const unit = shippedOrder.purchase_units[0]!;
+  const delivered: Order = { ...shippedOrder, purchase_units: [{ ...unit, shipping: { ...unit.shipping, trackers: [{ id: 'T-1', status: 'DELIVERED' }] } }] };
+  expect(states(buildCaseDetail(chargeback, null, delivered, eligibleCapture, state(), now))).toEqual(['in_paypal_data', 'in_paypal_data', 'in_paypal_data', 'not_visible']);
+});
+
+test('checklist for an order with an address but no tracker, and for a case with no order', () => {
+  expect(states(buildCaseDetail(resolved, null, untrackedOrder, resolvedCapture, state(), now))).toEqual(['not_visible', 'missing', 'missing', 'not_visible']);
+  const noOrder = buildCaseDetail(inquiry, null, null, null, state(), now).protectionChecklist!;
+  expect(noOrder.items.map((item) => item.state)).toEqual(['not_visible', 'not_visible', 'not_visible', 'not_visible']);
+  expect(noOrder.summary).toBe('PayPal has not reported a Seller Protection status for this payment to Kept. PayPal decides whether Seller Protection applies; this is what Kept can see.');
+});
+
+test('checklist summary does not claim cover when the capture lists other categories', () => {
+  const unauthorizedOnly: Capture = { ...eligibleCapture, seller_protection: { status: 'PARTIALLY_ELIGIBLE', dispute_categories: ['UNAUTHORIZED_TRANSACTION'] } };
+  expect(buildCaseDetail(chargeback, null, shippedOrder, unauthorizedOnly, state(), now).protectionChecklist!.summary).toMatch(/^PayPal lists this payment as partially eligible, but not for item not received\./);
+});
+
+test('checklist adds the card chargeback line for an item-not-received claim from the card issuer', () => {
+  const external = buildCaseDetail({ ...chargeback, dispute_channel: 'EXTERNAL' }, null, shippedOrder, eligibleCapture, state(), now).protectionChecklist!;
+  expect(external.applies).toBe(false);
+  expect(external.summary).toContain('does not cover item not received claims that come as card chargebacks');
+  expect(buildCaseDetail(chargeback, null, shippedOrder, eligibleCapture, state(), now).protectionChecklist!.summary).not.toContain('card chargebacks');
+});
+
+test('checklist for not-as-described, unauthorised and other reasons has no items', () => {
+  expect(buildCaseDetail({ ...inquiry, reason: 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED' }, null, shippedOrder, eligibleCapture, state(), now).protectionChecklist).toEqual({ applies: false, summary: "PayPal's Seller Protection does not list cover for not-as-described claims.", items: [], source: SOURCE });
+  const unauthorised = buildCaseDetail({ ...inquiry, reason: 'UNAUTHORISED' }, null, shippedOrder, eligibleCapture, state(), now).protectionChecklist!;
+  expect(unauthorised).toMatchObject({ applies: true, items: [], source: SOURCE });
+  expect(unauthorised.summary).toContain('PayPal decides whether it applies');
+  expect(buildCaseDetail({ ...inquiry, reason: 'DUPLICATE_TRANSACTION' }, null, null, null, state(), now).protectionChecklist).toMatchObject({ applies: false, items: [] });
+});
+
+function action(at: string, ok: boolean, actionKind: ActionEntry['action'], offerAmount: string | null): ActionEntry {
+  return { id: at, at, disputeId: resolved.dispute_id, caseKey: 'B', action: actionKind, recommended: null, submitted: { note: 'n', offerAmount }, sellerEdited: false, paypal: { ok, status: ok ? 200 : 422, requestId: null, debugId: null, durationMs: 1, message: null }, after: null };
+}
+
+test('what happened on a resolved case: the recommendation, the first sent action and what PayPal reported', () => {
+  const decision: Decision = { recommendation: 'SETTLE', plain_ask: 'offer', evidence_have: [], evidence_missing: [], reasons: ['r'], offer_amount: '5.00', draft_note: 'Sorry.' };
+  const actions = [action('2026-11-04T18:20:00.000Z', false, 'make_offer', '6.00'), action('2026-11-04T18:26:30.000Z', true, 'make_offer', '5.00'), action('2026-11-04T18:28:00.000Z', true, 'accept_claim', null)];
+  expect(buildCaseDetail(resolved, null, null, null, state({ decisions: { [resolved.dispute_id]: stored(decision) }, actions }), now).whatHappened).toEqual({
+    recommended: 'SETTLE',
+    recommendedOffer: '5.00',
+    approved: { action: 'make_offer', offer: '5.00', at: '2026-11-04T18:26:30.000Z' },
+    paypalReported: { outcome: 'RESOLVED_BUYER_FAVOUR', refunded: 'USD 5.00', kept: 'USD 15.00', closedAt: resolved.update_time },
+  });
+});
+
+test('what happened without a decision or a sent action, and none for an open case', () => {
+  expect(buildCaseDetail(resolved, null, null, null, state(), now).whatHappened).toEqual({
+    recommended: null, recommendedOffer: null, approved: null,
+    paypalReported: { outcome: 'RESOLVED_BUYER_FAVOUR', refunded: 'USD 5.00', kept: 'USD 15.00', closedAt: resolved.update_time },
+  });
+  expect(buildCaseDetail(inquiry, null, null, null, state(), now).whatHappened).toBeNull();
 });

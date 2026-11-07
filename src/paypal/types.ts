@@ -12,6 +12,7 @@ export type Dispute = {
   status: string;
   dispute_state?: string;
   dispute_life_cycle_stage: string;
+  dispute_channel?: string;
   dispute_amount: Money;
   seller_response_due_date?: string;
   buyer_response_due_date?: string;

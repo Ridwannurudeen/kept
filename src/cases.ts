@@ -49,6 +49,17 @@ export type CaseDetail = CaseRow & {
   cap: string | null;
   breakEven: BreakEven | null;
   timeline: TimelineEntry[];
+  protectionChecklist: ProtectionChecklist | null;
+  whatHappened: WhatHappened | null;
+};
+
+export type ChecklistItem = { label: string; state: 'in_paypal_data' | 'not_visible' | 'missing'; detail: string };
+export type ProtectionChecklist = { applies: boolean; summary: string; items: ChecklistItem[]; source: string };
+export type WhatHappened = {
+  recommended: string | null;
+  recommendedOffer: string | null;
+  approved: { action: string; offer: string | null; at: string } | null;
+  paypalReported: { outcome: string; refunded: string | null; kept: string | null; closedAt: string };
 };
 
 export type TimelineEntry = { at: string | null; who: 'seller' | 'buyer' | 'paypal'; text: string };
@@ -93,6 +104,72 @@ function protectionOf(d: Dispute, capture: Capture | null): CaseRow['protection'
   const categories = protection.dispute_categories;
   const category = PROTECTION_CATEGORIES[d.reason];
   return { status: protection.status, covers: categories ? category !== undefined && categories.includes(category) : null };
+}
+
+export const SELLER_PROTECTION_URL = 'https://www.paypal.com/us/legalhub/paypal/seller-protection';
+
+function protectionStatusLine(d: Dispute, capture: Capture | null, label: string): string {
+  const protection = protectionOf(d, capture);
+  if (!protection) return 'PayPal has not reported a Seller Protection status for this payment to Kept.';
+  const status = protection.status.toLowerCase().replaceAll('_', ' ');
+  if (protection.covers === null) return `PayPal lists this payment as ${status}.`;
+  return protection.covers ? `PayPal lists this payment as ${status} for ${label}.` : `PayPal lists this payment as ${status}, but not for ${label}.`;
+}
+
+function itemNotReceivedItems(order: Order | null): ChecklistItem[] {
+  const shipping = order?.purchase_units[0]?.shipping;
+  const trackers = shipping?.trackers ?? [];
+  const delivered = trackers.some((tracker) => tracker.status === 'DELIVERED');
+  const noOrder = "Kept could not load PayPal's order for this payment.";
+  const shipped: Omit<ChecklistItem, 'label'> = shipping?.address && trackers.length
+    ? { state: 'in_paypal_data', detail: "PayPal's order has a shipping address and a tracker added to it. Kept cannot see where the carrier took the parcel." }
+    : { state: 'not_visible', detail: order ? "PayPal's order does not show both a shipping address and a tracker." : noOrder };
+  const tracking: Omit<ChecklistItem, 'label'> = !order ? { state: 'not_visible', detail: noOrder }
+    : trackers.length ? { state: 'in_paypal_data', detail: `Tracker ${trackers[0]!.id} on PayPal's order.` }
+    : { state: 'missing', detail: "PayPal's order has no tracker." };
+  const delivery: Omit<ChecklistItem, 'label'> = !order ? { state: 'not_visible', detail: noOrder }
+    : delivered ? { state: 'in_paypal_data', detail: "PayPal's record shows DELIVERED." }
+    : trackers.length ? { state: 'missing', detail: `PayPal's record shows ${trackers[0]!.status}, not delivered` }
+    : { state: 'missing', detail: "PayPal's order has no tracker, so no delivery status." };
+  return [
+    { label: "Shipped to the address on PayPal's transaction details", ...shipped },
+    { label: 'Online, verifiable tracking number', ...tracking },
+    { label: "'Delivered' status with a delivery date", ...delivery },
+    { label: 'Recipient address matches the transaction details', state: 'not_visible', detail: "Kept cannot see the carrier's delivery address." },
+  ];
+}
+
+export function protectionChecklistOf(d: Dispute, order: Order | null, capture: Capture | null): ProtectionChecklist {
+  if (d.reason === 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED') {
+    const external = d.dispute_channel === 'EXTERNAL';
+    const chargeback = external ? " PayPal's Seller Protection does not cover item not received claims that come as card chargebacks from the buyer's card issuer, and PayPal reports this one came through the buyer's card issuer or bank." : '';
+    return {
+      applies: !external,
+      summary: `${protectionStatusLine(d, capture, 'item not received')} PayPal decides whether Seller Protection applies; this is what Kept can see.${chargeback}`,
+      items: itemNotReceivedItems(order),
+      source: SELLER_PROTECTION_URL,
+    };
+  }
+  if (d.reason === 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED') {
+    return { applies: false, summary: "PayPal's Seller Protection does not list cover for not-as-described claims.", items: [], source: SELLER_PROTECTION_URL };
+  }
+  if (d.reason === 'UNAUTHORISED') {
+    return { applies: true, summary: `${protectionStatusLine(d, capture, 'unauthorized transactions')} PayPal's Seller Protection lists cover for unauthorized transaction claims; PayPal decides whether it applies.`, items: [], source: SELLER_PROTECTION_URL };
+  }
+  return { applies: false, summary: "PayPal's Seller Protection page lists cover for unauthorized and item not received claims; this reason is not among them.", items: [], source: SELLER_PROTECTION_URL };
+}
+
+function whatHappenedOf(d: Dispute, stored: StoredDecision | null, actions: ActionEntry[]): WhatHappened | null {
+  const outcome = outcomeOf(d);
+  if (!outcome) return null;
+  const approved = actions.find((entry) => entry.paypal.ok) ?? null;
+  const text = (amount: Money | null) => amount ? `${amount.currency_code} ${amount.value}` : null;
+  return {
+    recommended: stored?.decision.recommendation ?? null,
+    recommendedOffer: stored?.decision.offer_amount ?? null,
+    approved: approved ? { action: approved.action, offer: approved.submitted.offerAmount, at: approved.at } : null,
+    paypalReported: { outcome: outcome.code, refunded: text(outcome.refunded), kept: text(outcome.kept), closedAt: d.update_time },
+  };
 }
 
 function readable(code: string): string {
@@ -201,6 +278,8 @@ export function buildCaseDetail(d: Dispute, record: CaseRecord | null, order: Or
       ? calculateBreakEven(disputedAmount(d).value, breakEvenOffer, policy.disputeFeeTier)
       : null,
     timeline: timelineOf(d),
+    protectionChecklist: protectionChecklistOf(d, order, capture),
+    whatHappened: whatHappenedOf(d, state.decisions[d.dispute_id] ?? null, actions),
   };
 }
 

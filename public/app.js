@@ -1572,6 +1572,89 @@
     return wrap;
   }
 
+  const CHECKLIST_STATES = {
+    in_paypal_data: "In PayPal's data",
+    not_visible: "Not visible to Kept",
+    missing: "Missing",
+  };
+
+  function renderProtection(detail) {
+    const checklist = detail.protectionChecklist;
+    if (!checklist) return null;
+    const wrap = section("Seller Protection");
+    wrap.append(el("p", "panel-text", checklist.summary));
+    if (checklist.items.length) {
+      const ul = el("ul", "panel-list");
+      for (const item of checklist.items) {
+        const li = el("li");
+        li.append(
+          el("strong", "", `${CHECKLIST_STATES[item.state]}: `),
+          document.createTextNode(`${item.label}. ${item.detail}`),
+        );
+        ul.append(li);
+      }
+      wrap.append(ul);
+    }
+    const source = el("a", "", "PayPal's Seller Protection page");
+    source.href = checklist.source;
+    source.target = "_blank";
+    source.rel = "noopener noreferrer";
+    const cite = el("p", "panel-muted", "Source: ");
+    cite.append(source);
+    wrap.append(cite);
+    return wrap;
+  }
+
+  const RECOMMENDED_WORDS = {
+    FIGHT: "fighting",
+    SETTLE: "settling",
+    ACCEPT: "accepting the claim",
+  };
+  const APPROVED_WORDS = {
+    make_offer: "an offer",
+    provide_supporting_info: "sending supporting information",
+    provide_evidence: "sending evidence",
+    accept_claim: "accepting the claim",
+  };
+
+  function renderWhatHappened(detail) {
+    const record = detail.whatHappened;
+    if (!record) return null;
+    const currency = detail.amount.currency_code;
+    const wrap = section("What happened");
+    const ul = el("ul", "panel-list");
+    if (record.recommended)
+      ul.append(
+        el(
+          "li",
+          "",
+          `Kept recommended ${RECOMMENDED_WORDS[record.recommended] || record.recommended}${record.recommendedOffer ? ` with an offer of ${currency} ${record.recommendedOffer}` : ""}.`,
+        ),
+      );
+    if (record.approved)
+      ul.append(
+        el(
+          "li",
+          "",
+          `You approved ${APPROVED_WORDS[record.approved.action] || record.approved.action}${record.approved.offer ? ` of ${currency} ${record.approved.offer}` : ""}, sent ${stampFormat.format(new Date(record.approved.at))}.`,
+        ),
+      );
+    const reported = record.paypalReported;
+    const outcome = reported.outcome
+      ? reported.outcome.charAt(0) +
+        reported.outcome.slice(1).toLowerCase().replaceAll("_", " ")
+      : "Closed";
+    ul.append(
+      el(
+        "li",
+        "",
+        `PayPal reported: ${outcome}${reported.refunded ? `, refunded ${reported.refunded}` : ""}${reported.kept ? `, you kept ${reported.kept}` : ""}, closed ${stampFormat.format(new Date(reported.closedAt))}.`,
+      ),
+    );
+    wrap.append(ul);
+    return wrap;
+  }
+
   function renderPanel(detail) {
     els.panelTitle.textContent = `Case ${panelLabel(detail)}${detail.itemName ? `: ${detail.itemName}` : ""}`;
     const state = panelState(detail);
@@ -1580,10 +1663,12 @@
         renderHead(detail),
         state === "action" ? renderAsk(detail) : stateCard(detail, state),
         renderEvidence(detail),
+        renderProtection(detail),
         renderPhotos(detail),
         renderRecommendation(detail),
         ...(state === "action" ? renderDraftAndApprove(detail) : []),
         renderResult(detail),
+        renderWhatHappened(detail),
         renderTimeline(detail),
         renderNotes(detail),
         renderActivity(detail),
