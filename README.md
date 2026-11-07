@@ -1,5 +1,7 @@
 # Kept
 
+**Kept shows what PayPal holds and what PayPal says you kept, recommends fight, settle or accept on each open dispute, and sends nothing that touches money until you approve.**
+
 Kept shows a small PayPal seller two numbers taken from PayPal's own API: what PayPal is holding from them across their open disputes, and what PayPal says they kept on the resolved ones. **Held now** is the sum of each open dispute's `fund_movements` entries with reason `HOLD_PLACED`. **Kept** is the disputed amount minus PayPal's `dispute_outcome.amount_refunded` on each resolved dispute.
 
 Under those numbers, Claude reads each open dispute, says in plain words what PayPal is asking for, checks the payment's Seller Protection against the buyer's reason, and recommends one move: fight (send evidence or supporting info), settle (a partial refund offer under the seller's cap) or accept (refund in full), then drafts the note. Nothing that touches money is sent until the seller approves it.

@@ -16,6 +16,8 @@ I sell online, and these are my own experiences as a seller in PayPal disputes: 
 
 ## What it does
 
+Kept shows what PayPal holds and what PayPal says you kept, recommends fight, settle or accept on each open dispute, and sends nothing that touches money until you approve.
+
 Kept leads with two numbers from PayPal's own API. **Held now**: what PayPal is holding from the seller across open disputes (the `fund_movements` entries with reason `HOLD_PLACED`). **Kept**: what PayPal says the seller kept on each resolved dispute (the disputed amount minus `dispute_outcome.amount_refunded`). Beside them sit what was refunded, the resolved count with the median days to close, and the amount still at stake. Under them is PayPal's published fee rule, as text: with a dispute ratio of 1.5% or more and over 100 sales in 3 months, each dispute costs $30 instead of $15.
 
 The loop behind those numbers is proven live in the PayPal sandbox. In our 2026-11-04 spike, a 5.00 partial refund offer went out on a 20.00 inquiry, the sandbox buyer accepted it, PayPal moved the case to RESOLVED with `amount_refunded` 5.00, and the seller kept 15.00 of 20.00. Kept reads that outcome from PayPal; it does not predict it. Similar dispute assistants we looked at draft replies or estimate an expected value, often on mock data. Kept sends the approved action to the real sandbox, reads the result back, and totals only what PayPal reports.
