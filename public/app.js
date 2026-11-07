@@ -1029,11 +1029,11 @@
           const winCost = tier === "high_volume" ? 3000 : 0;
           const fee = tier === "high_volume" ? 3000 : disputedCents < 3000 ? 0 : 1500;
           const loseCost = disputedCents + fee;
-          const percent = Math.max(0, Math.min(100, Math.floor(((loseCost - offerCents) / (loseCost - winCost)) * 100)));
+          const percent = Math.max(0, Math.min(100, Math.floor(((loseCost - offerCents) * 100) / (loseCost - winCost))));
           if (breakEvenLine && offerCents >= loseCost) {
             breakEvenLine.textContent = "An offer this size costs at least as much as losing a fight.";
           } else if (breakEvenLine && (offerCents <= winCost || percent >= 100)) {
-            breakEvenLine.textContent = `Offering ${fromCents(offerCents)} costs less than fighting even if you would win.`;
+            breakEvenLine.textContent = `Offering ${detail.amount.currency_code} ${fromCents(offerCents)} costs less than fighting even if you would win.`;
           } else if (breakEvenLine) {
             breakEvenLine.textContent = `Offering ${detail.amount.currency_code} ${fromCents(offerCents)} costs less than fighting unless you would win more than ${percent}% of the time. Kept does not know that number; you do.`;
           }

@@ -65,6 +65,7 @@ test('break-even uses the Standard fee rules in integer cents', () => {
   expect(breakEven('20.00', '5.00', 'standard')).toMatchObject({ percent: 75, loseCost: '20.00', winCost: '0.00', feeApplied: '0.00' });
   expect(breakEven('30.00', '5.00', 'standard')).toMatchObject({ loseCost: '45.00', feeApplied: '15.00' });
   expect(breakEven('36.00', '9.00', 'standard')?.percent).toBe(82);
+  expect(breakEven('20.00', '14.20', 'standard')?.percent).toBe(29);
   expect(breakEven('100.00', '10.00', 'standard')?.percent).toBe(91);
   expect(breakEven('100.00', '21.16', 'standard')?.percent).toBe(81);
 });
@@ -75,7 +76,7 @@ test('break-even clamps High Volume to 100 and explains when settling always cos
     loseCost: '66.00',
     winCost: '30.00',
     feeApplied: '30.00',
-    note: 'Offering 9.00 costs less than fighting even if you would win.',
+    note: 'Offering USD 9.00 costs less than fighting even if you would win.',
   });
 });
 

@@ -53,6 +53,7 @@ test('loads a stored policy from before dispute fee tiers were added', async () 
 });
 test('uses the default policy for an invalid stored policy and keeps the rest of state', async () => {
   const f = await fixture();
+  const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
   try {
     const store = await Store.open(f.opts);
     await store.update((state) => { state.policy.disputeFeeTier = 'invalid' as never; state.startedAt = 'preserved'; });
@@ -61,7 +62,9 @@ test('uses the default policy for an invalid stored policy and keeps the rest of
     expect(reopened.get().startedAt).toBe('preserved');
     expect(reopened.get().cases).toHaveProperty('A');
     expect((await readdir(f.opts.dataDir)).some((name) => name.startsWith('state.json.corrupt-'))).toBe(false);
-  } finally { await f.cleanup(); }
+    expect(warning).toHaveBeenCalledWith(expect.stringContaining('Invalid stored policy'));
+    expect(warning.mock.calls[0]?.[0]).toContain('disputeFeeTier');
+  } finally { warning.mockRestore(); await f.cleanup(); }
 });
 test('quarantines a corrupt file and restarts from seed', async () => {
   const f = await fixture();

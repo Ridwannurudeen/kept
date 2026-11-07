@@ -111,7 +111,10 @@ export class Store {
         const state = JSON.parse(text) as State;
         state.unknownOutcomes ??= {};
         try { state.policy = parsePolicy(state.policy); }
-        catch { state.policy = { ...defaultPolicy }; }
+        catch (error) {
+          console.warn(`Invalid stored policy; using default policy: ${error instanceof Error ? error.message : String(error)}`);
+          state.policy = { ...defaultPolicy };
+        }
         return new Store(opts.dataDir, opts.seedPath, snapshotPath, now, opts.onReset, state);
       } catch {
         await rename(file, join(opts.dataDir, `state.json.corrupt-${now().getTime()}`));
