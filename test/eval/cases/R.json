@@ -1,0 +1,304 @@
+{
+  "_derived": [
+    "dispute: test/fixtures/paypal/dispute-inquiry-open.json (hand-derived from the recorded dispute-inquiry-resolved.json); reason and item reason changed to MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED per the plan, item_name and item_description changed to 'Linen table runner'.",
+    "amount 36.00 as in the fixture and the plan, so the offer cap is 10.80; seller_response_due_date 2026-11-24T18:22:34.555Z as in the fixture.",
+    "order and capture: seed/replay/orders.json ORDERB0000000001 and seed/replay/captures.json CAPTUREB0000000001.",
+    "record: seed/replay/cases.json case B.",
+    "now: fixed at 2026-11-05T00:00:00.000Z.",
+    "case R: identical to case B except for sellerRecord, two resolved not-as-described inquiries where the buyer accepted a partial refund offer Kept sent (hand-built, in the shape sellerRecordOf returns)."
+  ],
+  "dispute": {
+    "dispute_id": "PP-R-HND-00000001",
+    "create_time": "2026-11-04T18:22:34.555Z",
+    "update_time": "2026-11-04T18:22:34.555Z",
+    "disputed_transactions": [
+      {
+        "buyer_transaction_id": "1WU327708M217505J",
+        "seller_transaction_id": "CAPTUREB0000000001",
+        "create_time": "2026-11-04T18:17:01.000Z",
+        "transaction_status": "HELD",
+        "gross_amount": {
+          "currency_code": "USD",
+          "value": "36.00"
+        },
+        "buyer": {
+          "email": "redacted@example.com",
+          "payer_id": "REDACTED",
+          "name": "REDACTED"
+        },
+        "seller": {
+          "email": "redacted@example.com",
+          "merchant_id": "REDACTED",
+          "name": "REDACTED"
+        },
+        "items": [
+          {
+            "item_name": "Linen table runner",
+            "item_description": "Linen table runner",
+            "item_quantity": "1",
+            "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+            "item_type": "DIGITAL_DOWNLOAD"
+          }
+        ],
+        "seller_protection_eligible": true,
+        "seller_protection_type": "EXPANDED_SELLER_PROTECTION"
+      }
+    ],
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+    "status": "OPEN",
+    "dispute_amount": {
+      "currency_code": "USD",
+      "value": "36.00"
+    },
+    "dispute_state": "REQUIRED_ACTION",
+    "dispute_life_cycle_stage": "INQUIRY",
+    "dispute_channel": "INTERNAL",
+    "messages": [
+      {
+        "posted_by": "BUYER",
+        "time_posted": "2026-11-04T18:22:34.555Z",
+        "content": "nil"
+      }
+    ],
+    "extensions": {
+      "buyer_contacted_time": "2026-11-04T18:22:33.764Z"
+    },
+    "evidences": [
+      {
+        "evidence_type": "CREATE",
+        "notes": "nil",
+        "source": "SUBMITTED_BY_BUYER",
+        "date": "2026-11-04T18:22:34.555Z",
+        "dispute_life_cycle_stage": "INQUIRY"
+      }
+    ],
+    "offer": {
+      "buyer_requested_amount": {
+        "currency_code": "USD",
+        "value": "36.00"
+      }
+    },
+    "refund_details": {
+      "allowed_refund_amount": {
+        "currency_code": "USD",
+        "value": "36.00"
+      }
+    },
+    "links": [
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-HND-00000001",
+        "rel": "self",
+        "method": "GET"
+      },
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-HND-00000001/make-offer",
+        "rel": "make_offer",
+        "method": "POST"
+      },
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-HND-00000001/accept-claim",
+        "rel": "accept_claim",
+        "method": "POST"
+      },
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-HND-00000001/escalate",
+        "rel": "escalate",
+        "method": "POST"
+      },
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-HND-00000001/send-message",
+        "rel": "send_message",
+        "method": "POST"
+      },
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-HND-00000001/provide-evidence",
+        "rel": "provide_evidence",
+        "method": "POST"
+      }
+    ],
+    "seller_response_due_date": "2026-11-24T18:22:34.555Z",
+    "allowed_response_options": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      },
+      "make_offer": {
+        "offer_types": [
+          "REFUND"
+        ]
+      }
+    }
+  },
+  "order": {
+    "id": "ORDERB0000000001",
+    "intent": "CAPTURE",
+    "status": "COMPLETED",
+    "purchase_units": [
+      {
+        "reference_id": "default",
+        "amount": {
+          "currency_code": "USD",
+          "value": "36.00",
+          "breakdown": {}
+        },
+        "description": "Spike test item",
+        "payments": {
+          "captures": [
+            {
+              "id": "CAPTUREB0000000001",
+              "status": "PENDING",
+              "status_details": {
+                "reason": "BUYER_COMPLAINT"
+              },
+              "amount": {
+                "currency_code": "USD",
+                "value": "36.00"
+              },
+              "final_capture": true,
+              "seller_protection": {
+                "status": "ELIGIBLE",
+                "dispute_categories": [
+                  "ITEM_NOT_RECEIVED",
+                  "UNAUTHORIZED_TRANSACTION"
+                ]
+              },
+              "links": [],
+              "create_time": "2026-11-04T18:15:53Z",
+              "update_time": "2026-11-04T18:35:03Z"
+            }
+          ]
+        }
+      }
+    ],
+    "create_time": "2026-11-04T18:15:53Z",
+    "update_time": "2026-11-04T18:35:03Z",
+    "links": []
+  },
+  "capture": {
+    "id": "CAPTUREB0000000001",
+    "amount": {
+      "currency_code": "USD",
+      "value": "36.00"
+    },
+    "final_capture": true,
+    "seller_protection": {
+      "status": "ELIGIBLE",
+      "dispute_categories": [
+        "ITEM_NOT_RECEIVED",
+        "UNAUTHORIZED_TRANSACTION"
+      ]
+    },
+    "status": "PENDING",
+    "status_details": {
+      "reason": "BUYER_COMPLAINT"
+    },
+    "supplementary_data": {
+      "related_ids": {
+        "order_id": "ORDERB0000000001"
+      }
+    },
+    "create_time": "2026-11-04T18:15:53Z",
+    "update_time": "2026-11-04T18:35:03Z",
+    "links": []
+  },
+  "record": {
+    "key": "B",
+    "orderId": "ORDERB0000000001",
+    "captureId": "CAPTUREB0000000001",
+    "amount": "36.00",
+    "currency": "USD",
+    "itemName": "Linen table runner",
+    "trackingNumber": null,
+    "carrier": null,
+    "trackedAt": null,
+    "notes": "Sent as listed, no photos before shipping, buyer says the colour differs.",
+    "attachments": [
+      {
+        "name": "listing-photo-note.txt",
+        "type": "text/plain"
+      },
+      {
+        "name": "listing-colour.jpg",
+        "type": "image/jpeg"
+      }
+    ],
+    "disputeId": "PP-R-HND-00000001",
+    "createdAt": "2026-11-04T18:17:01.000Z",
+    "observed": null
+  },
+  "attachments": [
+    {
+      "name": "listing-photo-note.txt",
+      "type": "text/plain"
+    },
+    {
+      "name": "listing-colour.jpg",
+      "type": "image/jpeg"
+    }
+  ],
+  "sellerRecord": {
+    "n": 2,
+    "cases": [
+      {
+        "reason": "Not as described",
+        "stage": "Inquiry",
+        "sent": [
+          {
+            "action": "make_offer",
+            "offer": "9.00"
+          }
+        ],
+        "outcome": "RESOLVED_BUYER_FAVOUR",
+        "outcomeReason": "INQUIRY_OFFER_PARTIAL_REFUND",
+        "disputed": {
+          "currency_code": "USD",
+          "value": "30.00"
+        },
+        "refunded": {
+          "currency_code": "USD",
+          "value": "9.00"
+        },
+        "kept": {
+          "currency_code": "USD",
+          "value": "21.00"
+        }
+      },
+      {
+        "reason": "Not as described",
+        "stage": "Inquiry",
+        "sent": [
+          {
+            "action": "make_offer",
+            "offer": "7.50"
+          }
+        ],
+        "outcome": "RESOLVED_BUYER_FAVOUR",
+        "outcomeReason": "INQUIRY_OFFER_PARTIAL_REFUND",
+        "disputed": {
+          "currency_code": "USD",
+          "value": "25.00"
+        },
+        "refunded": {
+          "currency_code": "USD",
+          "value": "7.50"
+        },
+        "kept": {
+          "currency_code": "USD",
+          "value": "17.50"
+        }
+      }
+    ]
+  },
+  "policy": {
+    "maxOfferPercent": 30,
+    "maxOfferAbsolute": "50.00",
+    "deadlineBufferHours": 48
+  },
+  "allowed": [
+    "make_offer",
+    "accept_claim",
+    "provide_evidence"
+  ],
+  "now": "2026-11-05T00:00:00.000Z"
+}

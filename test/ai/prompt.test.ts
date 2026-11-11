@@ -1,4 +1,6 @@
 import { buildUserPrompt, SYSTEM_PROMPT } from '../../src/ai/prompt.js';
+import { sellerRecordOf } from '../../src/cases.js';
+import type { ActionEntry } from '../../src/log.js';
 import type { Capture, Order } from '../../src/paypal/types.js';
 import { fixture, inputFor, recordB } from './helpers.js';
 
@@ -49,4 +51,32 @@ test('the system prompt asks for would_change as named evidence only, never a gu
   expect(SYSTEM_PROMPT).toContain('In would_change, name the single, concrete piece of evidence the seller could supply that would move your recommendation toward the seller');
   expect(SYSTEM_PROMPT).toContain('Set it to null when you already recommend FIGHT, or when nothing the seller could add would change it.');
   expect(SYSTEM_PROMPT).toContain("never say that it would win the case or guarantee an outcome, and never say the seller has it unless it is in the seller's notes or PayPal's records");
+});
+
+test('includes the seller record as past facts with n, and the system prompt allows citing them but not changing the call, stating rates or crediting Kept', () => {
+  const resolved = fixture('dispute-inquiry-resolved');
+  const sent: ActionEntry = { id: 'a', at: 'at', disputeId: resolved.dispute_id, caseKey: null, action: 'make_offer', recommended: null, submitted: { note: 'n', offerAmount: '5.00' }, sellerEdited: false, paypal: { ok: true, status: 200, requestId: null, debugId: null, durationMs: 1, message: null }, after: null };
+  const input = inputFor('dispute-inquiry-open', null);
+  input.dispute.reason = resolved.reason;
+  const bare = { ...resolved, dispute_id: 'bare', update_time: '2026-11-01T00:00:00.000Z', dispute_outcome: undefined };
+  const p = buildUserPrompt({ ...input, sellerRecord: sellerRecordOf(input.dispute, [resolved, bare], [sent]) });
+  expect(p).toContain(`Seller's record, past facts PayPal reported for this seller's resolved cases with the same buyer reason (n = 2, most recent first, at most 3 shown): [{"reason":"Item not received","stage":"Inquiry","sent_by_kept":[{"action":"make_offer","offer":"5.00"}],"paypal_outcome":"RESOLVED_BUYER_FAVOUR","outcome_reason":"INQUIRY_OFFER_PARTIAL_REFUND","disputed":"USD 20.00","refunded":"USD 5.00","kept":"USD 15.00"},{"reason":"Item not received","stage":"Inquiry","sent_by_kept":"nothing","paypal_outcome":"not reported","outcome_reason":null,"disputed":"USD 20.00","refunded":"not reported","kept":"not reported"}]`);
+  expect(SYSTEM_PROMPT).toContain("The case may include the seller's record: past facts PayPal reported for this seller's resolved cases with the same buyer reason. You may cite them in plain_ask or reasons. Do not change your recommendation or your offer amount because of them. Never compute or state a win rate, a percentage, a probability or how likely the seller is to win or lose, and never say that Kept's advice caused an outcome.");
+});
+test('the seller record block shows at most 3 cases, all with the same buyer reason, while n counts every one', () => {
+  const resolved = fixture('dispute-inquiry-resolved');
+  const input = inputFor('dispute-inquiry-open', null);
+  input.dispute.reason = resolved.reason;
+  const same = ['1', '2', '3', '4', '5'].map((day) => ({ ...resolved, dispute_id: `same-${day}`, update_time: `2026-11-0${day}T00:00:00.000Z` }));
+  const other = { ...resolved, dispute_id: 'other', reason: 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED' };
+  const p = buildUserPrompt({ ...input, sellerRecord: sellerRecordOf(input.dispute, [...same, other], []) });
+  expect(p).toContain('(n = 5, most recent first, at most 3 shown)');
+  expect(p.match(/"reason":/g)).toHaveLength(3);
+  expect(p).not.toContain('Not as described');
+});
+test('omits the seller record block when there are no same-reason resolved cases', () => {
+  const input = inputFor('dispute-inquiry-open', recordB);
+  input.dispute.reason = 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED';
+  expect(buildUserPrompt(input)).not.toContain("Seller's record");
+  expect(buildUserPrompt({ ...input, sellerRecord: sellerRecordOf(input.dispute, [fixture('dispute-inquiry-resolved')], []) })).not.toContain("Seller's record");
 });

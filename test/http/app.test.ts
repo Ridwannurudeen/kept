@@ -433,6 +433,46 @@ describe('HTTP app', () => {
     expect(store.get().decisions['d-early']!.previous).toEqual({ recommendation: 'SETTLE', offer_amount: '3.00', would_change: null, at: '2026-11-04T00:00:00.000Z', evidenceChanged: false });
   });
 
+  test('POST decide passes the seller record of same-reason resolved cases with what Kept sent, and an empty one when PayPal cannot list', async () => {
+    const auth = { 'x-kept-passcode': 'pass' };
+    disputes.push({ ...dispute('d-other', '2026-11-02T00:00:00.000Z'), status: 'RESOLVED', reason: 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED' });
+    disputes[2] = { ...disputes[2]!, dispute_outcome: { outcome_code: 'RESOLVED_BUYER_FAVOUR', outcome_reason: 'INQUIRY_OFFER_PARTIAL_REFUND', amount_refunded: { currency_code: 'USD', value: '2.00' } } };
+    await store.update((state) => { state.actions.push({ id: 'sent', at: '2026-11-02T00:00:00.000Z', disputeId: 'd-closed', caseKey: null, action: 'make_offer', recommended: null, submitted: { note: 'Sorry.', offerAmount: '2.00' }, sellerEdited: false, paypal: { ok: true, status: 200, requestId: null, debugId: null, durationMs: 1, message: null }, after: null }); });
+    decide.mockResolvedValue({ ok: false, error: 'no_decision', detail: 'none', steps: 0, toolCalls: [], durationMs: 0 });
+    await request(app).post('/api/cases/d-early/decide').set(auth).expect(200);
+    expect(decide.mock.calls[0]![0].sellerRecord).toEqual({ n: 1, cases: [{ reason: 'Item not received', stage: 'Inquiry', sent: [{ action: 'make_offer', offer: '2.00' }], outcome: 'RESOLVED_BUYER_FAVOUR', outcomeReason: 'INQUIRY_OFFER_PARTIAL_REFUND', disputed: { currency_code: 'USD', value: '10.00' }, refunded: { currency_code: 'USD', value: '2.00' }, kept: { currency_code: 'USD', value: '8.00' } }] });
+    expect(paypal.getDispute).not.toHaveBeenCalledWith('d-other');
+    expect(paypal.getDispute).not.toHaveBeenCalledWith('d-late');
+    paypal.listDisputes.mockRejectedValueOnce(new PayPalError('down', 503, 'dbg', {}, '/list'));
+    await request(app).post('/api/cases/d-early/decide').set(auth).expect(200);
+    expect(decide.mock.calls[1]![0].sellerRecord).toEqual({ n: 0, cases: [] });
+  });
+
+  test('GET /api/cases returns your record from the rows and the action log', async () => {
+    await store.update((state) => { state.actions.push({ id: 'sent', at: '2026-11-02T00:00:00.000Z', disputeId: 'd-closed', caseKey: null, action: 'make_offer', recommended: null, submitted: { note: 'Sorry.', offerAmount: '2.00' }, sellerEdited: false, paypal: { ok: true, status: 200, requestId: null, debugId: null, durationMs: 1, message: null }, after: null }); });
+    const { body } = await request(app).get('/api/cases').set('x-kept-passcode', 'pass').expect(200);
+    expect(body.record).toEqual({ lines: [{ action: 'make_offer', sent: 1, resolved: 1, outcomes: [{ code: '', count: 1 }], kept: null, disputed: null, refundNotReported: 1 }], resolved: 1, open: 2, resolvedWithoutAction: 0, currency: 'USD', mixedCurrencyExcluded: 0 });
+  });
+
+  test('POST decide fetches only the 3 newest same-reason resolved cases for the seller record, takes n from the list, and still decides when a fetch fails', async () => {
+    const auth = { 'x-kept-passcode': 'pass' };
+    for (const day of ['3', '4', '5', '6', '7']) disputes.push({ ...dispute(`d-old-${day}`, '2026-11-02T00:00:00.000Z'), status: 'RESOLVED', update_time: `2026-11-0${day}T00:00:00.000Z` });
+    decide.mockResolvedValue({ ok: false, error: 'no_decision', detail: 'none', steps: 0, toolCalls: [], durationMs: 0 });
+    await request(app).post('/api/cases/d-early/decide').set(auth).expect(200);
+    expect(paypal.getDispute.mock.calls.map(([id]) => id)).toEqual(['d-early', 'd-old-7', 'd-old-6', 'd-old-5']);
+    expect(decide.mock.calls[0]![0].sellerRecord.n).toBe(6);
+    expect(decide.mock.calls[0]![0].sellerRecord.cases).toHaveLength(3);
+    paypal.getDispute.mockClear();
+    paypal.getDispute.mockImplementation(async (id: string) => {
+      if (id === 'd-old-6') throw new PayPalError('down', 503, 'dbg', {}, '/dispute');
+      return disputes.find((d) => d.dispute_id === id) as Dispute;
+    });
+    await request(app).post('/api/cases/d-early/decide').set(auth).expect(200);
+    expect(decide).toHaveBeenCalledTimes(2);
+    expect(decide.mock.calls[1]![0].sellerRecord.n).toBe(6);
+    expect(decide.mock.calls[1]![0].sellerRecord.cases).toHaveLength(2);
+  });
+
   test('POST decide returns 200 with ok false and stores nothing when the model gives no decision', async () => {
     decide.mockResolvedValueOnce({ ok: false, error: 'no_decision', detail: 'none', steps: 2, toolCalls: [], durationMs: 5 });
     const { body } = await request(app).post('/api/cases/d-late/decide').set('x-kept-passcode', 'pass').expect(200);

@@ -4,7 +4,7 @@ import type { Request, Router } from 'express';
 import { z, ZodError } from 'zod';
 import type { CaseImage, DecideResult } from '../ai/decide.js';
 import { createDecideQueue } from '../ai/queue.js';
-import { buildCaseDetail, buildCaseRow, joinCases, sortRows, summarize } from '../cases.js';
+import { buildCaseDetail, buildCaseRow, joinCases, sellerRecordOf, sortRows, summarize, yourRecord } from '../cases.js';
 import { PayPalError } from '../paypal/errors.js';
 import { allowedActions, captureIdOf, disputedAmount } from '../paypal/dispute.js';
 import { parsePolicy } from '../policy.js';
@@ -88,7 +88,13 @@ async function decideOne(disputeId: string, deps: Deps): Promise<DecideResult> {
     if (!mimeType) return unavailable(new Error(`${name} is not a JPEG or PNG image`));
     return { name, mimeType, data };
   }))).filter((image) => image !== null);
-  const result = await deps.decide({ dispute, order, capture, record, attachments, images, policy: state.policy, allowed: [...allowedActions(dispute)], now: deps.now() });
+  const listed = (await deps.paypal.listDisputes().catch(unavailable)) ?? [];
+  const same = listed
+    .filter((entry) => entry.dispute_id !== disputeId && entry.reason === dispute.reason && entry.status === 'RESOLVED')
+    .sort((a, b) => Date.parse(b.update_time) - Date.parse(a.update_time));
+  const resolved = (await Promise.all(same.slice(0, 3).map((entry) => deps.paypal.getDispute(entry.dispute_id).catch(unavailable)))).filter((entry) => entry !== null);
+  const sellerRecord = { ...sellerRecordOf(dispute, resolved, state.actions), n: same.length };
+  const result = await deps.decide({ dispute, order, capture, record, attachments, images, sellerRecord, policy: state.policy, allowed: [...allowedActions(dispute)], now: deps.now() });
   if (result.ok) {
     const { decision, validation, model, steps, toolCalls, durationMs } = result;
     await deps.store.update((current) => {
@@ -111,7 +117,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
       const refresh = req.query.refresh === '1';
       if (!refresh && cachedCases && deps.now().getTime() - cachedCases.at < 20_000) {
         const cases = cachedRows(cachedCases, deps);
-        res.json({ cases, summary: summarize(cases), fetchedAt: cachedCases.fetchedAt, stale: false, warnings: cachedCases.warnings });
+        res.json({ cases, summary: summarize(cases), record: yourRecord(cases, deps.store.get()), fetchedAt: cachedCases.fetchedAt, stale: false, warnings: cachedCases.warnings });
         return;
       }
       const listed = await deps.paypal.listDisputes();
@@ -128,13 +134,13 @@ export function registerRoutes(router: Router, deps: Deps): void {
       const fresh: CachedCases = { disputes, captures, fetchedAt: deps.now().toISOString(), at: deps.now().getTime(), warnings };
       const cases = cachedRows(fresh, deps);
       if (generation === (generations.get(deps.store) ?? 0)) caches.set(deps.store, fresh);
-      res.json({ cases, summary: summarize(cases), fetchedAt: fresh.fetchedAt, stale: false, warnings });
+      res.json({ cases, summary: summarize(cases), record: yourRecord(cases, deps.store.get()), fetchedAt: fresh.fetchedAt, stale: false, warnings });
     } catch (error) {
       const cachedCases = caches.get(deps.store);
       if (cachedCases) {
         try {
           const cases = cachedRows(cachedCases, deps);
-          res.json({ cases, summary: summarize(cases), fetchedAt: cachedCases.fetchedAt, stale: true, warning: error instanceof PayPalError ? error.message : 'PayPal unavailable', warnings: cachedCases.warnings });
+          res.json({ cases, summary: summarize(cases), record: yourRecord(cases, deps.store.get()), fetchedAt: cachedCases.fetchedAt, stale: true, warning: error instanceof PayPalError ? error.message : 'PayPal unavailable', warnings: cachedCases.warnings });
         } catch (buildError) { next(buildError); }
         return;
       }

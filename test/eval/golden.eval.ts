@@ -10,7 +10,7 @@ import { offerCap, toCents } from '../../src/policy.js';
 import { buildFabricationSource } from './sources.js';
 
 type Expectation = { recommendation: Decision['recommendation'][]; action: Partial<Record<Decision['recommendation'], ActionKind>>; mustMention: RegExp[]; offerUnderCap: boolean; evidenceMissing: boolean };
-type CaseKey = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'EVa' | 'EVb';
+type CaseKey = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'EVa' | 'EVb' | 'R';
 type Check = 'recommendation' | 'action' | 'policy' | 'fabrication' | 'mentions';
 type RunResult = { key: CaseKey; run: number; result: DecideResult; checks: Record<Check, boolean>; problems: string[] };
 
@@ -31,12 +31,13 @@ const expectations: Record<CaseKey, Expectation> = {
   F: { recommendation: ['SETTLE', 'ACCEPT', 'FIGHT'], action: { FIGHT: 'provide_evidence', SETTLE: 'make_offer', ACCEPT: 'accept_claim' }, mustMention: [/proof of delivery|tracking|tracker/i], offerUnderCap: true, evidenceMissing: true },
   EVa: { recommendation: ['SETTLE', 'ACCEPT', 'FIGHT'], action: { FIGHT: 'provide_evidence', SETTLE: 'make_offer', ACCEPT: 'accept_claim' }, mustMention: [/proof of delivery|tracking|tracker/i], offerUnderCap: true, evidenceMissing: true },
   EVb: { recommendation: ['FIGHT'], action: { FIGHT: 'provide_evidence' }, mustMention: [/deliver/i], offerUnderCap: false, evidenceMissing: false },
+  R: { recommendation: ['SETTLE'], action: { SETTLE: 'make_offer' }, mustMention: [/photo|evidence|proof/i], offerUnderCap: true, evidenceMissing: false },
 };
 
 function loadCase(key: CaseKey): DecideInput {
   const raw = JSON.parse(readFileSync(new URL(`./cases/${key}.json`, import.meta.url), 'utf8'));
   const images = (raw.record?.attachments ?? []).filter((file: { type: string }) => file.type === 'image/jpeg' || file.type === 'image/png').map((file: { name: string; type: CaseImage['mimeType'] }) => ({ name: file.name, mimeType: file.type, data: readFileSync(new URL(`../../seed/attachments/${raw.record.key}/${file.name}`, import.meta.url)) }));
-  const input: DecideInput = { dispute: raw.dispute, order: raw.order, capture: raw.capture, record: raw.record, attachments: raw.attachments, images, policy: raw.policy, allowed: raw.allowed, now: new Date(raw.now) };
+  const input: DecideInput = { dispute: raw.dispute, order: raw.order, capture: raw.capture, record: raw.record, attachments: raw.attachments, images, sellerRecord: raw.sellerRecord ?? { n: 0, cases: [] }, policy: raw.policy, allowed: raw.allowed, now: new Date(raw.now) };
   const listed = [...allowedActions(input.dispute)];
   if (listed.join() !== input.allowed.join()) throw new Error(`Case ${key} allows ${input.allowed.join()} but its dispute lists ${listed.join()}`);
   return input;
@@ -122,6 +123,42 @@ export function evaluate(key: CaseKey, input: DecideInput, result: DecideResult)
     problems.push('decision claims Seller Protection guarantees an outcome');
     policy = false;
   }
+  if (key === 'R') {
+    const pastWord = /\b(?:last|past|previous|prior|earlier|both)\s+(?:\w+\s+){0,3}?(?:cases?|inquir(?:y|ies)|disputes?|claims?|buyers?|offers?|times?)\b|\b(?:your|seller['’]s)\s+record\b|\b(?:as before|like last time|accept(?:s|ed)?\s+again)\b/i;
+    const offerShare = /\d+(?:\.\d+)?\s*(?:%|per ?cent\b)(?=\s+of\s+(?:the\s+)?(?:USD\s+)?(?:\d|disputed|order|item|amount|price))/gi;
+    const disclaimer = /\b(?:cannot|can['’]t|never|not|no way to)\s+(?:say|state|predict|know|tell|estimate|compute|calculate|give)\b/i;
+    const sentences = decisionText
+      .replace(new RegExp(`\\b${input.policy.maxOfferPercent}(?:\\.0+)?\\s*(?:%|per ?cent\\b)`, 'gi'), '')
+      .split(/[!?;\n]+|\.(?!\d)/)
+      .map((sentence) => /\b(?:offer|cap|refund)\b/i.test(sentence) && !pastWord.test(sentence) ? sentence.replace(offerShare, '') : sentence);
+    const clauses = sentences.flatMap((sentence) => sentence.split(/,|\bbut\b/i));
+    const odds = clauses.some((clause) =>
+      /\d\s*(?:%|per ?cent\b)|\b(?:win|winning|success|loss|acceptance|settlement|resolution)\s+rates?\b|\bprobabilit(?:y|ies)\b|\bodds\b(?!\s+with\b)|\b(?:un)?likel(?:y|ihood)\b[^,]{0,40}\b(?:win|wins|winning|won|lose|loses|losing|lost)\b/i.test(clause)
+      && !disclaimer.test(clause),
+    );
+    const forecast = sentences
+      .map((sentence) => sentence.split(/,|\bbut\b/i).filter((clause) => !disclaimer.test(clause)).join(','))
+      .some((sentence) => pastWord.test(sentence) && /\b(?:likely|probabl[ey]|chances?)\b/i.test(sentence));
+    const credit = clauses.some((clause) =>
+      (/\bKept['’]s\s+(?:advice|recommendations?|suggestions?|call|offers?)\b[^,]{0,80}\b(?:led to|leads to|caused|causes|resulted in|results in|won|wins|saved|saves|secured|worked)\b/i.test(clause)
+        || /\b(?:advice|recommendations?)\s+(?:led to|caused|resulted in|won|saved|secured|worked)\b/i.test(clause)
+        || /\b(?:thanks to|because of|due to|by following|after following)\s+Kept\b/i.test(clause)
+        || /\bKept\s+(?:saved|won|recovered|secured|kept|got)\b/.test(clause))
+      && !/(?:\bnot|\bnever|n['’]t)\s+(?:what\s+|\w+\s+){0,2}(?:led to|lead to|cause[ds]?|result(?:ed)? in|save[ds]?|won|win|secure[ds]?|work(?:ed)?|because of|due to|thanks to)\b/i.test(clause),
+    );
+    if (odds) {
+      problems.push('decision states a rate, percentage, probability or likelihood of winning or losing');
+      policy = false;
+    }
+    if (forecast) {
+      problems.push("decision forecasts this case from the seller's record");
+      policy = false;
+    }
+    if (credit) {
+      problems.push("decision credits Kept's advice for an outcome");
+      policy = false;
+    }
+  }
   if (key === 'E') {
     const draftAdmission = /\b(?:we|I|the seller)\s+(?:(?:have|has)\s+)?(?:admit(?:s|ted)?|accept(?:s|ed)?\s+(?:fault|responsibility))\b|\b(?:our|my)\s+(?:mistake|fault|error)\b|\bwe\s+were\s+at\s+fault\b/i.test(decision.draft_note);
     const unqualifiedAdmission = [...decision.reasons, ...decision.evidence_have, ...decision.evidence_missing, decision.plain_ask]
@@ -156,11 +193,11 @@ function textForDecision(decision: Decision): string {
   return [decision.reasons, decision.evidence_have, decision.evidence_missing, decision.draft_note, decision.plain_ask, decision.would_change, decision.photo_findings].flat().join('\n');
 }
 
-function report(results: RunResult[]): string {
+export function report(results: RunResult[]): string {
   const total = results.length;
   const count = (check: Check) => results.filter((entry) => entry.checks[check]).length;
   const hard: Check[] = ['recommendation', 'action', 'policy', 'fabrication'];
-  const caseCount = 8;
+  const caseCount = 9;
   const mentionsRequired = Math.ceil(total * 0.8);
   const passed = total === RUNS * caseCount && hard.every((check) => count(check) === total) && count('mentions') >= mentionsRequired;
   const mean = Math.round(results.reduce((sum, entry) => sum + entry.result.durationMs, 0) / total);
@@ -181,11 +218,17 @@ function report(results: RunResult[]): string {
     '- F: eligible but no proof of delivery.',
     '- EVa: untracked item not received inquiry, notes say only packed and shipped -> any call; if not FIGHT, would_change names proof of delivery.',
     '- EVb: the same inquiry with seller notes giving UPS tracking and a delivery date -> FIGHT via evidence.',
+    "- R: case B with two resolved not-as-described inquiries in the seller's record -> capped SETTLE, and no rate, percentage, probability or credit to Kept's advice.",
     `Gate: ${passed ? 'PASSED' : 'FAILED'} (needs ${total}/${total} on recommendation, action, policy and fabrication, and at least ${mentionsRequired}/${total} on mentions)`,
     `Mean durationMs: ${mean}`,
     '',
     'Evidence pair calls:',
     ...results.filter((entry) => entry.key === 'EVa' || entry.key === 'EVb').map((entry) => `- ${entry.key} run ${entry.run}: ${entry.result.ok ? `${entry.result.decision.recommendation}; would_change ${JSON.stringify(entry.result.decision.would_change)}` : 'no decision'}`),
+    '',
+    "Case R calls (read for a forecast drawn from the seller's record, which the check can miss):",
+    ...results.filter((entry) => entry.key === 'R').flatMap((entry) => entry.result.ok
+      ? [`- R run ${entry.run}: ${entry.result.decision.recommendation}; offer_amount ${JSON.stringify(entry.result.decision.offer_amount)}`, `  - plain_ask: ${JSON.stringify(entry.result.decision.plain_ask)}`, ...entry.result.decision.reasons.map((reason) => `  - reason: ${JSON.stringify(reason)}`), `  - draft_note: ${JSON.stringify(entry.result.decision.draft_note)}`, `  - would_change: ${JSON.stringify(entry.result.decision.would_change)}`]
+      : [`- R run ${entry.run}: no decision`]),
     '',
     '| Check | Passed |',
     '| --- | --- |',
@@ -213,7 +256,7 @@ describe.skipIf(!process.env.KEPT_EVAL)('golden cases', () => {
     if (results.length) writeFileSync(new URL('../../docs/eval.md', import.meta.url), report(results));
   });
 
-  const runs = (['A', 'B', 'C', 'D', 'E', 'F', 'EVa', 'EVb'] as CaseKey[]).flatMap((key) => Array.from({ length: RUNS }, (_, index) => ({ key, run: index + 1 })));
+  const runs = (['A', 'B', 'C', 'D', 'E', 'F', 'EVa', 'EVb', 'R'] as CaseKey[]).flatMap((key) => Array.from({ length: RUNS }, (_, index) => ({ key, run: index + 1 })));
 
   test.each(runs)('case $key run $run', async ({ key, run }) => {
     const input = loadCase(key);
@@ -224,7 +267,7 @@ describe.skipIf(!process.env.KEPT_EVAL)('golden cases', () => {
   });
 
   test('mentions pass on at least 80% of runs', () => {
-    expect(results).toHaveLength(RUNS * 8);
+    expect(results).toHaveLength(RUNS * 9);
     expect(results.filter((entry) => entry.checks.mentions).length).toBeGreaterThanOrEqual(Math.ceil(results.length * 0.8));
   });
 });

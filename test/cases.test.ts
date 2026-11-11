@@ -4,7 +4,7 @@ import { evidenceOf, type State, type StoredDecision } from '../src/store.js';
 import type { CaseRecord } from '../seed/seed.js';
 import type { ActionEntry } from '../src/log.js';
 import type { Capture, Dispute, Order } from '../src/paypal/types.js';
-import { buildCaseDetail, buildCaseRow, joinCases, sortRows, summarize } from '../src/cases.js';
+import { buildCaseDetail, buildCaseRow, joinCases, sellerRecordOf, sortRows, summarize, yourRecord } from '../src/cases.js';
 
 const fixture = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/paypal/${name}.json`, import.meta.url), 'utf8')) as Dispute;
 const eligibleCapture = JSON.parse(readFileSync(new URL('./fixtures/paypal/capture-1VS093774J460400T.json', import.meta.url), 'utf8')) as Capture;
@@ -352,4 +352,70 @@ test('case detail carries the previous call kept after a re-decide', () => {
   const detail = buildCaseDetail(inquiry, record('CAPTUREB0000000001'), null, null, state({ decisions: { [inquiry.dispute_id]: { ...stored(decision), previous } } }), now);
   expect(detail.decision?.previous).toEqual(previous);
   expect(detail.decision?.decision.would_change).toBeNull();
+});
+
+function sentOn(disputeId: string, actionKind: ActionEntry['action'], offerAmount: string | null = null, ok = true): ActionEntry {
+  return { id: `${disputeId}-${actionKind}-${ok}`, at: now.toISOString(), disputeId, caseKey: null, action: actionKind, recommended: null, submitted: { note: 'n', offerAmount }, sellerEdited: false, paypal: { ok, status: ok ? 200 : 422, requestId: null, debugId: null, durationMs: 1, message: null }, after: null };
+}
+
+test('your record of an empty board has no lines and no counts', () => {
+  expect(yourRecord([], state())).toEqual({ lines: [], resolved: 0, open: 0, resolvedWithoutAction: 0, currency: null, mixedCurrencyExcluded: 0 });
+});
+
+test('your record counts each sent action once per case, PayPal\'s outcome codes on the resolved ones, kept of disputed where PayPal reported the refund, and cases resolved without a Kept action', () => {
+  const sellerWon = { ...resolved, dispute_id: 'r2', dispute_outcome: { outcome_code: 'RESOLVED_SELLER_FAVOUR' } };
+  const noAction = { ...resolved, dispute_id: 'r3' };
+  const refundUnreported = { ...resolved, dispute_id: 'r4', dispute_outcome: { outcome_code: 'RESOLVED_BUYER_FAVOUR' } };
+  const eur = { ...resolved, dispute_id: 'eur', dispute_amount: { currency_code: 'EUR', value: '5.00' }, disputed_transactions: [{ gross_amount: { currency_code: 'EUR', value: '20.00' } }] };
+  const actions = [
+    sentOn(resolved.dispute_id, 'make_offer', '5.00'), sentOn(resolved.dispute_id, 'make_offer', '6.00'), sentOn(resolved.dispute_id, 'provide_evidence', null, false),
+    sentOn('r2', 'make_offer', '4.00'), sentOn('r2', 'provide_evidence'),
+    sentOn('r4', 'accept_claim'),
+    sentOn(inquiry.dispute_id, 'make_offer', '8.00'),
+    sentOn('eur', 'make_offer', '5.00'),
+  ];
+  const rows = [inquiry, resolved, sellerWon, noAction, refundUnreported, eur].map((d) => buildCaseRow(d, null, state(), now, null));
+  expect(yourRecord(rows, state({ actions }))).toEqual({
+    lines: [
+      { action: 'make_offer', sent: 3, resolved: 2, outcomes: [{ code: 'RESOLVED_BUYER_FAVOUR', count: 1 }, { code: 'RESOLVED_SELLER_FAVOUR', count: 1 }], kept: { currency_code: 'USD', value: '35.00' }, disputed: { currency_code: 'USD', value: '40.00' }, refundNotReported: 0 },
+      { action: 'provide_evidence', sent: 1, resolved: 1, outcomes: [{ code: 'RESOLVED_SELLER_FAVOUR', count: 1 }], kept: { currency_code: 'USD', value: '20.00' }, disputed: { currency_code: 'USD', value: '20.00' }, refundNotReported: 0 },
+      { action: 'accept_claim', sent: 1, resolved: 1, outcomes: [{ code: 'RESOLVED_BUYER_FAVOUR', count: 1 }], kept: null, disputed: null, refundNotReported: 1 },
+    ],
+    resolved: 4,
+    open: 1,
+    resolvedWithoutAction: 1,
+    currency: 'USD',
+    mixedCurrencyExcluded: 1,
+  });
+});
+
+test('your record of sent actions on open cases only shows them sent and none resolved', () => {
+  const row = buildCaseRow(inquiry, null, state(), now, null);
+  expect(yourRecord([row], state({ actions: [sentOn(inquiry.dispute_id, 'make_offer', '8.00')] })).lines).toEqual([
+    { action: 'make_offer', sent: 1, resolved: 0, outcomes: [], kept: null, disputed: null, refundNotReported: 0 },
+  ]);
+});
+
+test('seller record lists only resolved cases with the same buyer reason, most recent first, at most 3, with n counting all of them', () => {
+  const at = (id: string, day: string) => ({ ...resolved, dispute_id: id, update_time: `2026-11-0${day}T00:00:00.000Z` });
+  const others = [
+    at('a', '1'), at('b', '3'), { ...at('c', '2'), dispute_outcome: { ...resolved.dispute_outcome!, amount_refunded: { currency_code: 'USD', value: '5' } } }, at('d', '4'),
+    { ...at('other-reason', '5'), reason: 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED' },
+    { ...inquiry, dispute_id: 'still-open' },
+    { ...at('self', '6'), dispute_id: inquiry.dispute_id },
+  ];
+  const actions = [sentOn('d', 'make_offer', '5.00'), sentOn('d', 'accept_claim', null, false), sentOn('b', 'provide_evidence')];
+  const record = sellerRecordOf(inquiry, others, actions);
+  expect(record.n).toBe(4);
+  expect(record.cases).toEqual([
+    { reason: 'Item not received', stage: 'Inquiry', sent: [{ action: 'make_offer', offer: '5.00' }], outcome: 'RESOLVED_BUYER_FAVOUR', outcomeReason: 'INQUIRY_OFFER_PARTIAL_REFUND', disputed: { currency_code: 'USD', value: '20.00' }, refunded: { currency_code: 'USD', value: '5.00' }, kept: { currency_code: 'USD', value: '15.00' } },
+    { reason: 'Item not received', stage: 'Inquiry', sent: [{ action: 'provide_evidence', offer: null }], outcome: 'RESOLVED_BUYER_FAVOUR', outcomeReason: 'INQUIRY_OFFER_PARTIAL_REFUND', disputed: { currency_code: 'USD', value: '20.00' }, refunded: { currency_code: 'USD', value: '5.00' }, kept: { currency_code: 'USD', value: '15.00' } },
+    { reason: 'Item not received', stage: 'Inquiry', sent: [], outcome: 'RESOLVED_BUYER_FAVOUR', outcomeReason: 'INQUIRY_OFFER_PARTIAL_REFUND', disputed: { currency_code: 'USD', value: '20.00' }, refunded: { currency_code: 'USD', value: '5.00' }, kept: { currency_code: 'USD', value: '15.00' } },
+  ]);
+});
+
+test('seller record is empty with no same-reason resolved case, and keeps what PayPal did not report as null', () => {
+  expect(sellerRecordOf(inquiry, [inquiry, chargeback], [])).toEqual({ n: 0, cases: [] });
+  const bare = { ...resolved, dispute_id: 'bare', dispute_outcome: undefined };
+  expect(sellerRecordOf(inquiry, [bare], []).cases).toEqual([{ reason: 'Item not received', stage: 'Inquiry', sent: [], outcome: '', outcomeReason: null, disputed: { currency_code: 'USD', value: '20.00' }, refunded: null, kept: null }]);
 });

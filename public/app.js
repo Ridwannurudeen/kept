@@ -36,6 +36,8 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
     grid: document.getElementById("grid"),
     gridFrame: document.getElementById("grid-frame"),
     strip: document.getElementById("summary-strip"),
+    record: document.getElementById("your-record"),
+    recordList: document.getElementById("record-list"),
     fetchStatus: document.getElementById("fetch-status"),
     quickFilter: document.getElementById("quick-filter"),
     refresh: document.getElementById("refresh-button"),
@@ -438,6 +440,71 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       hold: summary.heldByPayPal,
       outcome: summary.kept ? { kept: summary.kept } : null,
     };
+  }
+
+  // ---------- your record ----------
+
+  const RECORD_ACTIONS = {
+    make_offer: "Partial refund offers",
+    provide_evidence: "Evidence",
+    provide_supporting_info: "Supporting information",
+    accept_claim: "Claims accepted",
+  };
+
+  function recordOutcome(outcome) {
+    const code = outcome.code
+      ? outcome.code.charAt(0) +
+        outcome.code.slice(1).toLowerCase().replaceAll("_", " ")
+      : "Outcome not reported";
+    return `${code} ${outcome.count}`;
+  }
+
+  function renderRecord(record) {
+    const items = record.lines.map((line) => {
+      const outcomes = line.outcomes.map(recordOutcome).join(", ");
+      const text = [
+        `Sent ${line.sent}.`,
+        `PayPal resolved ${line.resolved}${outcomes ? `: ${outcomes}` : ""}.`,
+        line.kept
+          ? `Kept ${money(line.kept)} of ${money(line.disputed)} disputed.`
+          : "",
+        line.refundNotReported
+          ? `PayPal did not report the refund on ${plural(line.refundNotReported, "case")}.`
+          : "",
+        line.resolved < 3 ? "Too few to read anything into." : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+      const item = el("li", "record-line");
+      item.append(
+        el("span", "record-action", `${RECORD_ACTIONS[line.action]}. `),
+        document.createTextNode(`${text} `),
+        el("span", "record-n", `n = ${line.resolved}`),
+      );
+      return item;
+    });
+    if (!items.length)
+      items.push(
+        el(
+          "li",
+          "record-line",
+          "Kept has not sent anything to PayPal on these cases yet.",
+        ),
+      );
+    const totals = [
+      `${plural(record.resolved, "resolved case")}, ${record.open} still open. ${record.resolvedWithoutAction} resolved without an action sent by Kept.`,
+      record.mixedCurrencyExcluded
+        ? `${plural(record.mixedCurrencyExcluded, "case")} in another currency left out.`
+        : "",
+      record.resolved < 3
+        ? "Too few resolved cases to read anything into."
+        : "",
+    ].filter(Boolean);
+    els.recordList.replaceChildren(
+      ...items,
+      ...totals.map((text) => el("li", "record-line record-total", text)),
+    );
+    els.record.hidden = false;
   }
 
   // ---------- cell renderers ----------
@@ -2679,6 +2746,9 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       headerName,
       minWidth: 110,
       enableCellChangeFlash: true,
+      wrapText: true,
+      autoHeight: true,
+      cellClass: "cell-wrap",
       valueGetter: (p) =>
         CHECKLIST_STATES[p.data.checklist[index]?.state] || "",
       tooltipValueGetter: (p) => {
@@ -2718,6 +2788,9 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       flex: 1.3,
       valueGetter: (p) => shippingProtectionText(p.data),
       cellRenderer: shippingProtectionCell,
+      wrapText: true,
+      autoHeight: true,
+      cellClass: "cell-wrap-stack",
       tooltipValueGetter: (p) =>
         p.data.protection
           ? "The capture's seller_protection.status and dispute_categories. PayPal decides whether Seller Protection applies."
@@ -2732,6 +2805,9 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       enableCellChangeFlash: true,
       valueGetter: (p) => trackerText(p.data),
       cellRenderer: trackerCell,
+      wrapText: true,
+      autoHeight: true,
+      cellClass: "cell-wrap-stack",
       tooltipValueGetter: (p) =>
         `The first tracker on PayPal's order, with the status PayPal reports. PayPal's tracker record does not include the carrier${p.data.tracking?.carrier ? `; you sent ${p.data.tracking.carrier}` : ""}.`,
     },
@@ -3206,6 +3282,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
         data.cases.length ? [totalRow(data.summary)] : [],
       );
       renderSummary(data.summary);
+      renderRecord(data.record);
       const when = timeFormat.format(new Date(data.fetchedAt));
       els.fetchStatus.classList.toggle("is-warning", data.stale);
       els.fetchStatus.textContent = data.stale
@@ -3294,6 +3371,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       gridApi.applyTransaction({ update: changed });
       gridApi.setGridOption("pinnedBottomRowData", [totalRow(data.summary)]);
       renderSummary(data.summary);
+      renderRecord(data.record);
       els.fetchStatus.classList.remove("is-warning");
       els.fetchStatus.textContent = `${plural(data.cases.length, "case")} from PayPal, updated ${timeFormat.format(new Date(data.fetchedAt))}`;
       const held = data.summary.heldByPayPal

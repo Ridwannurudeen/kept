@@ -4,10 +4,11 @@ import { disputedAmount, type ActionKind } from '../paypal/dispute.js';
 import type { Capture, Dispute, Order } from '../paypal/types.js';
 import type { Policy } from '../policy.js';
 import type { CaseRecord } from '../../seed/seed.js';
+import type { SellerRecord } from '../cases.js';
 import { buildUserPrompt, PHOTO_INSTRUCTION, SYSTEM_PROMPT } from './prompt.js';
 import type { ModelTools } from './tools.js';
 
-export type DecideInput = { dispute: Dispute; order: Order | null; capture: Capture | null; record: CaseRecord | null; attachments: { name: string; type: string }[]; images: CaseImage[]; policy: Policy; allowed: ActionKind[]; now: Date };
+export type DecideInput = { dispute: Dispute; order: Order | null; capture: Capture | null; record: CaseRecord | null; attachments: { name: string; type: string }[]; images: CaseImage[]; sellerRecord: SellerRecord; policy: Policy; allowed: ActionKind[]; now: Date };
 export type CaseImage = { name: string; mimeType: 'image/jpeg' | 'image/png'; data: Buffer };
 export type DecideResult =
   | { ok: true; decision: Decision; validation: Validation; steps: number; toolCalls: string[]; model: string; durationMs: number }

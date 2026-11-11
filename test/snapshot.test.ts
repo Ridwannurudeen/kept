@@ -1,8 +1,12 @@
 import { existsSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildCaseRow, sellerRecordOf, yourRecord } from '../src/cases.js';
+import type { Dispute } from '../src/paypal/types.js';
 import { buildSnapshot, checkSnapshot } from '../src/snapshot.js';
-import type { State } from '../src/store.js';
+import { Store, type State } from '../src/store.js';
 
 function shippingCheck() {
   return {
@@ -139,4 +143,29 @@ test('buildSnapshot keeps shipping checks without the ship-to city or any other 
   });
   expect(checkSnapshot(json)).toEqual({ ok: true });
   expect(checkSnapshot(JSON.stringify(valid()))).toEqual({ ok: true });
+});
+
+test('a store restored from a snapshot gives the same Your record and seller record as the state it was taken from', async () => {
+  const resolved = JSON.parse(await readFile(new URL('./fixtures/paypal/dispute-inquiry-resolved.json', import.meta.url), 'utf8')) as Dispute;
+  const inquiry = JSON.parse(await readFile(new URL('./fixtures/paypal/dispute-inquiry-open.json', import.meta.url), 'utf8')) as Dispute;
+  const base = valid();
+  const state = { ...base, actions: [{ ...base.actions[0], disputeId: resolved.dispute_id, recommended: null }], decisions: {}, unknownOutcomes: {}, shippingChecks: {} } as unknown as State;
+  const dir = await mkdtemp(join(tmpdir(), 'kept-snapshot-'));
+  try {
+    const seedPath = join(dir, 'cases.json');
+    const snapshotPath = join(dir, 'snapshot.json');
+    await writeFile(seedPath, JSON.stringify({ cases: {} }));
+    const json = JSON.stringify(buildSnapshot(state, new Date('2026-11-07T00:00:00.000Z')));
+    expect(checkSnapshot(json)).toEqual({ ok: true });
+    await writeFile(snapshotPath, json);
+    const restored = (await Store.open({ dataDir: join(dir, 'data'), seedPath, snapshotPath })).get();
+    const now = new Date('2026-11-05T00:00:00.000Z');
+    const rows = [inquiry, resolved].map((d) => buildCaseRow(d, null, restored, now, null));
+    expect(yourRecord(rows, restored)).toEqual(yourRecord(rows, state));
+    expect(yourRecord(rows, restored).lines).toEqual([{ action: 'make_offer', sent: 1, resolved: 1, outcomes: [{ code: 'RESOLVED_BUYER_FAVOUR', count: 1 }], kept: { currency_code: 'USD', value: '15.00' }, disputed: { currency_code: 'USD', value: '20.00' }, refundNotReported: 0 }]);
+    expect(sellerRecordOf(inquiry, [resolved], restored.actions)).toEqual(sellerRecordOf(inquiry, [resolved], state.actions));
+    expect(sellerRecordOf(inquiry, [resolved], restored.actions).cases[0]!.sent).toEqual([{ action: 'make_offer', offer: '5.00' }]);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });

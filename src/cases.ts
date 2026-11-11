@@ -80,6 +80,11 @@ export type OutcomeSummary = {
   mixedCurrencyExcluded: number;
 };
 
+export type RecordLine = { action: ActionKind; sent: number; resolved: number; outcomes: { code: string; count: number }[]; kept: Money | null; disputed: Money | null; refundNotReported: number };
+export type YourRecord = { lines: RecordLine[]; resolved: number; open: number; resolvedWithoutAction: number; currency: string | null; mixedCurrencyExcluded: number };
+export type RecordFact = { reason: string; stage: string; sent: { action: ActionKind; offer: string | null }[]; outcome: string; outcomeReason: string | null; disputed: Money; refunded: Money | null; kept: Money | null };
+export type SellerRecord = { n: number; cases: RecordFact[] };
+
 export function joinCases(disputes: Dispute[], records: Record<string, CaseRecord>): { dispute: Dispute; record: CaseRecord | null }[] {
   const byCapture = new Map(Object.values(records).flatMap((record) => record.captureId ? [[record.captureId, record] as const] : []));
   return disputes.map((dispute) => ({ dispute, record: byCapture.get(captureIdOf(dispute) ?? '') ?? null }));
@@ -340,5 +345,66 @@ export function summarize(rows: CaseRow[]): OutcomeSummary {
     },
     currency,
     mixedCurrencyExcluded,
+  };
+}
+
+const RECORD_ACTIONS: ActionKind[] = ['make_offer', 'provide_evidence', 'provide_supporting_info', 'accept_claim'];
+
+function sentActions(actions: ActionEntry[], disputeId: string): ActionEntry[] {
+  return actions.filter((entry) => entry.disputeId === disputeId && entry.paypal.ok);
+}
+
+export function yourRecord(rows: CaseRow[], state: Pick<State, 'actions'>): YourRecord {
+  const currency = rows[0]?.amount.currency_code ?? null;
+  const included = rows.filter((row) => row.amount.currency_code === currency);
+  const sentKinds = new Map(included.map((row) => [row.disputeId, new Set(sentActions(state.actions, row.disputeId).map((entry) => entry.action))]));
+  const total = (list: CaseRow[], read: (row: CaseRow) => string) => ({ currency_code: currency!, value: fromCents(list.reduce((sum, row) => sum + parseAmount(read(row)), 0)) });
+  const lines = RECORD_ACTIONS.flatMap((action): RecordLine[] => {
+    const sent = included.filter((row) => sentKinds.get(row.disputeId)!.has(action));
+    if (!sent.length) return [];
+    const resolved = sent.filter((row) => row.outcome !== null);
+    const reported = resolved.filter((row) => row.outcome!.kept !== null);
+    const codes = [...new Set(resolved.map((row) => row.outcome!.code))];
+    return [{
+      action,
+      sent: sent.length,
+      resolved: resolved.length,
+      outcomes: codes.map((code) => ({ code, count: resolved.filter((row) => row.outcome!.code === code).length })),
+      kept: reported.length ? total(reported, (row) => row.outcome!.kept!.value) : null,
+      disputed: reported.length ? total(reported, (row) => row.amount.value) : null,
+      refundNotReported: resolved.length - reported.length,
+    }];
+  });
+  const resolved = included.filter((row) => row.outcome !== null);
+  return {
+    lines,
+    resolved: resolved.length,
+    open: included.filter((row) => row.open).length,
+    resolvedWithoutAction: resolved.filter((row) => sentKinds.get(row.disputeId)!.size === 0).length,
+    currency,
+    mixedCurrencyExcluded: rows.length - included.length,
+  };
+}
+
+export function sellerRecordOf(d: Dispute, others: Dispute[], actions: ActionEntry[]): SellerRecord {
+  const same = others
+    .filter((other) => other.dispute_id !== d.dispute_id && other.reason === d.reason && other.status === 'RESOLVED')
+    .sort((a, b) => Date.parse(b.update_time) - Date.parse(a.update_time));
+  const amount = (money: Money) => ({ currency_code: money.currency_code, value: fromCents(parseAmount(money.value)) });
+  return {
+    n: same.length,
+    cases: same.slice(0, 3).map((other) => {
+      const outcome = outcomeOf(other)!;
+      return {
+        reason: reasonLabel(other.reason),
+        stage: stageLabel(other),
+        sent: sentActions(actions, other.dispute_id).map((entry) => ({ action: entry.action, offer: entry.submitted.offerAmount })),
+        outcome: outcome.code,
+        outcomeReason: other.dispute_outcome?.outcome_reason ?? null,
+        disputed: amount(disputedAmount(other)),
+        refunded: outcome.refunded && amount(outcome.refunded),
+        kept: outcome.kept,
+      };
+    }),
   };
 }
