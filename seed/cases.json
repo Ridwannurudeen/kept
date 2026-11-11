@@ -1,1 +1,334 @@
-{ "cases": {} }
+{
+  "cases": {
+    "A3": {
+      "key": "A3",
+      "orderId": "5LH92912P4826141T",
+      "captureId": "2WS2925138277954X",
+      "amount": "48.00",
+      "currency": "USD",
+      "itemName": "Ceramic pour-over set",
+      "trackingNumber": "1Z4F82V70394730525",
+      "carrier": "UPS",
+      "trackedAt": "2026-11-11T22:59:43.694Z",
+      "notes": "Spare claim for the document upload check. Shipping address matches the order address.\nShipped on 2026-11-11 via UPS, tracking 1Z4F82V70394730525.",
+      "attachments": [
+        {
+          "name": "packing-slip.pdf",
+          "type": "application/pdf"
+        },
+        {
+          "name": "packing-slip.txt",
+          "type": "text/plain"
+        },
+        {
+          "name": "ups-label.txt",
+          "type": "text/plain"
+        }
+      ],
+      "disputeId": "PP-R-ADY-10199633",
+      "createdAt": "2026-11-11T17:35:51.329Z",
+      "observed": {
+        "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+        "stage": "CHARGEBACK",
+        "status": "UNDER_REVIEW",
+        "disputeState": "UNDER_PAYPAL_REVIEW",
+        "links": [
+          "self",
+          "provide_supporting_info"
+        ],
+        "seenAt": "2026-11-11T23:45:58.231Z"
+      }
+    },
+    "EV1": {
+      "key": "EV1",
+      "orderId": "0GD411611H662073J",
+      "captureId": "18F64873R6984032H",
+      "amount": "33.00",
+      "currency": "USD",
+      "itemName": "Bamboo cutting board",
+      "trackingNumber": null,
+      "carrier": null,
+      "trackedAt": null,
+      "notes": "The Bamboo cutting board was packed and shipped.",
+      "attachments": [],
+      "disputeId": null,
+      "createdAt": "2026-11-11T22:50:48.354Z",
+      "observed": null
+    },
+    "A": {
+      "key": "A",
+      "orderId": "7M8551384K263612M",
+      "captureId": "59W40554PM409652T",
+      "amount": "48.00",
+      "currency": "USD",
+      "itemName": "Ceramic pour-over set",
+      "trackingNumber": "1Z4F82V70391746210",
+      "carrier": "UPS",
+      "trackedAt": "2026-11-11T22:59:36.254Z",
+      "notes": "Shipping address matches the order address.\nShipped on 2026-11-11 via UPS, tracking 1Z4F82V70391746210.",
+      "attachments": [
+        {
+          "name": "packing-slip.pdf",
+          "type": "application/pdf"
+        },
+        {
+          "name": "packing-slip.txt",
+          "type": "text/plain"
+        },
+        {
+          "name": "ups-label.txt",
+          "type": "text/plain"
+        }
+      ],
+      "disputeId": null,
+      "createdAt": "2026-11-11T22:50:51.264Z",
+      "observed": null
+    },
+    "A2": {
+      "key": "A2",
+      "orderId": "5U397600KM385363Y",
+      "captureId": "02A0291606763345L",
+      "amount": "48.00",
+      "currency": "USD",
+      "itemName": "Ceramic pour-over set",
+      "trackingNumber": "1Z4F82V70392851434",
+      "carrier": "UPS",
+      "trackedAt": "2026-11-11T22:59:39.796Z",
+      "notes": "Spare of A. Shipping address matches the order address.\nShipped on 2026-11-11 via UPS, tracking 1Z4F82V70392851434.",
+      "attachments": [
+        {
+          "name": "packing-slip.pdf",
+          "type": "application/pdf"
+        },
+        {
+          "name": "packing-slip.txt",
+          "type": "text/plain"
+        },
+        {
+          "name": "ups-label.txt",
+          "type": "text/plain"
+        }
+      ],
+      "disputeId": "PP-R-GMF-10199635",
+      "createdAt": "2026-11-11T22:50:54.794Z",
+      "observed": {
+        "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+        "stage": "CHARGEBACK",
+        "status": "UNDER_REVIEW",
+        "disputeState": "UNDER_PAYPAL_REVIEW",
+        "links": [
+          "self",
+          "provide_supporting_info"
+        ],
+        "seenAt": "2026-11-11T23:45:58.231Z"
+      }
+    },
+    "B": {
+      "key": "B",
+      "orderId": "2BT240571K4299024",
+      "captureId": "4M013267KS7929009",
+      "amount": "36.00",
+      "currency": "USD",
+      "itemName": "Linen table runner",
+      "trackingNumber": null,
+      "carrier": null,
+      "trackedAt": null,
+      "notes": "Sent as listed, no photos before shipping, buyer says the colour differs.",
+      "attachments": [
+        {
+          "name": "listing-photo-note.txt",
+          "type": "text/plain"
+        },
+        {
+          "name": "listing-colour.jpg",
+          "type": "image/jpeg"
+        }
+      ],
+      "disputeId": "PP-R-PGK-10199629",
+      "createdAt": "2026-11-11T22:50:58.105Z",
+      "observed": {
+        "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+        "stage": "INQUIRY",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "disputeState": "REQUIRED_ACTION",
+        "links": [
+          "self",
+          "accept_claim",
+          "send_message",
+          "escalate",
+          "make_offer"
+        ],
+        "seenAt": "2026-11-11T23:45:58.231Z"
+      }
+    },
+    "B2": {
+      "key": "B2",
+      "orderId": "9T763053VJ940711E",
+      "captureId": "6LF66366PK137145V",
+      "amount": "36.00",
+      "currency": "USD",
+      "itemName": "Linen table runner",
+      "trackingNumber": null,
+      "carrier": null,
+      "trackedAt": null,
+      "notes": "Spare of B. Sent as listed, no photos before shipping, buyer says the colour differs.",
+      "attachments": [
+        {
+          "name": "listing-photo-note.txt",
+          "type": "text/plain"
+        }
+      ],
+      "disputeId": "PP-R-LGS-10199627",
+      "createdAt": "2026-11-11T22:51:01.685Z",
+      "observed": {
+        "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+        "stage": "INQUIRY",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "disputeState": "REQUIRED_ACTION",
+        "links": [
+          "self",
+          "accept_claim",
+          "send_message",
+          "escalate",
+          "make_offer"
+        ],
+        "seenAt": "2026-11-11T23:45:58.231Z"
+      }
+    },
+    "DEV1": {
+      "key": "DEV1",
+      "orderId": "6SD67488YV9012713",
+      "captureId": "2DH68539417202354",
+      "amount": "18.00",
+      "currency": "USD",
+      "itemName": "Cotton tote",
+      "trackingNumber": null,
+      "carrier": null,
+      "trackedAt": null,
+      "notes": "Development case for CLI verification.",
+      "attachments": [],
+      "disputeId": "PP-R-GNF-10199630",
+      "createdAt": "2026-11-11T22:51:04.585Z",
+      "observed": {
+        "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+        "stage": "INQUIRY",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "disputeState": "REQUIRED_ACTION",
+        "links": [
+          "self",
+          "accept_claim",
+          "send_message",
+          "escalate",
+          "make_offer"
+        ],
+        "seenAt": "2026-11-11T23:45:58.231Z"
+      }
+    },
+    "B3": {
+      "key": "B3",
+      "orderId": "6VH987942H278564E",
+      "captureId": "7VU02992SV414300C",
+      "amount": "24.00",
+      "currency": "USD",
+      "itemName": "Wool throw blanket",
+      "trackingNumber": null,
+      "carrier": null,
+      "trackedAt": null,
+      "notes": "Sent as listed, no photos before shipping, buyer says the colour differs.",
+      "attachments": [],
+      "disputeId": "PP-R-BDX-10199626",
+      "createdAt": "2026-11-11T22:51:07.515Z",
+      "observed": {
+        "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+        "stage": "INQUIRY",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "disputeState": "REQUIRED_ACTION",
+        "links": [
+          "self",
+          "accept_claim",
+          "send_message",
+          "escalate",
+          "make_offer"
+        ],
+        "seenAt": "2026-11-11T23:45:58.231Z"
+      }
+    },
+    "B4": {
+      "key": "B4",
+      "orderId": "08676730LD715130R",
+      "captureId": "61958196937699053",
+      "amount": "27.00",
+      "currency": "USD",
+      "itemName": "Cotton napkin set",
+      "trackingNumber": null,
+      "carrier": null,
+      "trackedAt": null,
+      "notes": "Sent as listed, no photos before shipping, buyer says the size differs.",
+      "attachments": [],
+      "disputeId": "PP-R-KRB-10199621",
+      "createdAt": "2026-11-11T22:51:10.507Z",
+      "observed": {
+        "reason": "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+        "stage": "INQUIRY",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "disputeState": "REQUIRED_ACTION",
+        "links": [
+          "self",
+          "accept_claim",
+          "send_message",
+          "escalate",
+          "make_offer"
+        ],
+        "seenAt": "2026-11-11T23:45:58.231Z"
+      }
+    },
+    "P1": {
+      "key": "P1",
+      "orderId": "0KY4190824060933V",
+      "captureId": "5N431138DD4140803",
+      "amount": "16.00",
+      "currency": "USD",
+      "itemName": "Stoneware mug pair",
+      "trackingNumber": null,
+      "carrier": null,
+      "trackedAt": null,
+      "notes": "Undisputed order for the Shipping check. Posted without tracking.",
+      "attachments": [],
+      "disputeId": null,
+      "createdAt": "2026-11-11T22:51:13.535Z",
+      "observed": null
+    },
+    "P2": {
+      "key": "P2",
+      "orderId": "65T82698XJ5708820",
+      "captureId": "2UH76108C28042055",
+      "amount": "26.00",
+      "currency": "USD",
+      "itemName": "Glass storage jars",
+      "trackingNumber": "1Z4F82V70393962545",
+      "carrier": "UPS",
+      "trackedAt": "2026-11-11T22:59:46.983Z",
+      "notes": "Undisputed order for the Shipping check.\nShipped on 2026-11-11 via UPS, tracking 1Z4F82V70393962545.",
+      "attachments": [],
+      "disputeId": null,
+      "createdAt": "2026-11-11T22:51:16.507Z",
+      "observed": null
+    },
+    "P3": {
+      "key": "P3",
+      "orderId": "0BY13623R4326592E",
+      "captureId": "89654065MH244713H",
+      "amount": "31.00",
+      "currency": "USD",
+      "itemName": "Oak serving tray",
+      "trackingNumber": "1Z4F82V70394073656",
+      "carrier": "UPS",
+      "trackedAt": "2026-11-11T22:59:50.964Z",
+      "notes": "Undisputed order for the Shipping check.\nShipped on 2026-11-11 via UPS, tracking 1Z4F82V70394073656.",
+      "attachments": [],
+      "disputeId": null,
+      "createdAt": "2026-11-11T22:51:19.895Z",
+      "observed": null
+    }
+  }
+}
