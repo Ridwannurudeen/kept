@@ -2,6 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { buildSnapshot, checkSnapshot } from '../src/snapshot.js';
 import type { ActionEntry, CallEntry } from '../src/log.js';
+import type { ShippingCheck } from '../src/shipping.js';
 import type { State, StoredDecision, UnknownOutcome } from '../src/store.js';
 
 const outputPath = resolve('seed/snapshot.json');
@@ -12,12 +13,13 @@ async function getJson<T>(base: string, path: string, passcode: string): Promise
   return (await response.json()) as T;
 }
 
-type SnapshotSource = Pick<State, 'decisions' | 'actions' | 'calls' | 'unknownOutcomes'>;
+type SnapshotSource = Pick<State, 'decisions' | 'actions' | 'calls' | 'unknownOutcomes' | 'shippingChecks'>;
 
 async function fromUrl(base: string, passcode: string): Promise<SnapshotSource> {
   const actions = await getJson<{ entries: ActionEntry[] }>(base, '/api/log?kind=actions', passcode);
   const calls = await getJson<{ entries: CallEntry[] }>(base, '/api/log?kind=calls', passcode);
   const { cases } = await getJson<{ cases: { disputeId: string }[] }>(base, '/api/cases', passcode);
+  const { checks } = await getJson<{ checks: ShippingCheck[] }>(base, '/api/shipping-checks', passcode);
   const decisions: Record<string, StoredDecision> = {};
   const unknownOutcomes: Record<string, UnknownOutcome> = {};
   for (const { disputeId } of cases) {
@@ -25,7 +27,7 @@ async function fromUrl(base: string, passcode: string): Promise<SnapshotSource> 
     if (detail.decision) decisions[disputeId] = detail.decision;
     if (detail.unknownOutcome) unknownOutcomes[disputeId] = detail.unknownOutcome;
   }
-  return { decisions, actions: actions.entries, calls: calls.entries, unknownOutcomes };
+  return { decisions, actions: actions.entries, calls: calls.entries, unknownOutcomes, shippingChecks: Object.fromEntries(checks.map((check) => [check.orderId, check])) };
 }
 
 async function run(): Promise<void> {
@@ -46,13 +48,13 @@ async function run(): Promise<void> {
     state = await fromUrl(base, passcode);
   } else {
     const saved = JSON.parse(await readFile(join(resolve(process.env.KEPT_DATA_DIR ?? './data'), 'state.json'), 'utf8')) as State;
-    state = { ...saved, unknownOutcomes: saved.unknownOutcomes ?? {} };
+    state = { ...saved, unknownOutcomes: saved.unknownOutcomes ?? {}, shippingChecks: saved.shippingChecks ?? {} };
   }
   const json = `${JSON.stringify(buildSnapshot(state, new Date()), null, 2)}\n`;
   const result = checkSnapshot(json);
   if (!result.ok) throw new Error(`Refusing to write ${outputPath}:\n${result.problems.join('\n')}`);
   await writeFile(outputPath, json);
-  console.log(`Wrote ${outputPath}: ${Object.keys(state.decisions).length} decisions, ${state.actions.length} actions, ${state.calls.length} calls`);
+  console.log(`Wrote ${outputPath}: ${Object.keys(state.decisions).length} decisions, ${state.actions.length} actions, ${state.calls.length} calls, ${Object.keys(state.shippingChecks).length} shipping checks`);
 }
 
 run().catch((error: unknown) => {

@@ -352,6 +352,73 @@ textarea {
   min-height: 0;
 }
 
+/* Shipping check */
+.shipping {
+  margin-top: 32px;
+}
+
+.shipping-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.shipping-intro {
+  max-width: 72ch;
+  margin: 6px 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.shipping-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.search-input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.shipping-frame {
+  margin-top: 12px;
+}
+
+.shipping-tracking {
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.shipping-subtitle {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.shipping-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+}
+
+.shipping-fields .field + .field {
+  margin-top: 0;
+}
+
+.shipping-result {
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+
+.kept-grid .ag-cell.cell-missing {
+  color: var(--danger);
+}
+
 /* Grid cells */
 .kept-grid .ag-cell {
   font-variant-numeric: tabular-nums;

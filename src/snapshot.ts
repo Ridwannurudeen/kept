@@ -1,7 +1,9 @@
-import type { PreviousCall, Snapshot, SnapshotAction, SnapshotCall, State, StoredDecision, UnknownOutcome } from './store.js';
+import type { ChecklistItem } from './cases.js';
+import type { TrackingAttempt } from './shipping.js';
+import type { PreviousCall, Snapshot, SnapshotAction, SnapshotCall, SnapshotShippingCheck, State, StoredDecision, UnknownOutcome } from './store.js';
 
 export const SNAPSHOT_ALLOWLIST: Record<string, string[]> = {
-  Snapshot: ['snapshotAt', 'decisions', 'actions', 'calls', 'unknownOutcomes'],
+  Snapshot: ['snapshotAt', 'decisions', 'actions', 'calls', 'unknownOutcomes', 'shippingChecks'],
   decision: ['recommendation', 'plain_ask', 'evidence_have', 'evidence_missing', 'reasons', 'would_change', 'offer_amount', 'draft_note'],
   validation: ['ok', 'action', 'cap', 'blockers'],
   StoredDecision: ['decision', 'validation', 'at', 'model', 'steps', 'toolCalls', 'durationMs', 'basis', 'previous'],
@@ -13,6 +15,12 @@ export const SNAPSHOT_ALLOWLIST: Record<string, string[]> = {
   after: ['status', 'stage', 'outcome'],
   SnapshotCall: ['id', 'at', 'method', 'path', 'status', 'durationMs', 'requestId', 'debugId', 'retried'],
   UnknownOutcome: ['action', 'at'],
+  ShippingCheck: ['orderId', 'itemName', 'amount', 'captureId', 'protection', 'checklist', 'tracker', 'checkedAt', 'tracking'],
+  money: ['currency_code', 'value'],
+  shippingProtection: ['status', 'categories'],
+  checklistItem: ['label', 'state', 'detail'],
+  tracker: ['id', 'status', 'trackingNumber'],
+  tracking: ['carrier', 'trackingNumber', 'at', 'ok', 'unknown', 'status', 'requestId', 'debugId', 'message'],
 };
 
 const FORBIDDEN = ['@', 'example.com', 'payer_id', 'address_line', 'full_name', 'email'];
@@ -21,14 +29,17 @@ const MAX_MESSAGE = 200;
 const CHILD_KINDS: Record<string, Record<string, string>> = {
   StoredDecision: { decision: 'decision', validation: 'validation', basis: 'basis', previous: 'previous' },
   SnapshotAction: { submitted: 'submitted', paypal: 'paypal', after: 'after' },
+  ShippingCheck: { amount: 'money', protection: 'shippingProtection', tracker: 'tracker', tracking: 'tracking' },
 };
+const LIST_KINDS: Record<string, Record<string, string>> = { ShippingCheck: { checklist: 'checklistItem' } };
+const NULLABLE = ['SnapshotAction.after', 'ShippingCheck.amount', 'ShippingCheck.protection', 'ShippingCheck.tracker', 'ShippingCheck.tracking'];
 
 function pick<T>(source: object, kind: string): T {
   const record = source as Record<string, unknown>;
   return Object.fromEntries(SNAPSHOT_ALLOWLIST[kind].filter((key) => key in record).map((key) => [key, record[key]])) as T;
 }
 
-export function buildSnapshot(state: Pick<State, 'decisions' | 'actions' | 'calls' | 'unknownOutcomes'>, now: Date): Snapshot {
+export function buildSnapshot(state: Pick<State, 'decisions' | 'actions' | 'calls' | 'unknownOutcomes' | 'shippingChecks'>, now: Date): Snapshot {
   const decisions: Record<string, StoredDecision> = {};
   for (const [id, stored] of Object.entries(state.decisions)) {
     decisions[id] = {
@@ -50,7 +61,18 @@ export function buildSnapshot(state: Pick<State, 'decisions' | 'actions' | 'call
   });
   const calls = state.calls.map((call) => pick<SnapshotCall>(call, 'SnapshotCall'));
   const unknownOutcomes = Object.fromEntries(Object.entries(state.unknownOutcomes).map(([id, unknown]) => [id, pick<UnknownOutcome>(unknown, 'UnknownOutcome')]));
-  return { snapshotAt: now.toISOString(), decisions, actions, calls, unknownOutcomes };
+  const shippingChecks = Object.fromEntries(Object.entries(state.shippingChecks).map(([id, check]): [string, SnapshotShippingCheck] => {
+    const tracking = check.tracking && pick<TrackingAttempt>(check.tracking, 'tracking');
+    return [id, {
+      ...pick<Omit<SnapshotShippingCheck, 'amount' | 'protection' | 'checklist' | 'tracker' | 'tracking'>>(check, 'ShippingCheck'),
+      amount: check.amount && pick(check.amount, 'money'),
+      protection: check.protection && pick(check.protection, 'shippingProtection'),
+      checklist: check.checklist.map((item) => pick<ChecklistItem>(item, 'checklistItem')),
+      tracker: check.tracker && pick(check.tracker, 'tracker'),
+      tracking: tracking && { ...tracking, message: tracking.message === null ? null : tracking.message.slice(0, MAX_MESSAGE) },
+    }];
+  }));
+  return { snapshotAt: now.toISOString(), decisions, actions, calls, unknownOutcomes, shippingChecks };
 }
 
 export function checkSnapshot(json: string): { ok: true } | { ok: false; problems: string[] } {
@@ -71,7 +93,7 @@ export function checkSnapshot(json: string): { ok: true } | { ok: false; problem
     } else if (typeof item === 'string') {
       const found = forbiddenIn(item);
       if (found) problems.push(`${path} contains forbidden text '${found}'`);
-      if (path.endsWith('.paypal.message') && item.length > MAX_MESSAGE) problems.push(`${path} is longer than ${MAX_MESSAGE} characters`);
+      if ((path.endsWith('.paypal.message') || path.endsWith('.tracking.message')) && item.length > MAX_MESSAGE) problems.push(`${path} is longer than ${MAX_MESSAGE} characters`);
     }
   }
 
@@ -87,7 +109,9 @@ export function checkSnapshot(json: string): { ok: true } | { ok: false; problem
         continue;
       }
       const childKind = CHILD_KINDS[kind]?.[key];
-      if (childKind && !(kind === 'SnapshotAction' && key === 'after' && child === null)) shape(child, childPath, childKind);
+      const listKind = LIST_KINDS[kind]?.[key];
+      if (listKind) list(child, childPath, listKind);
+      else if (childKind && !(child === null && NULLABLE.includes(`${kind}.${key}`))) shape(child, childPath, childKind);
       else leaf(child, childPath);
     }
   }
@@ -112,7 +136,7 @@ export function checkSnapshot(json: string): { ok: true } | { ok: false; problem
       for (const [id, stored] of Object.entries(child)) {
         const found = forbiddenIn(id);
         if (found) problems.push(`${path} key '${id}' contains forbidden text '${found}'`);
-        shape(stored, `${path}.${id}`, key === 'decisions' ? 'StoredDecision' : 'UnknownOutcome');
+        shape(stored, `${path}.${id}`, key === 'decisions' ? 'StoredDecision' : key === 'shippingChecks' ? 'ShippingCheck' : 'UnknownOutcome');
       }
     }
   }

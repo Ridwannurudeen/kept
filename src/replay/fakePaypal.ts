@@ -7,7 +7,7 @@ import { PayPalError } from '../paypal/errors.js';
 import type { CallRecord, PayPalClient } from '../paypal/client.js';
 import type { Capture, Dispute, DisputeListItem, Link, Money, Order } from '../paypal/types.js';
 
-type Used = 'listDisputes' | 'getDispute' | 'getOrder' | 'getCapture' | 'makeOffer' | 'provideSupportingInfo' | 'provideEvidence';
+type Used = 'listDisputes' | 'getDispute' | 'getOrder' | 'getCapture' | 'addTracking' | 'makeOffer' | 'provideSupportingInfo' | 'provideEvidence';
 type Marked = { _replay: string };
 
 function load<T>(dir: string, name: string): (T & Marked)[] {
@@ -18,8 +18,8 @@ function notFound(path: string): PayPalError {
   return new PayPalError(`PayPal GET ${path} returned 404`, 404, null, { name: 'RESOURCE_NOT_FOUND' }, path);
 }
 
-function written(path: string, at: string, onCall?: (call: CallRecord) => void): void {
-  onCall?.({ at, method: 'POST', path, status: 200, durationMs: 0, requestId: null, debugId: null });
+function written(path: string, at: string, onCall?: (call: CallRecord) => void, status = 200): void {
+  onCall?.({ at, method: 'POST', path, status, durationMs: 0, requestId: null, debugId: null });
 }
 
 function selfOnly(d: Dispute): Link[] {
@@ -71,6 +71,20 @@ export class FakePayPal implements Pick<PayPalClient, Used> {
     const capture = this.captures.get(id);
     if (!capture) throw notFound(`/v2/payments/captures/${id}`);
     return structuredClone(capture);
+  }
+
+  async addTracking(orderId: string, body: { capture_id: string; tracking_number: string; carrier: string; notify_payer: boolean }, onCall?: (call: CallRecord) => void): Promise<Order> {
+    const target = `/v2/checkout/orders/${orderId}/track`;
+    const order = this.orders.get(orderId);
+    if (!order) throw new PayPalError(`PayPal POST ${target} returned 404`, 404, null, { name: 'RESOURCE_NOT_FOUND' }, target);
+    const unit = order.purchase_units.find((entry) => (entry.payments?.captures ?? []).some((capture) => capture.id === body.capture_id && capture.status === 'COMPLETED'));
+    if (!unit) throw new PayPalError(`PayPal POST ${target} returned 422`, 422, null, { name: 'UNPROCESSABLE_ENTITY', details: [{ issue: 'CAPTURE_STATUS_NOT_VALID' }] }, target);
+    const at = this.now().toISOString();
+    written(target, at, onCall, 201);
+    const id = `${body.capture_id}-${body.tracking_number}`;
+    const trackers = unit.shipping?.trackers ?? [];
+    if (!trackers.some((tracker) => tracker.id === id)) unit.shipping = { ...unit.shipping, trackers: [...trackers, { id, status: 'SHIPPED', create_time: at }] };
+    return structuredClone(order);
   }
 
   async makeOffer(id: string, body: { note: string; offer_amount: Money; offer_type: 'REFUND' }, onCall?: (call: CallRecord) => void): Promise<{ links?: Link[] }> {

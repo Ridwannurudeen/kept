@@ -362,5 +362,72 @@
         "method": "GET"
       }
     ]
+  },
+  {
+    "_replay": "invented for replay: a P1 Shipping check order modelled on the recorded sandbox fixtures of 2026-11-04, not a recording",
+    "id": "ORDERP1000000001",
+    "intent": "CAPTURE",
+    "status": "COMPLETED",
+    "purchase_units": [
+      {
+        "reference_id": "P1",
+        "amount": {
+          "currency_code": "USD",
+          "value": "16.00",
+          "breakdown": {
+            "item_total": {
+              "currency_code": "USD",
+              "value": "16.00"
+            }
+          }
+        },
+        "description": "Stoneware mug pair",
+        "items": [
+          {
+            "name": "Stoneware mug pair",
+            "unit_amount": {
+              "currency_code": "USD",
+              "value": "16.00"
+            },
+            "quantity": "1",
+            "category": "PHYSICAL_GOODS",
+            "sku": "P1"
+          }
+        ],
+        "shipping": {
+          "address": {
+            "admin_area_2": "San Jose",
+            "admin_area_1": "CA",
+            "country_code": "US"
+          }
+        },
+        "payments": {
+          "captures": [
+            {
+              "id": "CAPTUREP1000000001",
+              "status": "COMPLETED",
+              "amount": {
+                "currency_code": "USD",
+                "value": "16.00"
+              },
+              "final_capture": true,
+              "seller_protection": {
+                "status": "ELIGIBLE",
+                "dispute_categories": [
+                  "ITEM_NOT_RECEIVED",
+                  "UNAUTHORIZED_TRANSACTION"
+                ]
+              },
+              "links": [],
+              "create_time": "2026-11-04T18:20:11Z",
+              "update_time": "2026-11-04T18:20:11Z"
+            }
+          ]
+        }
+      }
+    ],
+    "create_time": "2026-11-04T18:20:11Z",
+    "update_time": "2026-11-04T18:20:11Z",
+    "links": []
   }
 ]

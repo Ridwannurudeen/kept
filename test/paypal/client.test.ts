@@ -68,6 +68,17 @@ test('sends Bearer auth and PayPal-Request-Id on writes', async () => {
   expect(JSON.parse(req.body)).toMatchObject({ offer_type: 'REFUND' });
 });
 
+test('addTracking posts to the order track path with the caller request id and exposes the write CallRecord', async () => {
+  const calls: CallRecord[] = [];
+  const { client, requests } = makeClient([tokenReply(), { status: 201, json: { id: 'ORDER1' }, headers: { 'paypal-debug-id': 'track-debug' } }]);
+  const body = { capture_id: 'CAP1', tracking_number: '1Z999AA10123456784', carrier: 'UPS', notify_payer: false };
+  await client.addTracking('ORDER1', body, (call) => calls.push(call), 'kept-ORDER1-track-abc');
+  expect(requests[1]).toMatchObject({ method: 'POST', url: 'https://api-m.sandbox.paypal.com/v2/checkout/orders/ORDER1/track' });
+  expect(requests[1].headers['paypal-request-id']).toBe('kept-ORDER1-track-abc');
+  expect(JSON.parse(requests[1].body)).toEqual(body);
+  expect(calls).toMatchObject([{ method: 'POST', path: '/v2/checkout/orders/ORDER1/track', status: 201, requestId: 'kept-ORDER1-track-abc', debugId: 'track-debug' }]);
+});
+
 test('exposes the write CallRecord to the action caller', async () => {
   const calls: CallRecord[] = [];
   const { client } = makeClient([tokenReply(), { status: 201, json: { links: [] }, headers: { 'paypal-debug-id': 'write-debug' } }]);

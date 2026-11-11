@@ -99,8 +99,8 @@ export class PayPalClient {
     return (await this.request('POST', `/v2/checkout/orders/${encodeURIComponent(id)}/capture`, { json: {}, requestId })) as Order;
   }
 
-  async addTracking(orderId: string, body: { capture_id: string; tracking_number: string; carrier: string; notify_payer: boolean }): Promise<Order> {
-    return (await this.request('POST', `/v2/checkout/orders/${encodeURIComponent(orderId)}/track`, { json: body })) as Order;
+  async addTracking(orderId: string, body: { capture_id: string; tracking_number: string; carrier: string; notify_payer: boolean }, onCall?: (call: CallRecord) => void, requestId?: string): Promise<Order> {
+    return (await this.request('POST', `/v2/checkout/orders/${encodeURIComponent(orderId)}/track`, { json: body, requestId }, onCall)) as Order;
   }
 
   async makeOffer(id: string, body: { note: string; offer_amount: Money; offer_type: 'REFUND' }, onCall?: (call: CallRecord) => void, requestId?: string): Promise<{ links?: Link[] }> {

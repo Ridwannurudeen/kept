@@ -104,10 +104,37 @@ describe('FakePayPal replay', () => {
     await expect(paypal.getCapture('1VS093774J460400T')).resolves.toMatchObject({ amount: { value: '20.00' } });
   });
 
+  test('the Shipping check order P1 has a COMPLETED capture, no tracker, and a capture that names the order', async () => {
+    const paypal = fake();
+    const order = await paypal.getOrder('ORDERP1000000001');
+    expect(order.purchase_units[0]).toMatchObject({ description: 'Stoneware mug pair', amount: { value: '16.00' }, shipping: { address: { admin_area_2: 'San Jose' } }, payments: { captures: [{ id: 'CAPTUREP1000000001', status: 'COMPLETED' }] } });
+    expect(order.purchase_units[0]?.shipping?.trackers).toBeUndefined();
+    expect(await paypal.getCapture('CAPTUREP1000000001')).toMatchObject({ seller_protection: { status: 'ELIGIBLE', dispute_categories: ['ITEM_NOT_RECEIVED', 'UNAUTHORIZED_TRANSACTION'] }, supplementary_data: { related_ids: { order_id: 'ORDERP1000000001' } } });
+  });
+
+  test('addTracking adds one SHIPPED tracker named capture-number, answers the order, and is idempotent; reset removes it', async () => {
+    const paypal = fake();
+    const calls: unknown[] = [];
+    const body = { capture_id: 'CAPTUREP1000000001', tracking_number: '1Z999AA10123456784', carrier: 'UPS', notify_payer: false };
+    const result = await paypal.addTracking('ORDERP1000000001', body, (call) => calls.push(call));
+    expect(calls).toEqual([{ at: at.toISOString(), method: 'POST', path: '/v2/checkout/orders/ORDERP1000000001/track', status: 201, durationMs: 0, requestId: null, debugId: null }]);
+    expect(result.purchase_units[0]?.shipping?.trackers).toEqual([{ id: 'CAPTUREP1000000001-1Z999AA10123456784', status: 'SHIPPED', create_time: at.toISOString() }]);
+    await paypal.addTracking('ORDERP1000000001', body);
+    expect((await paypal.getOrder('ORDERP1000000001')).purchase_units[0]?.shipping?.trackers).toHaveLength(1);
+    paypal.reset();
+    expect((await paypal.getOrder('ORDERP1000000001')).purchase_units[0]?.shipping?.trackers).toBeUndefined();
+  });
+
+  test('addTracking refuses a capture that is not COMPLETED with 422 and an unknown order with 404, like the spec', async () => {
+    const paypal = fake();
+    await expect(paypal.addTracking('92U413849D170012F', { capture_id: '1VS093774J460400T', tracking_number: '1Z999AA10123456785', carrier: 'UPS', notify_payer: false })).rejects.toMatchObject({ status: 422 });
+    await expect(paypal.addTracking('NOSUCHORDER1', { capture_id: 'X', tracking_number: '1Z999AA10123456785', carrier: 'UPS', notify_payer: false })).rejects.toMatchObject({ status: 404 });
+  });
+
   test('replay data carries the marker and no personal data', () => {
     for (const name of ['disputes', 'orders', 'captures']) {
       const text = readFileSync(`${dir}/${name}.json`, 'utf8');
-      for (const entry of JSON.parse(text) as { _replay: string }[]) expect(entry._replay).toBe('derived from recorded sandbox fixtures 2026-11-04');
+      for (const entry of JSON.parse(text) as { _replay: string; id?: string }[]) expect(entry._replay).toBe(['ORDERP1000000001', 'CAPTUREP1000000001'].includes(entry.id ?? '') ? 'invented for replay: a P1 Shipping check order modelled on the recorded sandbox fixtures of 2026-11-04, not a recording' : 'derived from recorded sandbox fixtures 2026-11-04');
       expect(text).not.toMatch(/@|redacted|payer_id|merchant_id|address_line|postal_code|full_name|given_name|surname|email/i);
     }
     expect(readFileSync(`${dir}/cases.json`, 'utf8')).not.toMatch(/@|redacted|payer_id|merchant_id|address_line|postal_code|full_name|given_name|surname|email/i);

@@ -9,6 +9,7 @@ import type { ActionEntry, CallEntry } from './log.js';
 import type { ActionKind } from './paypal/dispute.js';
 import type { CaseRecord } from '../seed/seed.js';
 import { buildSnapshot } from './snapshot.js';
+import type { ShippingCheck } from './shipping.js';
 
 export type DecisionBasis = { stage: string; status: string; disputeState: string | null; links: string[]; amount: string; dueAt: string | null; evidence?: string };
 export type PreviousCall = Pick<Decision, 'recommendation' | 'offer_amount' | 'would_change'> & { at: string; evidenceChanged: boolean };
@@ -16,7 +17,8 @@ export type StoredDecision = { decision: Decision; validation: Validation; at: s
 export type SnapshotAction = Omit<ActionEntry, 'recommended'>;
 export type SnapshotCall = Pick<CallEntry, 'id' | 'at' | 'method' | 'path' | 'status' | 'durationMs' | 'requestId' | 'debugId' | 'retried'>;
 export type UnknownOutcome = { action: ActionKind; at: string };
-export type Snapshot = { snapshotAt: string; decisions: Record<string, StoredDecision>; actions: SnapshotAction[]; calls: SnapshotCall[]; unknownOutcomes: Record<string, UnknownOutcome> };
+export type SnapshotShippingCheck = Omit<ShippingCheck, 'shipToCity'>;
+export type Snapshot = { snapshotAt: string; decisions: Record<string, StoredDecision>; actions: SnapshotAction[]; calls: SnapshotCall[]; unknownOutcomes: Record<string, UnknownOutcome>; shippingChecks: Record<string, SnapshotShippingCheck> };
 export type State = {
   version: 1;
   startedAt: string;
@@ -28,6 +30,7 @@ export type State = {
   calls: CallEntry[];
   unknownOutcomes: Record<string, UnknownOutcome>;
   attachments: Record<string, { name: string; type: string; size: number; at: string }[]>;
+  shippingChecks: Record<string, ShippingCheck>;
 };
 
 export function basisOf(d: Dispute): DecisionBasis {
@@ -89,6 +92,7 @@ async function freshState(seedPath: string, snapshotPath: string | null, now: Da
     calls: snapshot?.calls ?? [],
     unknownOutcomes: snapshot?.unknownOutcomes ?? {},
     attachments: {},
+    shippingChecks: Object.fromEntries(Object.entries(snapshot?.shippingChecks ?? {}).map(([id, check]) => [id, { ...check, shipToCity: null }])),
   };
 }
 
@@ -121,6 +125,7 @@ export class Store {
       try {
         const state = JSON.parse(text) as State;
         state.unknownOutcomes ??= {};
+        state.shippingChecks ??= {};
         try { state.policy = parsePolicy(state.policy); }
         catch (error) {
           console.warn(`Invalid stored policy; using default policy: ${error instanceof Error ? error.message : String(error)}`);

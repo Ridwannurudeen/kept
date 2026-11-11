@@ -153,13 +153,14 @@ test('starts with empty lists and restoredFrom null when there is no snapshot', 
     expect(s.calls).toEqual([]);
     expect(s.attachments).toEqual({});
     expect(s.unknownOutcomes).toEqual({});
+    expect(s.shippingChecks).toEqual({});
   } finally { await f.cleanup(); }
 });
-test('snapshot() returns only decisions, actions, calls and a timestamp', async () => {
+test('snapshot() returns only decisions, actions, calls, unknown outcomes, shipping checks and a timestamp', async () => {
   const f = await fixture();
   try {
     const s = (await Store.open(f.opts)).snapshot();
-    expect(Object.keys(s).sort()).toEqual(['actions', 'calls', 'decisions', 'snapshotAt', 'unknownOutcomes']);
+    expect(Object.keys(s).sort()).toEqual(['actions', 'calls', 'decisions', 'shippingChecks', 'snapshotAt', 'unknownOutcomes']);
   } finally { await f.cleanup(); }
 });
 test('isDecisionStale is true when stage, links, amount or due date changed and false otherwise', () => {
@@ -218,5 +219,26 @@ test('photo findings are removed when restoring snapshot decisions', async () =>
     await writeFile(snapshotPath, JSON.stringify({ snapshotAt: '2026-11-06T00:00:00.000Z', decisions: { 'PP-D-1': { decision } }, actions: [], calls: [], unknownOutcomes: {} }));
     const store = await Store.open({ ...f.opts, snapshotPath });
     expect(store.get().decisions['PP-D-1'].decision).toEqual({ recommendation: 'SETTLE' });
+  } finally { await f.cleanup(); }
+});
+test('a state.json written before shipping checks existed loads with none', async () => {
+  const f = await fixture();
+  try {
+    await Store.open(f.opts);
+    const file = join(f.opts.dataDir, 'state.json');
+    const old = JSON.parse(await readFile(file, 'utf8'));
+    delete old.shippingChecks;
+    await writeFile(file, JSON.stringify(old));
+    expect((await Store.open(f.opts)).get().shippingChecks).toEqual({});
+  } finally { await f.cleanup(); }
+});
+test('shipping checks are restored from the snapshot with no ship-to city', async () => {
+  const f = await fixture();
+  try {
+    const snapshotPath = join(f.dir, 'snapshot.json');
+    const check = { orderId: 'ORDERP1', itemName: 'Mugs', amount: { currency_code: 'USD', value: '16.00' }, captureId: 'CAPP1', protection: null, checklist: [], tracker: null, checkedAt: '2026-11-05T00:00:00.000Z', tracking: null };
+    await writeFile(snapshotPath, JSON.stringify({ snapshotAt: '2026-11-06T00:00:00.000Z', decisions: {}, actions: [], calls: [], unknownOutcomes: {}, shippingChecks: { ORDERP1: check } }));
+    const store = await Store.open({ ...f.opts, snapshotPath });
+    expect(store.get().shippingChecks).toEqual({ ORDERP1: { ...check, shipToCity: null } });
   } finally { await f.cleanup(); }
 });

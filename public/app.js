@@ -73,6 +73,20 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
     calls: document.getElementById("calls"),
     callsCount: document.getElementById("calls-count"),
     callsScroll: document.getElementById("calls-scroll"),
+    shippingForm: document.getElementById("shipping-form"),
+    shippingOrder: document.getElementById("shipping-order"),
+    shippingCheck: document.getElementById("shipping-check-button"),
+    shippingStatus: document.getElementById("shipping-status"),
+    shippingGrid: document.getElementById("shipping-grid"),
+    shippingFrame: document.getElementById("shipping-frame"),
+    trackingForm: document.getElementById("tracking-form"),
+    trackingTitle: document.getElementById("tracking-title"),
+    trackingCarrier: document.getElementById("tracking-carrier"),
+    trackingNumber: document.getElementById("tracking-number"),
+    trackingError: document.getElementById("tracking-error"),
+    trackingCancel: document.getElementById("tracking-cancel"),
+    trackingApprove: document.getElementById("tracking-approve"),
+    trackingResult: document.getElementById("tracking-result"),
   };
 
   let gridApi = null;
@@ -101,6 +115,9 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
   let compareReturn = null;
   let calls = [];
   let heldNow = [];
+  let shippingApi = null;
+  let trackingOrderId = null;
+  let sendingTracking = false;
   const isPending = (job) =>
     job?.state === "queued" || job?.state === "running";
 
@@ -2552,6 +2569,374 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
     },
   ];
 
+  // ---------- shipping check ----------
+
+  const ORDER_ID = /^[A-Z0-9]{1,36}$/;
+  const TRACKING_NUMBER = /^[A-Z0-9]{8,40}$/;
+  const SHIPPING_CHECKLIST = [
+    "Shipped to the transaction address",
+    "Online tracking number",
+    "Delivered, with a date",
+    "Recipient address matches",
+  ];
+  const words = (code) => code.toLowerCase().replaceAll("_", " ");
+  const sentence = (code) =>
+    words(code).charAt(0).toUpperCase() + words(code).slice(1);
+
+  function shippingProtectionText(row) {
+    if (!row.protection) return "Not reported";
+    const categories = row.protection.categories?.length
+      ? `: ${row.protection.categories.map(words).join(", ")}`
+      : "";
+    return `${sentence(row.protection.status)}${categories}`;
+  }
+
+  const trackerStatus = (tracker) =>
+    tracker.status ? words(tracker.status) : "status not reported";
+  const isActive = (tracker) => tracker && tracker.status !== "CANCELLED";
+  const waitingForPayPal = (row) => row.tracking?.ok && !isActive(row.tracker);
+
+  function trackerText(row) {
+    return row.tracker
+      ? `${row.tracker.trackingNumber || row.tracker.id} ${trackerStatus(row.tracker)}`
+      : "None on PayPal's order";
+  }
+
+  function trackerReport(check) {
+    if (waitingForPayPal(check))
+      return `Sent, waiting for PayPal to show it on order ${check.orderId}. Check the order again later.`;
+    if (!check.tracker)
+      return `PayPal's order ${check.orderId} has no tracker.`;
+    if (!isActive(check.tracker))
+      return `PayPal's order ${check.orderId} shows only a cancelled tracker, ${check.tracker.trackingNumber || check.tracker.id}.`;
+    return `PayPal's order ${check.orderId} shows tracker ${check.tracker.trackingNumber || check.tracker.id}, status ${trackerStatus(check.tracker)}.`;
+  }
+
+  function orderCell(p) {
+    const wrap = el("div", "cell-stack");
+    wrap.append(el("span", "cell-line cell-mono", p.data.orderId));
+    if (p.data.shipToCity)
+      wrap.append(
+        el("span", "cell-line cell-sub", `Ships to ${p.data.shipToCity}`),
+      );
+    return wrap;
+  }
+
+  function shippingProtectionCell(p) {
+    const protection = p.data.protection;
+    const wrap = el("div", "cell-stack");
+    const top = el("span", "cell-line");
+    top.append(
+      el(
+        "span",
+        "chip chip-protect-none",
+        protection ? sentence(protection.status) : "Not reported",
+      ),
+    );
+    wrap.append(top);
+    if (protection?.categories?.length)
+      wrap.append(
+        el(
+          "span",
+          "cell-line cell-sub",
+          protection.categories.map(words).join(", "),
+        ),
+      );
+    return wrap;
+  }
+
+  function trackerCell(p) {
+    const tracker = p.data.tracker;
+    if (!tracker) return el("span", "cell-muted", "None on PayPal's order");
+    const wrap = el("div", "cell-stack");
+    wrap.append(
+      el("span", "cell-line cell-mono", tracker.trackingNumber || tracker.id),
+      el(
+        "span",
+        "cell-line cell-sub",
+        tracker.status ? sentence(tracker.status) : "Status not reported",
+      ),
+    );
+    return wrap;
+  }
+
+  function shippingActionCell(p) {
+    const row = p.data;
+    if (row.tracking?.unknown)
+      return el("span", "cell-muted", "Outcome unknown; check PayPal");
+    if (waitingForPayPal(row))
+      return el("span", "cell-muted", "Sent, waiting for PayPal to show it");
+    if (isActive(row.tracker) || !row.captureId) return "";
+    const button = el("button", "button button-small", "Add tracking");
+    button.type = "button";
+    button.addEventListener("click", () => openTracking(row.orderId));
+    return button;
+  }
+
+  function checklistColumn(headerName, index) {
+    return {
+      colId: `check${index}`,
+      headerName,
+      minWidth: 110,
+      enableCellChangeFlash: true,
+      valueGetter: (p) =>
+        CHECKLIST_STATES[p.data.checklist[index]?.state] || "",
+      tooltipValueGetter: (p) => {
+        const item = p.data.checklist[index];
+        return item ? `${item.label}. ${item.detail}` : null;
+      },
+      cellClassRules: {
+        "cell-missing": (p) => p.data.checklist[index]?.state === "missing",
+      },
+    };
+  }
+
+  const shippingColumnDefs = [
+    {
+      colId: "order",
+      headerName: "Order",
+      field: "orderId",
+      pinned: "left",
+      minWidth: 150,
+      cellRenderer: orderCell,
+    },
+    {
+      colId: "item",
+      headerName: "Item",
+      field: "itemName",
+      minWidth: 100,
+      flex: 1.2,
+      tooltipField: "itemName",
+      wrapText: true,
+      cellClass: "cell-wrap",
+    },
+    moneyColumn("amount", "Amount", (d) => d.amount, { minWidth: 94 }),
+    {
+      colId: "protection",
+      headerName: "Seller Protection, as PayPal reports it",
+      minWidth: 140,
+      flex: 1.3,
+      valueGetter: (p) => shippingProtectionText(p.data),
+      cellRenderer: shippingProtectionCell,
+      tooltipValueGetter: (p) =>
+        p.data.protection
+          ? "The capture's seller_protection.status and dispute_categories. PayPal decides whether Seller Protection applies."
+          : "PayPal did not report a Seller Protection status for this payment to Kept.",
+    },
+    ...SHIPPING_CHECKLIST.map(checklistColumn),
+    {
+      colId: "tracker",
+      headerName: "Tracker",
+      minWidth: 140,
+      flex: 1.2,
+      enableCellChangeFlash: true,
+      valueGetter: (p) => trackerText(p.data),
+      cellRenderer: trackerCell,
+      tooltipValueGetter: (p) =>
+        `The first tracker on PayPal's order, with the status PayPal reports. PayPal's tracker record does not include the carrier${p.data.tracking?.carrier ? `; you sent ${p.data.tracking.carrier}` : ""}.`,
+    },
+    {
+      colId: "checked",
+      headerName: "Checked",
+      minWidth: 110,
+      valueGetter: (p) => p.data.checkedAt,
+      valueFormatter: (p) => callFormat.format(new Date(p.value)),
+    },
+    {
+      colId: "shippingAction",
+      headerName: "Action",
+      minWidth: 130,
+      sortable: false,
+      filter: false,
+      cellRenderer: shippingActionCell,
+    },
+  ];
+
+  function createShippingGrid() {
+    shippingApi = agGrid.createGrid(els.shippingGrid, {
+      theme: gridTheme,
+      columnDefs: shippingColumnDefs,
+      defaultColDef: {
+        sortable: true,
+        resizable: true,
+        filter: true,
+        wrapHeaderText: true,
+        autoHeaderHeight: true,
+      },
+      animateRows: !reducedMotion,
+      rowHeight: 56,
+      getRowId: (p) => p.data.orderId,
+      domLayout: "autoHeight",
+      enableCellTextSelection: true,
+      tooltipShowDelay: 300,
+      autoSizeStrategy: { type: "fitGridWidth", defaultMinWidth: 100 },
+      onGridSizeChanged: (p) => {
+        if (p.clientWidth > 0) p.api.sizeColumnsToFit();
+      },
+      overlayNoRowsTemplate:
+        "<span>No orders checked yet. Enter a PayPal order ID above.</span>",
+    });
+    els.shippingGrid
+      .querySelector('[role="grid"]')
+      .setAttribute("aria-label", "Shipping checks");
+  }
+
+  function showShippingCheck(check) {
+    if (shippingApi.getRowNode(check.orderId))
+      shippingApi.applyTransaction({ update: [check] });
+    else shippingApi.applyTransaction({ add: [check], addIndex: 0 });
+    els.shippingFrame.classList.add("has-rows");
+  }
+
+  async function loadShippingChecks() {
+    try {
+      const { checks } = await api("/api/shipping-checks");
+      shippingApi.setGridOption("rowData", checks);
+      els.shippingFrame.classList.toggle("has-rows", checks.length > 0);
+    } catch (error) {
+      els.shippingStatus.classList.add("is-warning");
+      els.shippingStatus.textContent = `Could not load shipping checks. ${error.message}`;
+    }
+  }
+
+  async function checkShippingOrder(event) {
+    event.preventDefault();
+    const orderId = els.shippingOrder.value.trim().toUpperCase();
+    if (!ORDER_ID.test(orderId)) {
+      els.shippingOrder.setAttribute("aria-invalid", "true");
+      els.shippingStatus.classList.add("is-warning");
+      els.shippingStatus.textContent =
+        "Enter the order ID as PayPal shows it: up to 36 letters and digits.";
+      els.shippingOrder.focus();
+      return;
+    }
+    els.shippingOrder.removeAttribute("aria-invalid");
+    els.shippingCheck.disabled = true;
+    els.shippingStatus.classList.remove("is-warning");
+    els.shippingStatus.textContent = `Reading order ${orderId} from PayPal…`;
+    try {
+      const { check, warnings } = await api("/api/shipping-checks", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      showShippingCheck(check);
+      els.shippingStatus.classList.toggle("is-warning", warnings.length > 0);
+      els.shippingStatus.textContent =
+        `Checked. ${trackerReport(check)} ${warnings.join(" ")}`.trim();
+    } catch (error) {
+      els.shippingStatus.classList.add("is-warning");
+      els.shippingStatus.textContent = `Could not check order ${orderId}. ${error.message}`;
+    } finally {
+      els.shippingCheck.disabled = false;
+    }
+    announce(els.shippingStatus.textContent);
+    loadCalls();
+  }
+
+  function openTracking(orderId) {
+    trackingOrderId = orderId;
+    els.trackingTitle.textContent = `Add tracking to order ${orderId}`;
+    els.trackingNumber.value = "";
+    els.trackingNumber.removeAttribute("aria-invalid");
+    els.trackingError.hidden = true;
+    els.trackingResult.hidden = true;
+    els.trackingForm.hidden = false;
+    els.trackingTitle.focus();
+  }
+
+  function closeTracking() {
+    els.trackingForm.hidden = true;
+    trackingOrderId = null;
+  }
+
+  function submitTracking(event) {
+    event.preventDefault();
+    if (sendingTracking || els.confirmDialog.open || !trackingOrderId) return;
+    const orderId = trackingOrderId;
+    const body = {
+      carrier: els.trackingCarrier.value,
+      trackingNumber: els.trackingNumber.value
+        .replace(/\s+/g, "")
+        .toUpperCase(),
+    };
+    if (!TRACKING_NUMBER.test(body.trackingNumber)) {
+      els.trackingNumber.setAttribute("aria-invalid", "true");
+      els.trackingError.textContent =
+        "Enter the carrier's tracking number: 8 to 40 letters and digits.";
+      els.trackingError.hidden = false;
+      els.trackingNumber.focus();
+      return;
+    }
+    els.trackingNumber.removeAttribute("aria-invalid");
+    els.trackingError.hidden = true;
+    els.confirmSummary.textContent = `Add ${els.trackingCarrier.selectedOptions[0].textContent} tracking ${body.trackingNumber} to PayPal order ${orderId}.`;
+    els.confirmDialog.returnValue = "";
+    const onClose = () => {
+      els.confirmDialog.removeEventListener("close", onClose);
+      if (els.confirmDialog.returnValue === "ok" && !sendingTracking)
+        sendTracking(orderId, body);
+    };
+    els.confirmDialog.addEventListener("close", onClose);
+    els.confirmDialog.showModal();
+  }
+
+  async function sendTracking(orderId, body) {
+    sendingTracking = true;
+    els.trackingApprove.setAttribute("aria-disabled", "true");
+    els.trackingApprove.replaceChildren(
+      spinner(),
+      document.createTextNode("Sending…"),
+    );
+    announce(`Sending tracking to PayPal for order ${orderId}`);
+    let text;
+    try {
+      const res = await authedFetch(
+        `/api/shipping-checks/${encodeURIComponent(orderId)}/tracking`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
+      const result = await res.json();
+      if (res.status === 200) {
+        showShippingCheck(result.check);
+        closeTracking();
+        els.shippingStatus.textContent = "";
+        text = waitingForPayPal(result.check)
+          ? trackerReport(result.check)
+          : `Sent. ${trackerReport(result.check)}`;
+      } else if (res.status === 409) {
+        text = `Not sent. ${result.blockers.join(". ")}.`;
+        loadShippingChecks();
+      } else if (res.status === 502 && !result.check) {
+        text =
+          `Not sent. Kept could not read the order from PayPal first, so nothing was sent. ${result.message || ""}`.trim();
+      } else if (res.status === 502) {
+        showShippingCheck(result.check);
+        els.shippingStatus.textContent = "";
+        text = result.error.unknown
+          ? "Outcome unknown. Check the order in PayPal before retrying."
+          : `PayPal did not accept the tracking. ${result.error.message}`;
+      } else if (res.status >= 500) {
+        throw new Error(result.message || `Server returned ${res.status}`);
+      } else {
+        text = `Not sent. ${result.message || `Server returned ${res.status}`}`;
+      }
+    } catch (error) {
+      text = `Outcome unknown. Check the order in PayPal before retrying. ${error.message}`;
+    }
+    sendingTracking = false;
+    els.trackingApprove.removeAttribute("aria-disabled");
+    els.trackingApprove.textContent = "Approve and send to PayPal";
+    els.trackingResult.textContent = text;
+    els.trackingResult.hidden = false;
+    els.trackingResult.focus();
+    announce(text);
+    loadCalls();
+  }
+
   // ---------- saved view ----------
 
   function readView() {
@@ -2646,26 +3031,28 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
     );
   }
 
+  const gridTheme = agGrid.themeQuartz.withParams({
+    accentColor: "#2b4fb8",
+    fontFamily:
+      'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    fontSize: 14,
+    foregroundColor: "#18181b",
+    borderColor: "#e4e4e7",
+    headerBackgroundColor: "#fafafa",
+    headerTextColor: "#3f3f46",
+    headerFontWeight: 600,
+    rowHoverColor: "#f4f4f5",
+    selectedRowBackgroundColor: "#eef2fb",
+    wrapperBorderRadius: 8,
+    cellHorizontalPadding: 12,
+    browserColorScheme: "light",
+  });
+
   function createGrid() {
     const view = readView();
     userSized = Boolean(view?.state.columnSizing);
     gridApi = agGrid.createGrid(els.grid, {
-      theme: agGrid.themeQuartz.withParams({
-        accentColor: "#2b4fb8",
-        fontFamily:
-          'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-        fontSize: 14,
-        foregroundColor: "#18181b",
-        borderColor: "#e4e4e7",
-        headerBackgroundColor: "#fafafa",
-        headerTextColor: "#3f3f46",
-        headerFontWeight: 600,
-        rowHoverColor: "#f4f4f5",
-        selectedRowBackgroundColor: "#eef2fb",
-        wrapperBorderRadius: 8,
-        cellHorizontalPadding: 12,
-        browserColorScheme: "light",
-      }),
+      theme: gridTheme,
       columnDefs,
       defaultColDef: {
         sortable: true,
@@ -2975,6 +3362,9 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
   els.policyForm.addEventListener("submit", savePolicy);
   els.policyCancel.addEventListener("click", () => els.policyDialog.close());
   els.panelClose.addEventListener("click", closePanel);
+  els.shippingForm.addEventListener("submit", checkShippingOrder);
+  els.trackingForm.addEventListener("submit", submitTracking);
+  els.trackingCancel.addEventListener("click", closeTracking);
   document.addEventListener("keydown", (event) => {
     if (
       event.key === "Escape" &&
@@ -3008,10 +3398,12 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
   }, true);
 
   createGrid();
+  createShippingGrid();
   loadFooter().catch((error) => {
     els.footer.textContent = `Sandbox only. Server status unavailable: ${error.message}`;
   });
   loadCases();
+  loadShippingChecks();
 
   window.kept = { api, loadCases, renderGrid, openCase, announce };
 })();

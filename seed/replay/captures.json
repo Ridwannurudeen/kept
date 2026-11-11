@@ -125,5 +125,30 @@
         "method": "GET"
       }
     ]
+  },
+  {
+    "_replay": "invented for replay: a P1 Shipping check order modelled on the recorded sandbox fixtures of 2026-11-04, not a recording",
+    "id": "CAPTUREP1000000001",
+    "status": "COMPLETED",
+    "amount": {
+      "currency_code": "USD",
+      "value": "16.00"
+    },
+    "final_capture": true,
+    "seller_protection": {
+      "status": "ELIGIBLE",
+      "dispute_categories": [
+        "ITEM_NOT_RECEIVED",
+        "UNAUTHORIZED_TRANSACTION"
+      ]
+    },
+    "links": [],
+    "create_time": "2026-11-04T18:20:11Z",
+    "update_time": "2026-11-04T18:20:11Z",
+    "supplementary_data": {
+      "related_ids": {
+        "order_id": "ORDERP1000000001"
+      }
+    }
   }
 ]

@@ -61,11 +61,12 @@ export type Order = {
   create_time?: string;
   purchase_units: {
     amount: Money;
+    description?: string;
     items?: unknown[];
     shipping?: {
       name?: { full_name?: string };
       address?: Record<string, string>;
-      trackers?: { id: string; status: string; create_time?: string }[];
+      trackers?: { id: string; status?: string; create_time?: string }[];
     };
     payments?: { captures?: Capture[] };
   }[];

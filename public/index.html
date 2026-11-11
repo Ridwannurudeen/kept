@@ -48,6 +48,46 @@
         <div class="grid-frame" id="grid-frame">
           <div class="kept-grid" id="grid"></div>
         </div>
+        <section class="shipping" id="shipping" aria-labelledby="shipping-title">
+          <h2 class="shipping-title" id="shipping-title">Shipping check</h2>
+          <p class="shipping-intro">Before you ship, check a PayPal order. Kept reads PayPal's order and payment and shows what PayPal's record says about Seller Protection. PayPal decides whether Seller Protection applies.</p>
+          <form class="shipping-form" id="shipping-form" novalidate>
+            <div class="search">
+              <label class="search-label" for="shipping-order">PayPal order ID</label>
+              <input type="text" id="shipping-order" class="search-input cell-mono" maxlength="36" autocomplete="off" spellcheck="false" aria-describedby="shipping-status" />
+            </div>
+            <button type="submit" class="button button-primary" id="shipping-check-button">Check</button>
+          </form>
+          <p class="fetch-status" id="shipping-status"></p>
+          <div class="grid-frame shipping-frame" id="shipping-frame">
+            <div class="kept-grid" id="shipping-grid"></div>
+          </div>
+          <form class="shipping-tracking" id="tracking-form" aria-labelledby="tracking-title" hidden novalidate>
+            <h3 class="shipping-subtitle" id="tracking-title" tabindex="-1">Add tracking</h3>
+            <div class="shipping-fields">
+              <div class="field">
+                <label class="field-label" for="tracking-carrier">Carrier</label>
+                <select id="tracking-carrier" class="field-input">
+                  <option value="UPS">UPS</option>
+                  <option value="USPS">USPS</option>
+                  <option value="FEDEX">FedEx</option>
+                  <option value="DHL">DHL</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label" for="tracking-number">Tracking number</label>
+                <input type="text" id="tracking-number" class="field-input cell-mono" maxlength="40" autocomplete="off" spellcheck="false" aria-describedby="tracking-error" />
+              </div>
+            </div>
+            <p class="field-error" id="tracking-error" hidden></p>
+            <p class="field-hint">Kept sends this to PayPal's order only after you approve, and does not ask PayPal to email the buyer.</p>
+            <div class="dialog-actions">
+              <button type="button" class="button" id="tracking-cancel">Cancel</button>
+              <button type="submit" class="button button-primary" id="tracking-approve">Approve and send to PayPal</button>
+            </div>
+          </form>
+          <p class="shipping-result" id="tracking-result" tabindex="-1" hidden></p>
+        </section>
       </div>
       <section class="panel" id="panel" aria-labelledby="panel-title" hidden>
         <div class="panel-head">

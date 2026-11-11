@@ -121,9 +121,9 @@ function protectionStatusLine(d: Dispute, capture: Capture | null, label: string
   return protection.covers ? `PayPal lists this payment as ${status} for ${label}.` : `PayPal lists this payment as ${status}, but not for ${label}.`;
 }
 
-function itemNotReceivedItems(order: Order | null): ChecklistItem[] {
+export function itemNotReceivedItems(order: Order | null): ChecklistItem[] {
   const shipping = order?.purchase_units[0]?.shipping;
-  const trackers = shipping?.trackers ?? [];
+  const trackers = (shipping?.trackers ?? []).filter((tracker) => tracker.status !== 'CANCELLED');
   const delivered = trackers.some((tracker) => tracker.status === 'DELIVERED');
   const noOrder = "Kept could not load PayPal's order for this payment.";
   const shipped: Omit<ChecklistItem, 'label'> = shipping?.address && trackers.length
@@ -131,10 +131,10 @@ function itemNotReceivedItems(order: Order | null): ChecklistItem[] {
     : { state: 'not_visible', detail: order ? "PayPal's order does not show both a shipping address and a tracker." : noOrder };
   const tracking: Omit<ChecklistItem, 'label'> = !order ? { state: 'not_visible', detail: noOrder }
     : trackers.length ? { state: 'in_paypal_data', detail: `Tracker ${trackers[0]!.id} on PayPal's order.` }
-    : { state: 'missing', detail: "PayPal's order has no tracker." };
+    : { state: 'missing', detail: shipping?.trackers?.length ? "PayPal's order shows only a cancelled tracker." : "PayPal's order has no tracker." };
   const delivery: Omit<ChecklistItem, 'label'> = !order ? { state: 'not_visible', detail: noOrder }
     : delivered ? { state: 'not_visible', detail: 'PayPal shows DELIVERED; the delivery date is not in the data Kept can read' }
-    : trackers.length ? { state: 'missing', detail: `PayPal's record shows ${trackers[0]!.status}, not delivered` }
+    : trackers.length ? { state: 'missing', detail: `PayPal's record shows ${trackers[0]!.status ?? 'no status'}, not delivered` }
     : { state: 'missing', detail: "PayPal's order has no tracker, so no delivery status." };
   return [
     { label: "Shipped to the address on PayPal's transaction details", ...shipped },

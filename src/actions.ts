@@ -29,11 +29,11 @@ export function resetActionGuards(): void {
   unlogged.clear();
 }
 
-function isUnknownStatus(status: number | null): boolean {
+export function isUnknownStatus(status: number | null): boolean {
   return status === null || status >= 500;
 }
 
-function responseError(error: unknown): { status: number | null; debugId: string | null; message: string } {
+export function responseError(error: unknown): { status: number | null; debugId: string | null; message: string } {
   if (error instanceof PayPalError) return { status: error.status === 0 ? null : error.status, debugId: error.debugId, message: error.message };
   const value = error as { response?: { status?: unknown } };
   const status = typeof value?.response?.status === 'number' ? value.response.status : null;

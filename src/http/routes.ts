@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import type { Request, Router } from 'express';
-import { ZodError } from 'zod';
+import { z, ZodError } from 'zod';
 import type { CaseImage, DecideResult } from '../ai/decide.js';
 import { createDecideQueue } from '../ai/queue.js';
 import { buildCaseDetail, buildCaseRow, joinCases, sortRows, summarize } from '../cases.js';
@@ -15,6 +15,7 @@ import type { Deps } from './app.js';
 import type { FakePayPal } from '../replay/fakePaypal.js';
 import { ACTION_KINDS } from '../paypal/dispute.js';
 import { reconcileUnknown } from '../actions.js';
+import { addOrderTracking, CARRIERS, checkOrder, ORDER_ID_PATTERN, TRACKING_NUMBER_PATTERN } from '../shipping.js';
 
 type CachedCases = { disputes: Dispute[]; captures: Map<string, Capture>; fetchedAt: string; at: number; warnings: string[] };
 const caches = new WeakMap<object, CachedCases>();
@@ -49,6 +50,10 @@ async function orderAndCapture(dispute: Dispute, record: CaseRecord | null, deps
   const order = orderId ? await deps.paypal.getOrder(orderId).catch(unavailable) : null;
   return { order, capture: await capturePromise };
 }
+
+const orderIdSchema = z.string().regex(ORDER_ID_PATTERN);
+const shippingCheckSchema = z.object({ orderId: orderIdSchema }).strict();
+const trackingSchema = z.object({ carrier: z.enum(CARRIERS), trackingNumber: z.string().regex(TRACKING_NUMBER_PATTERN) }).strict();
 
 const MAX_IMAGES = 3;
 const JPEG_MAGIC = Buffer.from([0xff, 0xd8, 0xff]);
@@ -258,6 +263,23 @@ export function registerRoutes(router: Router, deps: Deps): void {
       const warnings: string[] = [];
       const { order, capture } = await orderAndCapture(outcome.dispute, record, deps, (error: unknown) => { warnings.push(error instanceof Error ? error.message : String(error)); return null; });
       res.json({ entry: outcome.entry, dispute: outcome.dispute, detail: { ...buildCaseDetail(outcome.dispute, record, order, capture, deps.store.get(), deps.now()), warnings } });
+    } catch (error) { next(error); }
+  });
+
+  router.get('/api/shipping-checks', (_req, res) => res.json({ checks: Object.values(deps.store.get().shippingChecks) }));
+  router.post('/api/shipping-checks', async (req, res, next) => {
+    try {
+      const { orderId } = shippingCheckSchema.parse(req.body);
+      res.json(await checkOrder(orderId, deps));
+    } catch (error) { next(error); }
+  });
+  router.post('/api/shipping-checks/:orderId/tracking', async (req, res, next) => {
+    try {
+      const orderId = orderIdSchema.parse(req.params.orderId);
+      const outcome = await addOrderTracking(orderId, trackingSchema.parse(req.body), deps);
+      if (outcome.status === 'refused') { res.status(409).json({ blockers: outcome.blockers }); return; }
+      if (outcome.status === 'failed') { res.status(502).json({ check: outcome.check, error: outcome.error }); return; }
+      res.json({ check: outcome.check });
     } catch (error) { next(error); }
   });
 }
