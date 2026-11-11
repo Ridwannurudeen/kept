@@ -16,8 +16,12 @@ export function disputedAmount(d: Dispute): Money {
   return d.disputed_transactions?.[0]?.gross_amount ?? d.dispute_amount;
 }
 
+export function holdMovements(d: Dispute): NonNullable<Dispute['fund_movements']> {
+  return (d.fund_movements ?? []).filter((movement) => (movement.party === 'SELLER' || movement.party === 'RECEIVER') && movement.type === 'DEBIT' && movement.reason === 'HOLD_PLACED');
+}
+
 export function holdAmount(d: Dispute): Money | null {
-  const movements = (d.fund_movements ?? []).filter((movement) => (movement.party === 'SELLER' || movement.party === 'RECEIVER') && movement.type === 'DEBIT' && movement.reason === 'HOLD_PLACED');
+  const movements = holdMovements(d);
   if (movements.length === 0) return null;
   const value = movements.reduce((sum, movement) => sum + Number(movement.amount.value), 0);
   return { currency_code: movements[0].amount.currency_code, value: value.toFixed(2) };

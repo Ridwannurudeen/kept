@@ -16,6 +16,7 @@ Rules:
 - Never promise that PayPal will release held funds.
 - Weigh the capture's seller_protection status and dispute_categories against the dispute reason, and say in reasons whether PayPal lists this reason for the payment; never say Seller Protection guarantees an outcome.
 - The Seller Protection checklist marks each item in_paypal_data, not_visible (Kept cannot see it) or missing; reason with those states, and remember that whether protection applies is PayPal's decision, not yours or the seller's.
+- Kept sends the seller's note to PayPal, never files. The draft_note must never say that files, labels, photos or documents are attached, enclosed or included; you may still list the seller's files in evidence_have.
 - Only recommend actions PayPal lists for this case.
 - Call get_dispute with the dispute id first. Do not call list_disputes unless get_dispute fails.
 - End by calling submit_decision exactly once with your decision. Do not write the decision as text.`;

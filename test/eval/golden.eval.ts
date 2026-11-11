@@ -23,7 +23,7 @@ const DATES = /\b\d{1,2} \w{3,9} 20\d\d\b|\b20\d\d-\d\d-\d\d\b/g;
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
 const expectations: Record<CaseKey, Expectation> = {
-  A: { recommendation: ['FIGHT'], action: { FIGHT: 'provide_supporting_info' }, mustMention: [/tracking|1Z999AA10123456784|UPS/i, /hold|holding/i], offerUnderCap: false, evidenceMissing: false },
+  A: { recommendation: ['FIGHT'], action: { FIGHT: 'provide_supporting_info' }, mustMention: [/tracking|1Z999AA10123456784|UPS/i, /\bh(?:old(?:s|ing)?|eld)\b/i], offerUnderCap: false, evidenceMissing: false },
   B: { recommendation: ['SETTLE'], action: { SETTLE: 'make_offer' }, mustMention: [/photo|evidence|proof/i], offerUnderCap: true, evidenceMissing: false },
   C: { recommendation: ['ACCEPT'], action: { ACCEPT: 'accept_claim' }, mustMention: [/wrong size|our mistake|admit/i], offerUnderCap: false, evidenceMissing: false },
   D: { recommendation: ['FIGHT', 'SETTLE'], action: { FIGHT: 'provide_evidence', SETTLE: 'make_offer' }, mustMention: [], offerUnderCap: true, evidenceMissing: true },
@@ -129,10 +129,17 @@ export function evaluate(key: CaseKey, input: DecideInput, result: DecideResult)
   }
   const invented = fabrications(decision, buildFabricationSource(input));
   if (invented.length) problems.push(`not in the prompt: ${invented.join(', ')}`);
+  const attachmentClaim = decision.draft_note.split(/[.!?;\n]+/).some((sentence) => {
+    const verb = sentence.search(/\b(?:attach(?:ed|es|ing|ments?)?|enclos(?:e|ed|es|ing|ures?))\b/i);
+    return verb >= 0
+      && /\b(?:attachments?|enclosures?|labels?|slips?|receipts?|photos?|pictures?|images?|documents?|files?|invoices?|screenshots?|scans?|cop(?:y|ies)|proof|evidence)\b|\b(?:find|see) (?:the )?attached\b/i.test(sentence)
+      && !/\b(?:not|no|never|nothing|none|cannot|can['’]t|don['’]t|doesn['’]t|isn['’]t|aren['’]t|won['’]t|wasn['’]t|weren['’]t|without)\b/i.test(sentence.slice(0, verb));
+  });
+  if (attachmentClaim) problems.push('draft_note claims a file is attached; Kept sends notes only');
   const text = [...decision.reasons, ...decision.evidence_have, ...decision.evidence_missing, decision.draft_note, decision.plain_ask].join('\n');
   const missed = expected.mustMention.filter((pattern) => !pattern.test(text));
   if (missed.length) problems.push(`did not mention ${missed.map(String).join(', ')}`);
-  return { checks: { recommendation, action, policy, fabrication: invented.length === 0, mentions: missed.length === 0 }, problems };
+  return { checks: { recommendation, action, policy, fabrication: invented.length === 0 && !attachmentClaim, mentions: missed.length === 0 }, problems };
 }
 
 function textForDecision(decision: Decision): string {

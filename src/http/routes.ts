@@ -9,7 +9,7 @@ import { PayPalError } from '../paypal/errors.js';
 import { allowedActions, captureIdOf, disputedAmount } from '../paypal/dispute.js';
 import { parsePolicy } from '../policy.js';
 import { basisOf } from '../store.js';
-import type { Capture, Dispute } from '../paypal/types.js';
+import type { Capture, Dispute, Order } from '../paypal/types.js';
 import type { CaseRecord } from '../../seed/seed.js';
 import type { Deps } from './app.js';
 import type { FakePayPal } from '../replay/fakePaypal.js';
@@ -24,11 +24,14 @@ function requestId(res: import('express').Response): string { return String(res.
 
 function cachedRows(cached: CachedCases, deps: Deps) {
   const state = deps.store.get();
-  return sortRows(joinCases(cached.disputes, state.cases).map(({ dispute, record }) => buildCaseRow(dispute, record, state, deps.now(), cached.captures.get(record?.captureId ?? '') ?? null)));
+  return sortRows(joinCases(cached.disputes, state.cases).map(({ dispute, record }) => buildCaseRow(dispute, record, state, deps.now(), cached.captures.get(record?.captureId ?? captureIdOf(dispute) ?? '') ?? null)));
 }
 
 async function fetchCaptures(disputes: Dispute[], deps: Deps): Promise<Map<string, Capture>> {
-  const pending = [...new Set(joinCases(disputes, deps.store.get().cases).flatMap(({ record }) => record?.captureId ? [record.captureId] : []))];
+  const pending = [...new Set(joinCases(disputes, deps.store.get().cases).flatMap(({ dispute, record }) => {
+    const id = record?.captureId ?? captureIdOf(dispute);
+    return id ? [id] : [];
+  }))];
   const captures = new Map<string, Capture>();
   await Promise.all(Array.from({ length: Math.min(4, pending.length) }, async () => {
     for (let id = pending.shift(); id !== undefined; id = pending.shift()) {
@@ -37,6 +40,14 @@ async function fetchCaptures(disputes: Dispute[], deps: Deps): Promise<Map<strin
     }
   }));
   return captures;
+}
+
+async function orderAndCapture(dispute: Dispute, record: CaseRecord | null, deps: Deps, unavailable: (error: unknown) => null): Promise<{ order: Order | null; capture: Capture | null }> {
+  const captureId = record?.captureId ?? captureIdOf(dispute);
+  const capturePromise = captureId ? deps.paypal.getCapture(captureId).catch(unavailable) : Promise.resolve(null);
+  const orderId = record?.orderId || (await capturePromise)?.supplementary_data?.related_ids?.order_id;
+  const order = orderId ? await deps.paypal.getOrder(orderId).catch(unavailable) : null;
+  return { order, capture: await capturePromise };
 }
 
 const MAX_IMAGES = 3;
@@ -62,10 +73,7 @@ async function decideOne(disputeId: string, deps: Deps): Promise<DecideResult> {
   const state = deps.store.get();
   const record = Object.values(state.cases).find((entry) => entry.captureId && entry.captureId === captureIdOf(dispute)) ?? null;
   const unavailable = (error: unknown) => { console.error(`[decide ${disputeId}]`, error); return null; };
-  const [order, capture] = await Promise.all([
-    record?.orderId ? deps.paypal.getOrder(record.orderId).catch(unavailable) : Promise.resolve(null),
-    record?.captureId ? deps.paypal.getCapture(record.captureId).catch(unavailable) : Promise.resolve(null),
-  ]);
+  const { order, capture } = await orderAndCapture(dispute, record, deps, unavailable);
   const attachments = [...(record?.attachments ?? []), ...(state.attachments[disputeId] ?? []).map(({ name, type }) => ({ name, type }))];
   const images = (await Promise.all(caseImageFiles(disputeId, record, deps).slice(0, MAX_IMAGES).map(async ({ name, path }): Promise<CaseImage | null> => {
     const data = await readFile(path).catch(unavailable);
@@ -130,9 +138,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
       await reconcileUnknown(req.params.id, dispute, deps);
       const warnings: string[] = [];
       const record = Object.values(deps.store.get().cases).find((entry) => entry.captureId && entry.captureId === captureIdOf(dispute)) ?? null;
-      const orderPromise = record?.orderId ? deps.paypal.getOrder(record.orderId).catch((error: unknown) => { warnings.push(error instanceof Error ? error.message : String(error)); return null; }) : Promise.resolve(null);
-      const capturePromise = record?.captureId ? deps.paypal.getCapture(record.captureId).catch((error: unknown) => { warnings.push(error instanceof Error ? error.message : String(error)); return null; }) : Promise.resolve(null);
-      const [order, capture] = await Promise.all([orderPromise, capturePromise]);
+      const { order, capture } = await orderAndCapture(dispute, record, deps, (error: unknown) => { warnings.push(error instanceof Error ? error.message : String(error)); return null; });
       res.json({ ...buildCaseDetail(dispute, record, order, capture, deps.store.get(), deps.now()), warnings });
     } catch (error) { next(error); }
   });
@@ -245,8 +251,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
       const captureId = captureIdOf(outcome.dispute);
       const record = Object.values(state.cases).find((entry) => entry.captureId && entry.captureId === captureId) ?? null;
       const warnings: string[] = [];
-      const order = record?.orderId ? await deps.paypal.getOrder(record.orderId).catch((error: unknown) => { warnings.push(error instanceof Error ? error.message : String(error)); return null; }) : null;
-      const capture = record?.captureId ? await deps.paypal.getCapture(record.captureId).catch((error: unknown) => { warnings.push(error instanceof Error ? error.message : String(error)); return null; }) : null;
+      const { order, capture } = await orderAndCapture(outcome.dispute, record, deps, (error: unknown) => { warnings.push(error instanceof Error ? error.message : String(error)); return null; });
       res.json({ entry: outcome.entry, dispute: outcome.dispute, detail: { ...buildCaseDetail(outcome.dispute, record, order, capture, deps.store.get(), deps.now()), warnings } });
     } catch (error) { next(error); }
   });

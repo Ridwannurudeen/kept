@@ -22,7 +22,7 @@ Rules:
    The app token must carry `disputes/read-seller` and `disputes/update-seller`. The first test in `npm run test:e2e` checks this.
 3. `npm ci`.
 
-The cases are defined in `seed/plan.json` (key, item, amount, tracked or not, seller notes, expected reason and stage). The script records progress in `seed/cases.json`. Commands:
+The cases are defined in `seed/plan.json` (key, item, amount, tracked or not, seller notes, expected reason and stage; orders with role `shipping` never get a dispute, so they have no expected reason or stage). The script checks the plan before every command and records progress in `seed/cases.json`. Commands:
 
 ```
 npm run seed -- order <KEY>
@@ -54,6 +54,26 @@ Same steps, with these keys from `seed/plan.json`:
 - C2: spare of C, used by the live accept test (`KEPT_E2E_ACCEPT_ID`).
 - REH1 (Canvas apron, 15.00): rehearsal case, not as described, `INQUIRY`.
 - E (Brass hook set, 22.00): optional item-not-received case; add tracking after filing only if it is used (`npm run seed -- track E --force --tracking-number <number> --carrier <carrier>`), for the evidence test (`KEPT_E2E_EVIDENCE_ID`).
+
+## Session 3: B3, B4, EV1, P1, P2, P3
+
+Three new disputes and three orders that are never disputed. B3 and B4 give Kept resolved cases to report, EV1 is kept open for the evidence demo, and P1 to P3 are for a later Shipping check.
+
+1. Create all six orders: `npm run seed -- order B3`, then `B4`, `EV1`, `P1`, `P2`, `P3`.
+2. Approve each as the buyer, as in Session 1 step 2.
+3. Capture all six: `npm run seed -- capture B3`, then `B4`, `EV1`, `P1`, `P2`, `P3`.
+4. Add tracking to P2 and P3 only: `npm run seed -- track P2`, `npm run seed -- track P3`. Do not track B3, B4, EV1 or P1.
+5. Open disputes as the buyer for B3, B4 and EV1 only, at `https://www.sandbox.paypal.com/disputes/`, Report a problem:
+   - B3 (Wool throw blanket, 24.00) and B4 (Cotton napkin set, 27.00): same as B. I received an item that doesn't match the seller's description, choose the option that opens a dispute with the seller (not only a message), Submit. Each opens at `INQUIRY`.
+   - EV1 (Bamboo cutting board, 33.00): I didn't receive an item I purchased. No tracking is on file, so choose the option that opens a dispute with the seller, not Report Issue to PayPal. The plan expects `INQUIRY`.
+   - P1 (Stoneware mug pair, 16.00, no tracker), P2 (Glass storage jars, 26.00, UPS tracker) and P3 (Oak serving tray, 31.00, UPS tracker): open nothing. Leave these three payments undisputed. `status` never lists them; that is expected.
+6. Wait about 5 minutes, then `npm run seed -- status`. Expect B3, B4 and EV1 at `INQUIRY` with `make_offer`. If EV1 opens at `CHARGEBACK` instead, keep it and do not act on it; record the stage it opened at.
+7. Resolve B3 and B4 early, in this order for each case:
+   1. In Kept, run Decide on the case and approve a partial refund offer. The default policy caps it at 30% of the disputed amount: USD 7.20 for B3 and USD 8.10 for B4.
+   2. As the buyer, open the case at `https://www.sandbox.paypal.com/disputes/` and accept the seller's offer.
+
+   The offer must be sent before the buyer can accept it. Kept reads each resolution from PayPal on its next check.
+8. Leave EV1 open and do not act on it. It is for the evidence demo, and a case acted on once is spent. Its 20-day response window starts when it is filed.
 
 ## With your own sandbox
 

@@ -160,7 +160,36 @@ test('summarize excludes a second currency and counts it', () => {
 });
 
 test('summarize of no resolved cases returns zero resolved and null money fields', () => {
-  expect(summarize([])).toEqual({ resolved: 0, kept: null, refunded: null, medianDaysToClose: null, openAtStake: null, heldByPayPal: null, currency: null, mixedCurrencyExcluded: 0 });
+  expect(summarize([])).toEqual({ resolved: 0, kept: null, refunded: null, medianDaysToClose: null, openAtStake: null, heldByPayPal: null, heldNow: [], outsideProtection: { outside: 0, open: 0, disputed: null, notReported: 0 }, currency: null, mixedCurrencyExcluded: 0 });
+});
+
+test('summarize counts open cases whose reason is outside the capture\'s categories, and counts cases with no category data as not reported', () => {
+  const notAsDescribed = { ...inquiry, reason: 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED' };
+  const outside = buildCaseRow(notAsDescribed, null, state(), now, eligibleCapture);
+  const listed = buildCaseRow({ ...chargeback }, null, state(), now, eligibleCapture);
+  const noCapture = buildCaseRow({ ...inquiry, dispute_id: 'no-capture' }, null, state(), now, null);
+  const noCategories = buildCaseRow({ ...notAsDescribed, dispute_id: 'no-categories' }, null, state(), now, { ...eligibleCapture, seller_protection: { status: 'NOT_ELIGIBLE' } });
+  const resolvedOutside = buildCaseRow({ ...resolved, reason: 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED' }, null, state(), now, resolvedCapture);
+  expect(summarize([outside, listed, noCapture, noCategories, resolvedOutside]).outsideProtection).toEqual({ outside: 1, open: 4, disputed: { currency_code: 'USD', value: '36.00' }, notReported: 2 });
+  expect(summarize([listed]).outsideProtection).toEqual({ outside: 0, open: 1, disputed: null, notReported: 0 });
+});
+
+test('summarize lists every hold on open cases with its age in whole days, matching the held total', () => {
+  const held = buildCaseRow(inquiryWithRecordedHold, record('CAPTUREB0000000001'), state(), now, null);
+  const undated = buildCaseRow({ ...chargeback, fund_movements: [
+    { party: 'SELLER', type: 'DEBIT', reason: 'HOLD_PLACED', amount: { currency_code: 'USD', value: '2.50' } },
+    { party: 'BUYER', type: 'CREDIT', reason: 'HOLD_PLACED', amount: { currency_code: 'USD', value: '2.50' } },
+  ] }, null, state(), now, null);
+  const closed = buildCaseRow(resolved, null, state(), now, null);
+  const summary = summarize([held, undated, closed]);
+  expect(summary.heldNow).toEqual([
+    { disputeId: inquiry.dispute_id, caseKey: 'B', amount: { currency_code: 'USD', value: '18.81' }, at: '2026-11-04T18:35:04.000Z', ageDays: 0 },
+    { disputeId: chargeback.dispute_id, caseKey: null, amount: { currency_code: 'USD', value: '2.50' }, at: null, ageDays: null },
+  ]);
+  expect(summary.heldByPayPal).toEqual({ currency_code: 'USD', value: '21.31' });
+  const later = buildCaseRow(inquiryWithRecordedHold, null, state(), new Date('2026-11-07T18:35:03.000Z'), null);
+  expect(later.holds).toEqual([{ amount: { currency_code: 'USD', value: '18.81' }, at: '2026-11-04T18:35:04.000Z', ageDays: 2 }]);
+  expect(closed.holds).toEqual([]);
 });
 
 test('row says whether PayPal lists make_offer and carries the recommended offer amount', () => {

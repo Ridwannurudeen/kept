@@ -40,6 +40,28 @@ describe('AG Grid fix round 1', () => {
     expect(app).toMatch(/event\.target instanceof Element &&[\s\S]*closest\("\.ag-popup, \.ag-menu, \.ag-filter, select"\)/);
   });
 
+  it('replaces the Refunded tile with the Seller Protection categories tile and avoids loaded words', () => {
+    expect(app).toContain('"Outside Seller Protection categories"');
+    expect(app).toContain('`${outside.outside} of ${outside.open} open`');
+    expect(app).not.toContain('"Refunded",\n        money(summary.refunded)');
+    const tile = app.slice(app.indexOf('"Outside Seller Protection categories"'), app.indexOf('"Resolved",'));
+    expect(tile).not.toMatch(/\bgap\b|unprotected|covered/i);
+  });
+
+  it('makes Held now a keyboard button that opens the list of holds', () => {
+    expect(app).toMatch(/const button = el\("button", "stat-button", money\(summary\.heldByPayPal\)\);\n\s*button\.type = "button";/);
+    expect(app).toContain('els.heldDialog.showModal();');
+    expect(app).toMatch(/els\.policyDialog\.open \|\|\n\s*els\.heldDialog\.open \|\|/);
+    expect(styles).toContain('.stat-button:focus-visible {');
+  });
+
+  it('fits the Seller Protection reason line with narrower padding, and gives Amount room for its header', () => {
+    expect(app).toMatch(/colId: "protection",\n\s*headerName: "Seller Protection",\n\s*minWidth: 110,\n\s*cellClass: "cell-protection",/);
+    expect(styles).toContain('.kept-grid .ag-cell.cell-protection {\n  padding-left: 4px;\n  padding-right: 4px;\n}');
+    expect(app).toContain('moneyColumn("amount", "Amount", (d) => d.amount, { minWidth: 94 })');
+    expect(app).toMatch(/colId: "offer",\n\s*headerName: "Offer",\n\s*minWidth: 100,/);
+  });
+
   it('shows Add offer on editable empty cells and wraps the text columns', () => {
     expect(app).toContain('? "Add offer"');
     expect(app).toMatch(/colId: "reason",[\s\S]*tooltipField: "reasonLabel"[\s\S]*wrapText: true/);

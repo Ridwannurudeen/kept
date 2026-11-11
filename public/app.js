@@ -61,6 +61,8 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
     policyError: document.getElementById("policy-error"),
     policySave: document.getElementById("policy-save"),
     policyCancel: document.getElementById("policy-cancel"),
+    heldDialog: document.getElementById("held-dialog"),
+    heldBody: document.getElementById("held-body"),
     compare: document.getElementById("compare"),
     compareTitle: document.getElementById("compare-title"),
     compareClose: document.getElementById("compare-close"),
@@ -97,6 +99,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
   let replay = false;
   let compareReturn = null;
   let calls = [];
+  let heldNow = [];
   const isPending = (job) =>
     job?.state === "queued" || job?.state === "running";
 
@@ -282,23 +285,83 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
     return wrap;
   }
 
+  function renderHeld() {
+    const table = el("table", "calls-table");
+    const head = el("tr");
+    for (const [title, cls] of [
+      ["Case", ""],
+      ["Amount", "num"],
+      ["Placed", ""],
+      ["Age", "num"],
+    ]) {
+      const th = el("th", cls, title);
+      th.scope = "col";
+      head.append(th);
+    }
+    table.append(el("thead"), el("tbody"));
+    table.tHead.append(head);
+    for (const hold of heldNow) {
+      const row = el("tr");
+      row.append(
+        el(
+          "td",
+          "cell-mono",
+          `${hold.caseKey ? `${hold.caseKey} ` : ""}${hold.disputeId}`,
+        ),
+        el("td", "num", money(hold.amount)),
+        el(
+          "td",
+          "",
+          hold.at ? stampFormat.format(new Date(hold.at)) : "Not reported",
+        ),
+        el(
+          "td",
+          "num",
+          hold.ageDays === null ? "Not reported" : plural(hold.ageDays, "day"),
+        ),
+      );
+      table.tBodies[0].append(row);
+    }
+    els.heldBody.replaceChildren(table);
+  }
+
   function renderSummary(summary) {
     const currency = summary.currency || "USD";
     const zero = `${currency} 0.00`;
     const days = summary.medianDaysToClose;
+    const outside = summary.outsideProtection;
     const lead = (node) => {
       node.classList.add("stat-lead");
       return node;
     };
-    const items = [
-      lead(
-        stat(
-          "Held now",
-          money(summary.heldByPayPal) || zero,
-          summary.heldByPayPal ? "PayPal's hold on open cases" : "No funds on hold",
-          "Sum of fund_movements with reason HOLD_PLACED on open cases",
-        ),
+    const held = lead(
+      stat(
+        "Held now",
+        money(summary.heldByPayPal) || zero,
+        summary.heldByPayPal ? "PayPal's hold on open cases" : "No funds on hold",
+        "Sum of fund_movements with reason HOLD_PLACED on open cases",
       ),
+    );
+    heldNow = summary.heldNow;
+    const hadFocus =
+      document.activeElement?.classList.contains("stat-button") ?? false;
+    if (heldNow.length) {
+      const button = el("button", "stat-button", money(summary.heldByPayPal));
+      button.type = "button";
+      button.setAttribute("aria-haspopup", "dialog");
+      button.setAttribute(
+        "aria-label",
+        `Held now ${money(summary.heldByPayPal)}. Show each hold`,
+      );
+      button.addEventListener("click", () => {
+        renderHeld();
+        els.heldDialog.showModal();
+      });
+      held.querySelector(".stat-value").replaceChildren(button);
+    }
+    if (els.heldDialog.open) renderHeld();
+    const items = [
+      held,
       lead(
         stat(
           "Kept",
@@ -310,10 +373,15 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
         ),
       ),
       stat(
-        "Refunded",
-        money(summary.refunded) || zero,
-        "",
-        "Sum of dispute_outcome.amount_refunded on resolved cases",
+        "Outside Seller Protection categories",
+        `${outside.outside} of ${outside.open} open`,
+        [
+          money(outside.disputed) || zero,
+          outside.notReported ? `${outside.notReported} not reported` : "",
+        ]
+          .filter(Boolean)
+          .join(", "),
+        "Open cases whose buyer reason is not among the capture's seller_protection.dispute_categories, with their disputed total; cases where PayPal reports no Seller Protection status or no category list are counted as not reported",
       ),
       stat(
         "Resolved",
@@ -329,6 +397,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       ),
     ];
     els.strip.replaceChildren(...items);
+    if (hadFocus) els.strip.querySelector(".stat-button")?.focus();
 
     const text = [...els.strip.querySelectorAll(".stat")]
       .map((node) =>
@@ -2276,7 +2345,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       headerName: "PayPal reports",
       marryChildren: true,
       children: [
-        moneyColumn("amount", "Amount", (d) => d.amount),
+        moneyColumn("amount", "Amount", (d) => d.amount, { minWidth: 94 }),
         moneyColumn("hold", "Held", (d) => d.hold, {
           enableCellChangeFlash: true,
           tooltipValueGetter: (p) =>
@@ -2301,6 +2370,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
           colId: "protection",
           headerName: "Seller Protection",
           minWidth: 110,
+          cellClass: "cell-protection",
           valueGetter: (p) =>
             p.node.rowPinned ? "" : protectionText(p.data.protection),
           cellRenderer: protectionCell,
@@ -2377,7 +2447,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
         {
           colId: "offer",
           headerName: "Offer",
-          minWidth: 105,
+          minWidth: 100,
           flex: 0.9,
           valueGetter: (p) => (p.node.rowPinned ? null : offerValue(p.data)),
           valueSetter: setOffer,
@@ -2863,6 +2933,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       els.dialog.open ||
       els.confirmDialog.open ||
       els.policyDialog.open ||
+      els.heldDialog.open ||
       gridApi.getEditingCells().length > 0
     )
       return;

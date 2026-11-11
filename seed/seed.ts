@@ -1,5 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { z } from 'zod';
 import { PayPalClient } from '../src/paypal/client.js';
 import type { Dispute, Order } from '../src/paypal/types.js';
 
@@ -12,11 +13,44 @@ export type PlanCase = {
   trackingNumber?: string;
   notes: string;
   attachments: { name: string; type: string }[];
-  expectedReason: 'ITEM_NOT_RECEIVED' | 'NOT_AS_DESCRIBED';
-  expectedStage: 'INQUIRY' | 'CHARGEBACK';
-  role: 'demo' | 'spare' | 'dev' | 'e2e' | 'optional' | 'rehearsal' | 'judging';
+  expectedReason?: 'ITEM_NOT_RECEIVED' | 'NOT_AS_DESCRIBED';
+  expectedStage?: 'INQUIRY' | 'CHARGEBACK';
+  role: 'demo' | 'spare' | 'dev' | 'e2e' | 'optional' | 'rehearsal' | 'judging' | 'shipping';
   session: 1 | 2 | 3;
 };
+
+const planSchema = z.array(z.object({
+  key: z.string().regex(/^[A-Z0-9]+$/),
+  item: z.string().min(1),
+  amount: z.string().regex(/^\d+\.\d{2}$/),
+  tracked: z.boolean(),
+  carrier: z.literal('UPS').optional(),
+  trackingNumber: z.string().optional(),
+  notes: z.string(),
+  attachments: z.array(z.object({ name: z.string(), type: z.string() })),
+  expectedReason: z.enum(['ITEM_NOT_RECEIVED', 'NOT_AS_DESCRIBED']).optional(),
+  expectedStage: z.enum(['INQUIRY', 'CHARGEBACK']).optional(),
+  role: z.enum(['demo', 'spare', 'dev', 'e2e', 'optional', 'rehearsal', 'judging', 'shipping']),
+  session: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+}).superRefine((entry, ctx) => {
+  if (entry.tracked && (!entry.carrier || !entry.trackingNumber)) ctx.addIssue({ code: 'custom', message: `${entry.key} is tracked but has no carrier or tracking number` });
+  const expected = entry.expectedReason !== undefined || entry.expectedStage !== undefined;
+  if (entry.role === 'shipping' && expected) ctx.addIssue({ code: 'custom', message: `${entry.key} is a shipping order and never gets a dispute, so it has no expected reason or stage` });
+  if (entry.role !== 'shipping' && (entry.expectedReason === undefined || entry.expectedStage === undefined)) ctx.addIssue({ code: 'custom', message: `${entry.key} needs an expected reason and stage` });
+})).superRefine((entries, ctx) => {
+  const keys = entries.map((entry) => entry.key);
+  for (const key of new Set(keys.filter((key, index) => keys.indexOf(key) !== index))) ctx.addIssue({ code: 'custom', message: `Plan key ${key} appears more than once` });
+});
+
+export function parsePlan(input: unknown): PlanCase[] {
+  return planSchema.parse(input);
+}
+
+const PAYPAL_REASONS = { ITEM_NOT_RECEIVED: 'MERCHANDISE_OR_SERVICE_NOT_RECEIVED', NOT_AS_DESCRIBED: 'MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED' } as const;
+
+export function planMismatch(expected: PlanCase, observed: { reason: string; stage: string }): boolean {
+  return observed.stage !== expected.expectedStage || observed.reason !== (expected.expectedReason && PAYPAL_REASONS[expected.expectedReason]);
+}
 
 export type CaseRecord = {
   key: string;
@@ -107,7 +141,7 @@ const planPath = new URL('./plan.json', import.meta.url);
 const casesPath = new URL('./cases.json', import.meta.url);
 
 async function readPlan(): Promise<PlanCase[]> {
-  return JSON.parse(await readFile(planPath, 'utf8')) as PlanCase[];
+  return parsePlan(JSON.parse(await readFile(planPath, 'utf8')));
 }
 
 async function readCases(): Promise<CasesFile> {
@@ -227,7 +261,7 @@ async function run(): Promise<void> {
     for (const [caseKey, record] of Object.entries(file.cases)) {
       if (!record.disputeId || !record.observed) continue;
       const expected = plan.find((entry) => entry.key === caseKey);
-      const mismatch = expected && (record.observed.stage !== expected.expectedStage || record.observed.reason !== expected.expectedReason);
+      const mismatch = expected && planMismatch(expected, record.observed);
       console.log(`${caseKey}${mismatch ? ' MISMATCH' : ''}\t${record.disputeId}\t${record.observed.stage}\t${record.observed.status}\t${record.observed.links.join(',')}`);
     }
     return;

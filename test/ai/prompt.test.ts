@@ -37,6 +37,9 @@ test('includes the capture Seller Protection status and categories, and the syst
   expect(p).toContain('"seller_protection":{"status":"ELIGIBLE","dispute_categories":["ITEM_NOT_RECEIVED","UNAUTHORIZED_TRANSACTION"]}');
   expect(SYSTEM_PROMPT).toContain('seller_protection');
 });
+test('the system prompt forbids a draft note that claims files are attached', () => {
+  expect(SYSTEM_PROMPT).toContain('The draft_note must never say that files, labels, photos or documents are attached, enclosed or included');
+});
 test('includes the Seller Protection checklist states, and the system prompt says protection is PayPal\'s decision', () => {
   const p = buildUserPrompt({ ...inputFor('dispute-chargeback-fresh', null, fixture<Order>('order-92U413849D170012F')), capture: fixture<Capture>('capture-1VS093774J460400T') });
   expect(p).toContain('Seller Protection checklist: {"applies_to_this_reason":true,"items":[{"item":"Shipped to the address on PayPal\'s transaction details","state":"not_visible"},{"item":"Online, verifiable tracking number","state":"in_paypal_data"},{"item":"\'Delivered\' status with a delivery date","state":"missing"},{"item":"Recipient address matches the transaction details","state":"not_visible"}]}');

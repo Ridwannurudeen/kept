@@ -130,6 +130,17 @@
       </form>
     </dialog>
 
+    <dialog class="dialog dialog-wide" id="held-dialog" aria-labelledby="held-title">
+      <form method="dialog" class="dialog-form">
+        <h2 class="dialog-title" id="held-title">Held now</h2>
+        <p class="dialog-text">Each hold PayPal reports on an open case: the fund_movements entries with reason HOLD_PLACED.</p>
+        <div class="held-scroll" id="held-body"></div>
+        <div class="dialog-actions">
+          <button type="submit" class="button button-primary" value="close">Close</button>
+        </div>
+      </form>
+    </dialog>
+
     <dialog class="dialog" id="passcode-dialog" aria-labelledby="passcode-title">
       <form method="dialog" class="dialog-form" id="passcode-form">
         <h2 class="dialog-title" id="passcode-title">Enter the demo passcode</h2>

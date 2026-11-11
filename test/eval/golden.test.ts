@@ -3,7 +3,7 @@ import { evaluate } from './golden.eval.js';
 import type { DecideInput, DecideResult } from '../../src/ai/decide.js';
 import type { Decision } from '../../src/decision.js';
 
-function input(key: 'E' | 'F'): DecideInput {
+function input(key: 'A' | 'E' | 'F'): DecideInput {
   const raw = JSON.parse(readFileSync(new URL(`./cases/${key}.json`, import.meta.url), 'utf8'));
   return { dispute: raw.dispute, order: raw.order, capture: raw.capture, record: raw.record, attachments: raw.attachments, images: [], policy: raw.policy, allowed: raw.allowed, now: new Date(raw.now) };
 }
@@ -88,5 +88,44 @@ describe('harder golden case checks', () => {
   it('accepts a FIGHT decision that explains the missing proof in reasons', () => {
     const evaluated = evaluate('F', input('F'), result({ recommendation: 'FIGHT', reasons: ['Proof of delivery is missing.'], evidence_missing: ['Proof of delivery is missing.'] }));
     expect(evaluated.checks.policy).toBe(true);
+  });
+
+  it.each([
+    "We've attached the UPS label and the packing slip.",
+    'Please see the attached photo.',
+    'I attach the receipt for your records.',
+    'Enclosed is the packing slip.',
+    'Please find attached.',
+    'I enclose the receipt.',
+    'Enclosures: packing slip.',
+    'I have attached proof of shipment.',
+    'Evidence is attached.',
+    "We've attached photos showing the item was not damaged.",
+  ])('fails fabrication when draft_note claims an attachment: %s', (draft) => {
+    const evaluated = evaluate('E', input('E'), result({ draft_note: draft }));
+    expect(evaluated.checks.fabrication).toBe(false);
+    expect(evaluated.problems).toContain('draft_note claims a file is attached; Kept sends notes only');
+  });
+
+  it.each([
+    'Files cannot be attached here, so the details are in this note.',
+    'No documents are enclosed.',
+    'Please review the tracking details in this note.',
+    'That number is already attached to the transaction in PayPal and shows the package as shipped.',
+    'The tracking number is attached to the transaction.',
+  ])('allows a draft_note with no affirmative claim that a file is attached: %s', (draft) => {
+    expect(evaluate('E', input('E'), result({ draft_note: draft })).checks.fabrication).toBe(true);
+  });
+
+  it('only checks draft_note for attachment claims', () => {
+    expect(evaluate('E', input('E'), result({ evidence_have: ['Packing slip attached in Kept.'] })).checks.fabrication).toBe(true);
+  });
+
+  it.each(['PayPal has held the payment.', 'PayPal holds the payment.', 'PayPal is holding the payment.', 'There is a hold on the payment.'])('case A counts a mention of the hold: %s', (reason) => {
+    expect(evaluate('A', input('A'), result({ recommendation: 'FIGHT', reasons: [reason, 'Tracking is on file.'] })).checks.mentions).toBe(true);
+  });
+
+  it('case A misses the mention when nothing names the hold', () => {
+    expect(evaluate('A', input('A'), result({ recommendation: 'FIGHT', reasons: ['Tracking is on file.'] })).checks.mentions).toBe(false);
   });
 });

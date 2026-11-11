@@ -3,7 +3,7 @@ import { isDecisionStale, type State, type StoredDecision, type UnknownOutcome }
 import type { ActionEntry } from './log.js';
 import { hasSentAction } from './log.js';
 import { breakEven as calculateBreakEven, deadlineStatus, fromCents, offerCap, parseAmount, type BreakEven, type DeadlineStatus, type Policy } from './policy.js';
-import { allowedActions, captureIdOf, disputedAmount, explainState, holdAmount, isOpen, reasonLabel, stageLabel, type ActionKind, type StateExplanation } from './paypal/dispute.js';
+import { allowedActions, captureIdOf, disputedAmount, explainState, holdAmount, holdMovements, isOpen, reasonLabel, stageLabel, type ActionKind, type StateExplanation } from './paypal/dispute.js';
 import type { Capture, Dispute, Money, Order } from './paypal/types.js';
 import type { CaseRecord } from '../seed/seed.js';
 
@@ -21,6 +21,7 @@ export type CaseRow = {
   dueAt: string | null;
   deadline: DeadlineStatus;
   hold: Money | null;
+  holds: { amount: Money; at: string | null; ageDays: number | null }[];
   recommendation: Decision['recommendation'] | null;
   recommendationStale: boolean;
   staleReason: string | null;
@@ -64,6 +65,8 @@ export type WhatHappened = {
 
 export type TimelineEntry = { at: string | null; who: 'seller' | 'buyer' | 'paypal'; text: string };
 
+export type HeldEntry = { disputeId: string; caseKey: string | null; amount: Money; at: string | null; ageDays: number | null };
+
 export type OutcomeSummary = {
   resolved: number;
   kept: Money | null;
@@ -71,6 +74,8 @@ export type OutcomeSummary = {
   medianDaysToClose: number | null;
   openAtStake: Money | null;
   heldByPayPal: Money | null;
+  heldNow: HeldEntry[];
+  outsideProtection: { outside: number; open: number; disputed: Money | null; notReported: number };
   currency: string | null;
   mixedCurrencyExcluded: number;
 };
@@ -234,6 +239,10 @@ function buildRow(d: Dispute, record: CaseRecord | null, capture: Capture | null
     dueAt: open ? d.seller_response_due_date ?? null : null,
     deadline: open ? deadlineStatus(d.seller_response_due_date, now, state.policy) : { state: 'unknown', hoursLeft: null },
     hold: open ? holdAmount(d) : null,
+    holds: open ? holdMovements(d).map((movement) => {
+      const placed = movement.initiated_time ? Date.parse(movement.initiated_time) : NaN;
+      return { amount: movement.amount, at: movement.initiated_time ?? null, ageDays: Number.isFinite(placed) ? Math.floor((now.getTime() - placed) / 86_400_000) : null };
+    }) : [],
     recommendation: stored?.decision.recommendation ?? null,
     recommendationStale: stale,
     staleReason: stale && stored ? staleReason(stored, d) : null,
@@ -311,6 +320,8 @@ export function summarize(rows: CaseRow[]): OutcomeSummary {
   const heldRows = openRows.filter((row) => row.hold !== null);
   const openCents = openRows.reduce((sum, row) => sum + parseAmount(row.amount.value), 0);
   const holdCents = heldRows.reduce((sum, row) => sum + parseAmount(row.hold?.value ?? '0.00'), 0);
+  const outsideRows = openRows.filter((row) => row.protection?.covers === false);
+  const outsideCents = outsideRows.reduce((sum, row) => sum + parseAmount(row.amount.value), 0);
   return {
     resolved: resolved.length,
     kept: resolved.length ? { currency_code: included[0]!.amount.currency_code, value: fromCents(keptCents) } : null,
@@ -318,6 +329,13 @@ export function summarize(rows: CaseRow[]): OutcomeSummary {
     medianDaysToClose,
     openAtStake: openRows.length ? { currency_code: included[0]!.amount.currency_code, value: fromCents(openCents) } : null,
     heldByPayPal: heldRows.length ? { currency_code: included[0]!.amount.currency_code, value: fromCents(holdCents) } : null,
+    heldNow: openRows.flatMap((row) => row.holds.map((hold) => ({ disputeId: row.disputeId, caseKey: row.caseKey, ...hold }))),
+    outsideProtection: {
+      outside: outsideRows.length,
+      open: openRows.length,
+      disputed: outsideRows.length ? { currency_code: included[0]!.amount.currency_code, value: fromCents(outsideCents) } : null,
+      notReported: openRows.filter((row) => (row.protection?.covers ?? null) === null).length,
+    },
     currency,
     mixedCurrencyExcluded,
   };

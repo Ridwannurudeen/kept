@@ -112,24 +112,83 @@ describe('HTTP app', () => {
     expect(paypal.getDispute).toHaveBeenCalledTimes(6);
   });
 
-  test('GET /api/cases reads Seller Protection from seeded captures, cached with the disputes', async () => {
+  test('GET /api/cases reads Seller Protection from the seeded record or the dispute\'s own capture, cached with the disputes', async () => {
     paypal.getCapture.mockImplementation(async (id: string) => ({ id, status: 'COMPLETED', amount: { currency_code: 'USD', value: '10.00' }, seller_protection: { status: 'ELIGIBLE', dispute_categories: ['ITEM_NOT_RECEIVED'] } }));
     const get = (path = '/api/cases') => request(app).get(path).set('x-kept-passcode', 'pass').expect(200);
     const { body } = await get();
     const protection = (id: string) => body.cases.find((row: { disputeId: string }) => row.disputeId === id).protection;
     expect(protection('d-early')).toEqual({ status: 'ELIGIBLE', covers: true });
-    expect(protection('d-late')).toBeNull();
+    expect(protection('d-late')).toEqual({ status: 'ELIGIBLE', covers: true });
     expect(paypal.getCapture).toHaveBeenCalledWith('CAP-a');
-    expect(paypal.getCapture).toHaveBeenCalledTimes(1);
+    expect(paypal.getCapture).toHaveBeenCalledWith('CAP-d-late');
+    expect(paypal.getCapture).toHaveBeenCalledTimes(3);
     await get();
-    expect(paypal.getCapture).toHaveBeenCalledTimes(1);
+    expect(paypal.getCapture).toHaveBeenCalledTimes(3);
     await get('/api/cases?refresh=1');
-    expect(paypal.getCapture).toHaveBeenCalledTimes(2);
+    expect(paypal.getCapture).toHaveBeenCalledTimes(6);
   });
 
-  test('GET /api/cases shows no protection when a capture does not load', async () => {
+  test('GET /api/cases still lists every case with no protection when a capture does not load', async () => {
     const { body } = await request(app).get('/api/cases').set('x-kept-passcode', 'pass').expect(200);
-    expect(body.cases.find((row: { disputeId: string }) => row.disputeId === 'd-early').protection).toBeNull();
+    expect(body.cases.map((row: { disputeId: string; protection: unknown }) => [row.disputeId, row.protection])).toEqual([['d-early', null], ['d-late', null], ['d-closed', null]]);
+  });
+
+  test('GET /api/cases/:id with no seeded record reads the capture from the dispute and the order from the capture', async () => {
+    paypal.getCapture.mockImplementation(async (id: string) => ({ id, status: 'COMPLETED', amount: { currency_code: 'USD', value: '10.00' }, seller_protection: { status: 'ELIGIBLE', dispute_categories: ['ITEM_NOT_RECEIVED'] }, supplementary_data: { related_ids: { order_id: 'ORDER-LATE' } } }));
+    paypal.getOrder.mockImplementation(async (id: string) => ({ id, status: 'COMPLETED', purchase_units: [] }));
+    const { body } = await request(app).get('/api/cases/d-late').set('x-kept-passcode', 'pass').expect(200);
+    expect(paypal.getCapture).toHaveBeenCalledWith('CAP-d-late');
+    expect(paypal.getOrder).toHaveBeenCalledWith('ORDER-LATE');
+    expect(body).toMatchObject({ record: null, capture: { id: 'CAP-d-late' }, order: { id: 'ORDER-LATE' }, protection: { status: 'ELIGIBLE', covers: true }, warnings: [] });
+  });
+
+  test('GET /api/cases/:id prefers the seeded record\'s order id over the capture\'s', async () => {
+    paypal.getCapture.mockImplementation(async (id: string) => ({ id, status: 'COMPLETED', amount: { currency_code: 'USD', value: '10.00' }, supplementary_data: { related_ids: { order_id: 'ORDER-OTHER' } } }));
+    paypal.getOrder.mockImplementation(async (id: string) => ({ id, status: 'COMPLETED', purchase_units: [] }));
+    const { body } = await request(app).get('/api/cases/d-early').set('x-kept-passcode', 'pass').expect(200);
+    expect(paypal.getOrder).toHaveBeenCalledTimes(1);
+    expect(paypal.getOrder).toHaveBeenCalledWith('ORDER-A');
+    expect(body).toMatchObject({ record: { key: 'A' }, capture: { id: 'CAP-a' }, order: { id: 'ORDER-A' } });
+  });
+
+  test('GET /api/cases/:id with no record and no order id on the capture shows the capture and no order', async () => {
+    paypal.getCapture.mockImplementation(async (id: string) => ({ id, status: 'COMPLETED', amount: { currency_code: 'USD', value: '10.00' }, seller_protection: { status: 'ELIGIBLE', dispute_categories: ['ITEM_NOT_RECEIVED'] } }));
+    const { body } = await request(app).get('/api/cases/d-late').set('x-kept-passcode', 'pass').expect(200);
+    expect(paypal.getOrder).not.toHaveBeenCalled();
+    expect(body).toMatchObject({ capture: { id: 'CAP-d-late' }, order: null, protection: { status: 'ELIGIBLE', covers: true }, warnings: [] });
+  });
+
+  test('GET /api/cases/:id lists the case with a warning and no protection when the capture fetch fails', async () => {
+    const { body } = await request(app).get('/api/cases/d-late').set('x-kept-passcode', 'pass').expect(200);
+    expect(paypal.getOrder).not.toHaveBeenCalled();
+    expect(body).toMatchObject({ capture: null, order: null, protection: null, warnings: ['capture unavailable'] });
+    expect(body.protectionChecklist.summary).toContain('PayPal has not reported a Seller Protection status');
+  });
+
+  test('POST decide with no seeded record passes the capture from the dispute and the order from the capture', async () => {
+    paypal.getCapture.mockImplementation(async (id: string) => ({ id, status: 'COMPLETED', amount: { currency_code: 'USD', value: '10.00' }, supplementary_data: { related_ids: { order_id: 'ORDER-LATE' } } }));
+    paypal.getOrder.mockImplementation(async (id: string) => ({ id, status: 'COMPLETED', purchase_units: [] }));
+    decide.mockResolvedValueOnce({ ok: false, error: 'no_decision', detail: 'none', steps: 0, toolCalls: [], durationMs: 0 });
+    await request(app).post('/api/cases/d-late/decide').set('x-kept-passcode', 'pass').expect(200);
+    expect(decide.mock.calls[0]![0]).toMatchObject({ record: null, capture: { id: 'CAP-d-late' }, order: { id: 'ORDER-LATE' } });
+  });
+
+  test('replay with no seeded records still reads Seller Protection from the recorded captures', async () => {
+    const empty = join(dir, 'empty-cases.json');
+    await writeFile(empty, JSON.stringify({ cases: {} }));
+    const bare = await Store.open({ dataDir: join(dir, 'bare'), seedPath: empty, snapshotPath: null });
+    const fake = new FakePayPal({ dir: './seed/replay' });
+    const replay = createApp({ config: { ...config, mode: 'replay', seedPath: empty }, paypal: fake as never, store: bare, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: fake.recordedOn });
+    const { body } = await request(replay).get('/api/cases').set('x-kept-passcode', 'pass').expect(200);
+    expect(Object.fromEntries(body.cases.map((row: { disputeId: string; protection: unknown }) => [row.disputeId, row.protection]))).toEqual({
+      'PP-R-LKL-10196413': { status: 'ELIGIBLE', covers: true },
+      'PP-R-HND-00000001': { status: 'ELIGIBLE', covers: false },
+      'PP-R-CWP-10196411': { status: 'ELIGIBLE', covers: true },
+    });
+    expect(body.summary.outsideProtection).toEqual({ outside: 1, open: 2, disputed: { currency_code: 'USD', value: '36.00' }, notReported: 0 });
+    expect(body.summary.heldNow).toEqual([{ disputeId: 'PP-R-LKL-10196413', caseKey: null, amount: { currency_code: 'USD', value: '18.81' }, at: '2026-11-04T18:35:04.000Z', ageDays: 0 }]);
+    const detail = await request(replay).get('/api/cases/PP-R-HND-00000001').set('x-kept-passcode', 'pass').expect(200);
+    expect(detail.body).toMatchObject({ record: null, order: { id: 'ORDERB0000000001' }, capture: { id: 'CAPTUREB0000000001' } });
   });
 
   test('GET /api/cases rebuilds cached rows after policy changes', async () => {
@@ -202,7 +261,7 @@ describe('HTTP app', () => {
     await request(replay).post(`/api/replay/cases/${B}/buyer-accepts`).set('x-kept-passcode', 'pass').expect(502);
   });
 
-  test('a notes stub with no order id never asks PayPal for an order', async () => {
+  test('a notes stub with no order id asks PayPal for no order when its capture does not load', async () => {
     await request(app).put('/api/cases/d-late/notes').set('x-kept-passcode', 'pass').send({ notes: 'call buyer' }).expect(200);
     await request(app).get('/api/cases/d-late').set('x-kept-passcode', 'pass').expect(200);
     act.mockResolvedValueOnce({ status: 'sent', entry: { id: 'e' }, dispute: disputes[0] });
