@@ -55,21 +55,22 @@ Same steps, with these keys from `seed/plan.json`:
 - REH1 (Canvas apron, 15.00): rehearsal case, not as described, `INQUIRY`.
 - E (Brass hook set, 22.00): optional item-not-received case; add tracking after filing only if it is used (`npm run seed -- track E --force --tracking-number <number> --carrier <carrier>`), for the evidence test (`KEPT_E2E_EVIDENCE_ID`).
 
-## Session 3: B3, B4, EV1, P1, P2, P3
+## Session 3: A3, B3, B4, EV1, P1, P2, P3
 
-Three new disputes and three orders that are never disputed. B3 and B4 give Kept resolved cases to report, EV1 is kept open for the evidence demo, and P1 to P3 are for a later Shipping check.
+Four new disputes and three orders that are never disputed. A3 is a spare claim for the document upload check, B3 and B4 give Kept resolved cases to report, EV1 is kept open for the evidence demo, and P1 to P3 are for a later Shipping check.
 
 EV1 needs a day between its order and its dispute. The demo story is: shipped on day 0, delivered by UPS Next Day Air on day 1, buyer opens the case on day 2. Create, approve and capture EV1's order at least one day before its buyer opens the dispute (step 5); the other cases can run in one sitting.
 
-1. Create all six orders: `npm run seed -- order B3`, then `B4`, `EV1`, `P1`, `P2`, `P3`.
+1. Create all seven orders: `npm run seed -- order A3`, then `B3`, `B4`, `EV1`, `P1`, `P2`, `P3`.
 2. Approve each as the buyer, as in Session 1 step 2.
-3. Capture all six: `npm run seed -- capture B3`, then `B4`, `EV1`, `P1`, `P2`, `P3`.
-4. Add tracking to P2 and P3 only: `npm run seed -- track P2`, `npm run seed -- track P3`. Do not track B3, B4, EV1 or P1.
-5. Open disputes as the buyer for B3, B4 and EV1 only, at `https://www.sandbox.paypal.com/disputes/`, Report a problem:
+3. Capture all seven: `npm run seed -- capture A3`, then `B3`, `B4`, `EV1`, `P1`, `P2`, `P3`.
+4. Add tracking to A3, P2 and P3 only: `npm run seed -- track A3`, `npm run seed -- track P2`, `npm run seed -- track P3`. Do not track B3, B4, EV1 or P1.
+5. Open disputes as the buyer for A3, B3, B4 and EV1 only, at `https://www.sandbox.paypal.com/disputes/`, Report a problem:
+   - A3 (Ceramic pour-over set, 48.00): same as A. I didn't receive an item I purchased, then Report Issue to PayPal. It opens at `CHARGEBACK`. Keep it unspent; the lead uses it once to prove that PayPal lists an uploaded document, using `seed/attachments/A3/packing-slip.pdf`.
    - B3 (Wool throw blanket, 24.00) and B4 (Cotton napkin set, 27.00): same as B. I received an item that doesn't match the seller's description, choose the option that opens a dispute with the seller (not only a message), Submit. Each opens at `INQUIRY`.
    - EV1 (Bamboo cutting board, 33.00): only on a later day, at least one day after EV1's order (day 2 or later). I didn't receive an item I purchased. No tracking is on file, so choose the option that opens a dispute with the seller, not Report Issue to PayPal. The plan expects `INQUIRY`.
    - P1 (Stoneware mug pair, 16.00, no tracker), P2 (Glass storage jars, 26.00, UPS tracker) and P3 (Oak serving tray, 31.00, UPS tracker): open nothing. Leave these three payments undisputed. `status` never lists them; that is expected.
-6. Wait about 5 minutes, then `npm run seed -- status`. Expect B3 and B4 at `INQUIRY` with `make_offer`, and EV1 the same once its dispute is opened on day 2 (run status again then). If EV1 opens at `CHARGEBACK` instead, keep it and do not act on it; record the stage it opened at.
+6. Wait about 5 minutes, then `npm run seed -- status`. Expect A3 at `CHARGEBACK` with `accept_claim,provide_supporting_info`, B3 and B4 at `INQUIRY` with `make_offer`, and EV1 the same once its dispute is opened on day 2 (run status again then). If EV1 opens at `CHARGEBACK` instead, keep it and do not act on it; record the stage it opened at.
 7. Resolve B3 and B4 early, in this order for each case:
    1. In Kept, run Decide on the case and approve a partial refund offer. The default policy caps it at 30% of the disputed amount: USD 7.20 for B3 and USD 8.10 for B4.
    2. As the buyer, open the case at `https://www.sandbox.paypal.com/disputes/` and accept the seller's offer.

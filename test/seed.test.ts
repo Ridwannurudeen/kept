@@ -60,7 +60,9 @@ test('the committed plan passes validation, with undisputed shipping orders and 
   for (const key of ['P2', 'P3']) expect(byKey.get(key)).toMatchObject({ tracked: true, carrier: 'UPS', trackingNumber: expect.stringMatching(/^1Z[0-9A-Z]{16}$/) });
   for (const key of ['B3', 'B4']) expect(byKey.get(key)).toMatchObject({ role: 'demo', tracked: false, expectedReason: 'NOT_AS_DESCRIBED', expectedStage: 'INQUIRY' });
   expect(byKey.get('EV1')).toMatchObject({ tracked: false, expectedReason: 'ITEM_NOT_RECEIVED', expectedStage: 'INQUIRY' });
-  const amounts = entries.filter((entry) => !['A2', 'B2', 'C2'].includes(entry.key)).map((entry) => entry.amount);
+  expect(entries[entries.findIndex((entry) => entry.key === 'A2') + 1]?.key).toBe('A3');
+  expect(byKey.get('A3')).toEqual({ ...byKey.get('A2'), key: 'A3', trackingNumber: '1Z4F82V70394730525', notes: 'Spare claim for the document upload check. Shipping address matches the order address.', session: 3 });
+  const amounts = entries.filter((entry) => !['A2', 'A3', 'B2', 'C2'].includes(entry.key)).map((entry) => entry.amount);
   expect(new Set(amounts).size).toBe(amounts.length);
 });
 
@@ -103,5 +105,15 @@ test('plan attachments use MIME types and shipment attachments contain no fixed 
   for (const name of ['packing-slip.txt', 'ups-label.txt']) {
     const contents = readFileSync(new URL(`../seed/attachments/A/${name}`, import.meta.url), 'utf8');
     expect(contents).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+  }
+});
+
+test('every plan PDF attachment exists under its case key and starts with %PDF', () => {
+  const entries = parsePlan(JSON.parse(readFileSync(new URL('../seed/plan.json', import.meta.url), 'utf8')));
+  const pdfs = entries.flatMap((entry) => entry.attachments.filter((attachment) => attachment.type === 'application/pdf').map((attachment) => ({ key: entry.key, name: attachment.name })));
+  expect(pdfs).toEqual(['A', 'A2', 'A3'].map((key) => ({ key, name: 'packing-slip.pdf' })));
+  for (const { key, name } of pdfs) {
+    const bytes = readFileSync(new URL(`../seed/attachments/${key}/${name}`, import.meta.url));
+    expect(bytes.subarray(0, 4).toString('ascii')).toBe('%PDF');
   }
 });
