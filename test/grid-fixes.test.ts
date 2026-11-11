@@ -62,6 +62,12 @@ describe('AG Grid fix round 1', () => {
     expect(app).toMatch(/colId: "offer",\n\s*headerName: "Offer",\n\s*minWidth: 100,/);
   });
 
+  it('says Seller Protection lists the reason, never that it covers it', () => {
+    expect(app).toContain('reason: "lists this reason", cls: "chip-protect-yes"');
+    expect(app).toContain('reason: "not this reason", cls: "chip-protect-no"');
+    expect(app).not.toContain('covers this reason');
+  });
+
   it('shows Add offer on editable empty cells and wraps the text columns', () => {
     expect(app).toContain('? "Add offer"');
     expect(app).toMatch(/colId: "reason",[\s\S]*tooltipField: "reasonLabel"[\s\S]*wrapText: true/);

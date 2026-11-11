@@ -197,7 +197,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
     if (protection.covers === null)
       return { status, reason: "", cls: "chip-protect-none" };
     return protection.covers
-      ? { status, reason: "covers this reason", cls: "chip-protect-yes" }
+      ? { status, reason: "lists this reason", cls: "chip-protect-yes" }
       : { status, reason: "not this reason", cls: "chip-protect-no" };
   }
 
