@@ -2,7 +2,7 @@ import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { defaultPolicy } from '../src/policy.js';
-import { Store, isDecisionStale } from '../src/store.js';
+import { Store, evidenceOf, isDecisionStale } from '../src/store.js';
 import type { Dispute } from '../src/paypal/types.js';
 import type { CaseRecord } from '../seed/seed.js';
 
@@ -165,12 +165,29 @@ test('snapshot() returns only decisions, actions, calls and a timestamp', async 
 test('isDecisionStale is true when stage, links, amount or due date changed and false otherwise', () => {
   const d = { dispute_id: 'd', create_time: '', update_time: '', reason: '', status: 'OPEN', dispute_life_cycle_stage: 'INQUIRY', dispute_amount: { currency_code: 'USD', value: '5.00' }, links: [{ href: '', rel: 'b' }, { href: '', rel: 'a' }] } satisfies Dispute;
   const stored = { basis: { stage: 'INQUIRY', status: 'OPEN', disputeState: null, links: ['a', 'b'], amount: '5.00', dueAt: null } } as never;
-  expect(isDecisionStale(stored, d)).toBe(false);
-  expect(isDecisionStale(stored, { ...d, links: [...d.links].reverse() })).toBe(false);
-  expect(isDecisionStale(stored, { ...d, dispute_life_cycle_stage: 'CHARGEBACK' })).toBe(true);
-  expect(isDecisionStale(stored, { ...d, links: [{ href: '', rel: 'a' }] })).toBe(true);
-  expect(isDecisionStale(stored, { ...d, dispute_amount: { currency_code: 'USD', value: '6.00' } })).toBe(true);
-  expect(isDecisionStale(stored, { ...d, seller_response_due_date: 'later' })).toBe(true);
+  const evidence = evidenceOf(record, []);
+  expect(isDecisionStale(stored, d, evidence)).toBe(false);
+  expect(isDecisionStale(stored, { ...d, links: [...d.links].reverse() }, evidence)).toBe(false);
+  expect(isDecisionStale(stored, { ...d, dispute_life_cycle_stage: 'CHARGEBACK' }, evidence)).toBe(true);
+  expect(isDecisionStale(stored, { ...d, links: [{ href: '', rel: 'a' }] }, evidence)).toBe(true);
+  expect(isDecisionStale(stored, { ...d, dispute_amount: { currency_code: 'USD', value: '6.00' } }, evidence)).toBe(true);
+  expect(isDecisionStale(stored, { ...d, seller_response_due_date: 'later' }, evidence)).toBe(true);
+});
+test('isDecisionStale is true when the seller notes change or an attachment is added, and a decision stored without a fingerprint is not stale for evidence', () => {
+  const d = { dispute_id: 'd', create_time: '', update_time: '', reason: '', status: 'OPEN', dispute_life_cycle_stage: 'INQUIRY', dispute_amount: { currency_code: 'USD', value: '5.00' }, links: [] } satisfies Dispute;
+  const basis = { stage: 'INQUIRY', status: 'OPEN', disputeState: null, links: [], amount: '5.00', dueAt: null };
+  const uploaded = [{ name: 'label.png' }];
+  const stored = { basis: { ...basis, evidence: evidenceOf(record, uploaded) } } as never;
+  expect(isDecisionStale(stored, d, evidenceOf(record, uploaded))).toBe(false);
+  expect(isDecisionStale(stored, d, evidenceOf({ ...record, notes: 'Delivered on 2026-11-06' }, uploaded))).toBe(true);
+  expect(isDecisionStale(stored, d, evidenceOf(record, [...uploaded, { name: 'receipt.pdf' }]))).toBe(true);
+  expect(isDecisionStale(stored, d, evidenceOf({ ...record, attachments: [{ name: 'slip.txt', type: 'text/plain' }] }, uploaded))).toBe(true);
+  expect(isDecisionStale({ basis } as never, d, evidenceOf({ ...record, notes: 'changed' }, [{ name: 'new.png' }]))).toBe(false);
+});
+test('evidenceOf ignores attachment order and treats a missing record as empty notes', () => {
+  expect(evidenceOf(record, [{ name: 'a.png' }, { name: 'b.png' }])).toBe(evidenceOf(record, [{ name: 'b.png' }, { name: 'a.png' }]));
+  expect(evidenceOf(null, [])).toBe(evidenceOf({ ...record, notes: '' }, []));
+  expect(evidenceOf(null, [])).toMatch(/^[0-9a-f]{16}$/);
 });
 test('a state.json written before unknownOutcomes existed loads with none', async () => {
   const f = await fixture();

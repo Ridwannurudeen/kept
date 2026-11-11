@@ -5,7 +5,7 @@ import { afterEach, beforeEach, vi } from 'vitest';
 import { performAction, reconcileUnknown, resetActionGuards, type ActionDeps } from '../src/actions.js';
 import type { Dispute } from '../src/paypal/types.js';
 import { PayPalError } from '../src/paypal/errors.js';
-import { Store } from '../src/store.js';
+import { Store, evidenceOf } from '../src/store.js';
 
 const baseDispute = (id = 'd-action'): Dispute => ({
   dispute_id: id,
@@ -92,6 +92,21 @@ describe('performAction', () => {
     const result = await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps);
     expect(result).toMatchObject({ status: 'refused', blockers: [expect.stringMatching(/^Recommendation is stale/)] });
     expect(paypal.makeOffer).not.toHaveBeenCalled();
+  });
+
+  test('refuses when the seller evidence changed since the decision, naming that reason, before any PayPal call', async () => {
+    await store.update((state) => {
+      state.decisions['d-action']!.basis.evidence = evidenceOf(state.cases.B!, []);
+      state.cases.B!.notes = 'UPS shows it delivered on 2026-11-06';
+    });
+    const result = await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps);
+    expect(result).toEqual({ status: 'refused', blockers: ['Recommendation is stale: Seller evidence changed since this recommendation. Run Kept again before approving'] });
+    expect(paypal.makeOffer).not.toHaveBeenCalled();
+  });
+
+  test('sends when the seller evidence matches the decision fingerprint', async () => {
+    await store.update((state) => { state.decisions['d-action']!.basis.evidence = evidenceOf(state.cases.B!, []); });
+    expect(await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00' }, deps)).toMatchObject({ status: 'sent' });
   });
 
   test('accept_claim goes through the toolkit tool with dispute_id and note', async () => {

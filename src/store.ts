@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { defaultPolicy, parsePolicy, type Policy } from './policy.js';
@@ -9,8 +10,9 @@ import type { ActionKind } from './paypal/dispute.js';
 import type { CaseRecord } from '../seed/seed.js';
 import { buildSnapshot } from './snapshot.js';
 
-export type DecisionBasis = { stage: string; status: string; disputeState: string | null; links: string[]; amount: string; dueAt: string | null };
-export type StoredDecision = { decision: Decision; validation: Validation; at: string; model: string; steps: number; toolCalls: string[]; durationMs: number; basis: DecisionBasis };
+export type DecisionBasis = { stage: string; status: string; disputeState: string | null; links: string[]; amount: string; dueAt: string | null; evidence?: string };
+export type PreviousCall = Pick<Decision, 'recommendation' | 'offer_amount' | 'would_change'> & { at: string; evidenceChanged: boolean };
+export type StoredDecision = { decision: Decision; validation: Validation; at: string; model: string; steps: number; toolCalls: string[]; durationMs: number; basis: DecisionBasis; previous?: PreviousCall };
 export type SnapshotAction = Omit<ActionEntry, 'recommended'>;
 export type SnapshotCall = Pick<CallEntry, 'id' | 'at' | 'method' | 'path' | 'status' | 'durationMs' | 'requestId' | 'debugId' | 'retried'>;
 export type UnknownOutcome = { action: ActionKind; at: string };
@@ -39,11 +41,20 @@ export function basisOf(d: Dispute): DecisionBasis {
   };
 }
 
-export function isDecisionStale(stored: StoredDecision, d: Dispute): boolean {
+export function evidenceOf(record: CaseRecord | null, uploaded: { name: string }[]): string {
+  const names = [...(record?.attachments ?? []), ...uploaded].map((file) => file.name).sort();
+  return createHash('sha256').update(JSON.stringify([record?.notes ?? '', names])).digest('hex').slice(0, 16);
+}
+
+export function evidenceChanged(stored: StoredDecision, evidence: string): boolean {
+  return stored.basis.evidence !== undefined && stored.basis.evidence !== evidence;
+}
+
+export function isDecisionStale(stored: StoredDecision, d: Dispute, evidence: string): boolean {
   const a = stored.basis;
   const b = basisOf(d);
   const sameLinks = JSON.stringify([...new Set(a.links)].sort()) === JSON.stringify([...new Set(b.links)].sort());
-  return a.stage !== b.stage || a.status !== b.status || a.disputeState !== b.disputeState || a.amount !== b.amount || a.dueAt !== b.dueAt || !sameLinks;
+  return a.stage !== b.stage || a.status !== b.status || a.disputeState !== b.disputeState || a.amount !== b.amount || a.dueAt !== b.dueAt || !sameLinks || evidenceChanged(stored, evidence);
 }
 
 function isMissing(error: unknown): boolean {

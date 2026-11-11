@@ -1,11 +1,12 @@
-import type { Snapshot, SnapshotAction, SnapshotCall, State, StoredDecision, UnknownOutcome } from './store.js';
+import type { PreviousCall, Snapshot, SnapshotAction, SnapshotCall, State, StoredDecision, UnknownOutcome } from './store.js';
 
 export const SNAPSHOT_ALLOWLIST: Record<string, string[]> = {
   Snapshot: ['snapshotAt', 'decisions', 'actions', 'calls', 'unknownOutcomes'],
-  decision: ['recommendation', 'plain_ask', 'evidence_have', 'evidence_missing', 'reasons', 'offer_amount', 'draft_note'],
+  decision: ['recommendation', 'plain_ask', 'evidence_have', 'evidence_missing', 'reasons', 'would_change', 'offer_amount', 'draft_note'],
   validation: ['ok', 'action', 'cap', 'blockers'],
-  StoredDecision: ['decision', 'validation', 'at', 'model', 'steps', 'toolCalls', 'durationMs', 'basis'],
+  StoredDecision: ['decision', 'validation', 'at', 'model', 'steps', 'toolCalls', 'durationMs', 'basis', 'previous'],
   basis: ['stage', 'status', 'disputeState', 'links', 'amount', 'dueAt'],
+  previous: ['recommendation', 'offer_amount', 'would_change', 'at', 'evidenceChanged'],
   SnapshotAction: ['id', 'at', 'disputeId', 'caseKey', 'action', 'submitted', 'sellerEdited', 'paypal', 'after'],
   submitted: ['note', 'offerAmount'],
   paypal: ['ok', 'status', 'requestId', 'debugId', 'durationMs', 'message'],
@@ -18,7 +19,7 @@ const FORBIDDEN = ['@', 'example.com', 'payer_id', 'address_line', 'full_name', 
 const MAX_MESSAGE = 200;
 
 const CHILD_KINDS: Record<string, Record<string, string>> = {
-  StoredDecision: { decision: 'decision', validation: 'validation', basis: 'basis' },
+  StoredDecision: { decision: 'decision', validation: 'validation', basis: 'basis', previous: 'previous' },
   SnapshotAction: { submitted: 'submitted', paypal: 'paypal', after: 'after' },
 };
 
@@ -31,10 +32,11 @@ export function buildSnapshot(state: Pick<State, 'decisions' | 'actions' | 'call
   const decisions: Record<string, StoredDecision> = {};
   for (const [id, stored] of Object.entries(state.decisions)) {
     decisions[id] = {
-      ...pick<Omit<StoredDecision, 'decision' | 'validation' | 'basis'>>(stored, 'StoredDecision'),
+      ...pick<Omit<StoredDecision, 'decision' | 'validation' | 'basis' | 'previous'>>(stored, 'StoredDecision'),
       decision: pick(stored.decision, 'decision'),
       validation: pick(stored.validation, 'validation'),
       basis: pick(stored.basis, 'basis'),
+      ...(stored.previous ? { previous: pick<PreviousCall>(stored.previous, 'previous') } : {}),
     };
   }
   const actions = state.actions.map((action): SnapshotAction => {

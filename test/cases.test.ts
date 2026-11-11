@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import type { Decision } from '../src/decision.js';
-import type { State, StoredDecision } from '../src/store.js';
+import { evidenceOf, type State, type StoredDecision } from '../src/store.js';
 import type { CaseRecord } from '../seed/seed.js';
 import type { ActionEntry } from '../src/log.js';
 import type { Capture, Dispute, Order } from '../src/paypal/types.js';
@@ -332,4 +332,24 @@ test('what happened without a decision or a sent action, and none for an open ca
     paypalReported: { outcome: 'RESOLVED_BUYER_FAVOUR', refunded: 'USD 5.00', kept: 'USD 15.00', closedAt: resolved.update_time },
   });
   expect(buildCaseDetail(inquiry, null, null, null, state(), now).whatHappened).toBeNull();
+});
+test('row is stale for seller evidence when notes or attachments changed since the decision, and other reasons come first', () => {
+  const decision: Decision = { recommendation: 'SETTLE', plain_ask: 'offer a partial refund', evidence_have: [], evidence_missing: [], reasons: ['fair'], would_change: null, offer_amount: '5.00', draft_note: 'Sorry.' };
+  const seen = record('CAPTUREB0000000001');
+  const withEvidence = { ...stored(decision), basis: { ...stored(decision).basis, evidence: evidenceOf(seen, []) } };
+  const decisions = { [inquiry.dispute_id]: withEvidence };
+  expect(buildCaseRow(inquiry, seen, state({ decisions }), now, null)).toMatchObject({ recommendationStale: false, staleReason: null });
+  expect(buildCaseRow(inquiry, { ...seen, notes: 'UPS shows it delivered on 2026-11-06' }, state({ decisions }), now, null)).toMatchObject({ recommendationStale: true, staleReason: 'Seller evidence changed since this recommendation' });
+  const uploaded = { [inquiry.dispute_id]: [{ name: 'pod.png', type: 'image/png', size: 4, at: now.toISOString() }] };
+  expect(buildCaseRow(inquiry, seen, state({ decisions, attachments: uploaded }), now, null)).toMatchObject({ recommendationStale: true, staleReason: 'Seller evidence changed since this recommendation' });
+  expect(buildCaseRow({ ...inquiry, seller_response_due_date: '2026-11-12T00:00:00.000Z' }, { ...seen, notes: 'changed' }, state({ decisions }), now, null).staleReason).toBe('due date changed');
+  expect(buildCaseRow(inquiry, { ...seen, notes: 'changed' }, state({ decisions: { [inquiry.dispute_id]: stored(decision) } }), now, null).recommendationStale).toBe(false);
+});
+
+test('case detail carries the previous call kept after a re-decide', () => {
+  const decision: Decision = { recommendation: 'FIGHT', plain_ask: 'send the delivery record', evidence_have: [], evidence_missing: [], reasons: ['delivered'], would_change: null, offer_amount: null, draft_note: 'Delivered.' };
+  const previous = { recommendation: 'SETTLE' as const, offer_amount: '9.00', would_change: 'A carrier record showing the parcel delivered', at: '2026-11-04T00:00:00.000Z', evidenceChanged: true };
+  const detail = buildCaseDetail(inquiry, record('CAPTUREB0000000001'), null, null, state({ decisions: { [inquiry.dispute_id]: { ...stored(decision), previous } } }), now);
+  expect(detail.decision?.previous).toEqual(previous);
+  expect(detail.decision?.decision.would_change).toBeNull();
 });

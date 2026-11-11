@@ -8,7 +8,7 @@ import { buildCaseDetail, buildCaseRow, joinCases, sortRows, summarize } from '.
 import { PayPalError } from '../paypal/errors.js';
 import { allowedActions, captureIdOf, disputedAmount } from '../paypal/dispute.js';
 import { parsePolicy } from '../policy.js';
-import { basisOf } from '../store.js';
+import { basisOf, evidenceChanged, evidenceOf } from '../store.js';
 import type { Capture, Dispute, Order } from '../paypal/types.js';
 import type { CaseRecord } from '../../seed/seed.js';
 import type { Deps } from './app.js';
@@ -75,6 +75,7 @@ async function decideOne(disputeId: string, deps: Deps): Promise<DecideResult> {
   const unavailable = (error: unknown) => { console.error(`[decide ${disputeId}]`, error); return null; };
   const { order, capture } = await orderAndCapture(dispute, record, deps, unavailable);
   const attachments = [...(record?.attachments ?? []), ...(state.attachments[disputeId] ?? []).map(({ name, type }) => ({ name, type }))];
+  const evidence = evidenceOf(record, state.attachments[disputeId] ?? []);
   const images = (await Promise.all(caseImageFiles(disputeId, record, deps).slice(0, MAX_IMAGES).map(async ({ name, path }): Promise<CaseImage | null> => {
     const data = await readFile(path).catch(unavailable);
     if (!data) return null;
@@ -85,7 +86,11 @@ async function decideOne(disputeId: string, deps: Deps): Promise<DecideResult> {
   const result = await deps.decide({ dispute, order, capture, record, attachments, images, policy: state.policy, allowed: [...allowedActions(dispute)], now: deps.now() });
   if (result.ok) {
     const { decision, validation, model, steps, toolCalls, durationMs } = result;
-    await deps.store.update((current) => { current.decisions[disputeId] = { decision, validation, at: deps.now().toISOString(), model, steps, toolCalls, durationMs, basis: basisOf(dispute) }; });
+    await deps.store.update((current) => {
+      const prior = current.decisions[disputeId];
+      const previous = prior ? { previous: { recommendation: prior.decision.recommendation, offer_amount: prior.decision.offer_amount, would_change: prior.decision.would_change ?? null, at: prior.at, evidenceChanged: evidenceChanged(prior, evidence) } } : {};
+      current.decisions[disputeId] = { decision, validation, at: deps.now().toISOString(), model, steps, toolCalls, durationMs, basis: { ...basisOf(dispute), evidence }, ...previous };
+    });
   }
   return result;
 }

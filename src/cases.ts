@@ -1,5 +1,5 @@
 import type { Decision } from './decision.js';
-import { isDecisionStale, type State, type StoredDecision, type UnknownOutcome } from './store.js';
+import { evidenceChanged, evidenceOf, isDecisionStale, type State, type StoredDecision, type UnknownOutcome } from './store.js';
 import type { ActionEntry } from './log.js';
 import { hasSentAction } from './log.js';
 import { breakEven as calculateBreakEven, deadlineStatus, fromCents, offerCap, parseAmount, type BreakEven, type DeadlineStatus, type Policy } from './policy.js';
@@ -207,19 +207,21 @@ function timelineOf(d: Dispute): TimelineEntry[] {
   return entries.sort((a, b) => time(a) - time(b));
 }
 
-function staleReason(stored: StoredDecision, d: Dispute): string {
+function staleReason(stored: StoredDecision, d: Dispute, evidence: string): string {
   if (stored.basis.stage !== d.dispute_life_cycle_stage) return `stage changed ${stageLabel({ ...d, dispute_life_cycle_stage: stored.basis.stage })} \u2192 ${stageLabel(d)}`;
   const links = (d.links ?? []).map((link) => link.rel);
   if (JSON.stringify([...new Set(stored.basis.links)].sort()) !== JSON.stringify([...new Set(links)].sort())) return "PayPal's listed actions changed";
   if (stored.basis.status !== d.status) return `status changed ${stored.basis.status} → ${d.status}`;
   if (stored.basis.amount !== disputedAmount(d).value) return `amount changed ${stored.basis.amount} → ${disputedAmount(d).value}`;
   if (stored.basis.dueAt !== (d.seller_response_due_date ?? null)) return 'due date changed';
+  if (stored.basis.disputeState === (d.dispute_state ?? null) && evidenceChanged(stored, evidence)) return 'Seller evidence changed since this recommendation';
   return 'case details changed';
 }
 
 function buildRow(d: Dispute, record: CaseRecord | null, capture: Capture | null, state: State, now: Date, explanation: StateExplanation): CaseRow {
   const stored = state.decisions[d.dispute_id] ?? null;
-  const stale = stored ? isDecisionStale(stored, d) : false;
+  const evidence = evidenceOf(record, state.attachments[d.dispute_id] ?? []);
+  const stale = stored ? isDecisionStale(stored, d, evidence) : false;
   const open = isOpen(d);
   const amount = disputedAmount(d);
   const action = state.actions.filter((entry) => entry.disputeId === d.dispute_id && entry.paypal.ok).at(-1)?.action ?? null;
@@ -245,7 +247,7 @@ function buildRow(d: Dispute, record: CaseRecord | null, capture: Capture | null
     }) : [],
     recommendation: stored?.decision.recommendation ?? null,
     recommendationStale: stale,
-    staleReason: stale && stored ? staleReason(stored, d) : null,
+    staleReason: stale && stored ? staleReason(stored, d, evidence) : null,
     offerAmount: stored?.decision.offer_amount ?? null,
     canOffer: allowedActions(d).has('make_offer'),
     actionTaken: action,

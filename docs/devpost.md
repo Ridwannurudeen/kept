@@ -145,7 +145,7 @@ To run with your own sandbox app and Anthropic key, see README, Running it as a 
 
 ## Evaluation result
 
-Golden-case evaluation of 6 hand-built cases, 3 runs each, checks specific behaviours; it is not a measure of real-world accuracy.
+Golden-case evaluation of 8 hand-built cases, 3 runs each, checks specific behaviours; it is not a measure of real-world accuracy.
 
 ## Compliance check before submitting
 

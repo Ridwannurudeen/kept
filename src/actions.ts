@@ -7,7 +7,7 @@ import { allowedActions, captureIdOf, disputedAmount, type ActionKind } from './
 import type { CallRecord, PayPalClient } from './paypal/client.js';
 import type { Dispute } from './paypal/types.js';
 import { validateSubmission } from './decision.js';
-import { isDecisionStale, type Store } from './store.js';
+import { evidenceOf, isDecisionStale, type Store } from './store.js';
 import type { PayPalAgentToolkit } from '@paypal/agent-toolkit/ai-sdk';
 
 export type ApproveRequest = { action: ActionKind; note: string; offerAmount?: string | null; evidenceType?: 'PROOF_OF_FULFILLMENT' | 'OTHER' };
@@ -97,15 +97,15 @@ export async function performAction(disputeId: string, req: ApproveRequest, deps
   const state = deps.store.get();
   if (hasSentAction(state.actions, disputeId)) return { status: 'refused', blockers: ['This case already has a sent action'] };
   const stored = state.decisions[disputeId] ?? null;
-  if (stored && isDecisionStale(stored, fresh)) {
-    const staleReason = buildCaseRow(fresh, null, state, deps.now(), null).staleReason;
+  const record = Object.values(state.cases).find((entry) => entry.captureId && entry.captureId === captureIdOf(fresh)) ?? null;
+  if (stored && isDecisionStale(stored, fresh, evidenceOf(record, state.attachments[disputeId] ?? []))) {
+    const staleReason = buildCaseRow(fresh, record, state, deps.now(), null).staleReason;
     return { status: 'refused', blockers: [`Recommendation is stale: ${staleReason}. Run Kept again before approving`] };
   }
   const amount = disputedAmount(fresh);
   const validation = validateSubmission(req, { disputedAmount: amount.value, allowed: allowedActions(fresh), policy: state.policy, stage: fresh.dispute_life_cycle_stage });
   if (!validation.ok) return { status: 'refused', blockers: validation.blockers };
 
-  const record = Object.values(state.cases).find((entry) => entry.captureId && entry.captureId === captureIdOf(fresh)) ?? null;
   const requestId = (body: unknown) => `kept-${disputeId}-${req.action}-${createHash('sha256').update(JSON.stringify(body)).digest('hex').slice(0, 12)}`;
   const start = deps.now().getTime();
   let failure: ActionError | null = null;

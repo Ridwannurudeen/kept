@@ -3,7 +3,7 @@ import { evaluate } from './golden.eval.js';
 import type { DecideInput, DecideResult } from '../../src/ai/decide.js';
 import type { Decision } from '../../src/decision.js';
 
-function input(key: 'A' | 'E' | 'F'): DecideInput {
+function input(key: 'A' | 'E' | 'F' | 'EVa' | 'EVb'): DecideInput {
   const raw = JSON.parse(readFileSync(new URL(`./cases/${key}.json`, import.meta.url), 'utf8'));
   return { dispute: raw.dispute, order: raw.order, capture: raw.capture, record: raw.record, attachments: raw.attachments, images: [], policy: raw.policy, allowed: raw.allowed, now: new Date(raw.now) };
 }
@@ -127,5 +127,69 @@ describe('harder golden case checks', () => {
 
   it('case A misses the mention when nothing names the hold', () => {
     expect(evaluate('A', input('A'), result({ recommendation: 'FIGHT', reasons: ['Tracking is on file.'] })).checks.mentions).toBe(false);
+  });
+
+  it('EVa and EVb share PayPal data with no tracker and a physical item, differ only in the seller notes, and EVb carries a valid UPS number delivered on day 1', () => {
+    const { _derived: derivedA, record: recordA, ...restA } = JSON.parse(readFileSync(new URL('./cases/EVa.json', import.meta.url), 'utf8'));
+    const { _derived: derivedB, record: recordB, ...restB } = JSON.parse(readFileSync(new URL('./cases/EVb.json', import.meta.url), 'utf8'));
+    expect(restB).toEqual(restA);
+    expect({ ...recordB, notes: recordA.notes }).toEqual(recordA);
+    expect(restA.order.purchase_units[0].shipping.trackers).toEqual([]);
+    expect([recordA.trackingNumber, recordA.carrier]).toEqual([null, null]);
+    expect(restA.dispute.disputed_transactions[0].items[0].item_type).toBe('PRODUCT');
+    expect(restA.order.create_time.slice(0, 10)).toBe('2026-11-02');
+    expect(restA.dispute.create_time.slice(0, 10)).toBe('2026-11-04');
+    expect(recordA.notes).toBe('The Walnut phone stand was packed and shipped.');
+    expect(recordB.notes).toMatch(/^The Walnut phone stand was packed and shipped\. Shipped by UPS .*delivered on 2026-11-03 to the address on the order\.$/);
+    const numbers = recordB.notes.match(/1Z[0-9A-Z]{16}/g);
+    expect(numbers).toHaveLength(1);
+    const digits = [...numbers[0].slice(2, 17)].map((ch: string) => /\d/.test(ch) ? Number(ch) : (ch.charCodeAt(0) - 63) % 10);
+    const sum = digits.reduce((total: number, value: number, index: number) => total + (index % 2 === 0 ? value : 2 * value), 0);
+    expect((10 - (sum % 10)) % 10).toBe(Number(numbers[0][17]));
+    expect(derivedA).not.toEqual(derivedB);
+  });
+
+  it('EVa needs would_change to name proof of delivery when it does not recommend FIGHT', () => {
+    const missing = evaluate('EVa', input('EVa'), result({ evidence_missing: ['No proof of delivery.'], reasons: ['No delivery record.'], would_change: null }));
+    expect(missing.checks.policy).toBe(false);
+    expect(missing.problems).toContain('would_change does not name proof of delivery');
+    expect(evaluate('EVa', input('EVa'), result({ evidence_missing: ['No proof of delivery.'], reasons: ['No delivery record.'], would_change: 'A carrier record showing the price paid' })).checks.policy).toBe(false);
+    for (const wouldChange of ['A carrier record showing the parcel delivered to the address on the order', 'A UPS tracking number for the parcel', 'A tracker on the PayPal order']) {
+      for (const recommendation of ['SETTLE', 'ACCEPT'] as const) {
+        const evaluated = evaluate('EVa', input('EVa'), result({ recommendation, offer_amount: recommendation === 'SETTLE' ? '10.00' : null, evidence_missing: ['No proof of delivery.'], reasons: ['No delivery record.'], would_change: wouldChange }));
+        expect(evaluated.checks.recommendation).toBe(true);
+        expect(evaluated.checks.policy).toBe(true);
+        expect(evaluated.checks.mentions).toBe(true);
+      }
+    }
+  });
+
+  it('EVa on FIGHT skips the would_change content check but must explain the missing proof of delivery like F', () => {
+    const fight = (fields: Partial<Decision>) => evaluate('EVa', input('EVa'), { ...result({ recommendation: 'FIGHT', offer_amount: null, ...fields }), validation: { ok: true, action: 'provide_evidence', cap: null } });
+    expect(fight({ reasons: ['Proof of delivery is missing.'], evidence_missing: ['Proof of delivery is missing.'], would_change: null }).checks.policy).toBe(true);
+    expect(fight({ reasons: ['The seller shipped it.'], evidence_missing: ['Proof of delivery is missing.'], would_change: null }).problems).toContain('FIGHT does not explain missing proof of delivery in reasons or plain_ask');
+    expect(fight({ reasons: ['Proof of delivery is missing.'], evidence_missing: ['No records.'], would_change: null }).problems).toContain('evidence_missing does not name the missing proof of delivery');
+  });
+
+  it('rejects a would_change that says the evidence wins', () => {
+    const evaluated = evaluate('EVa', input('EVa'), result({ evidence_missing: ['No proof of delivery.'], would_change: 'A delivery record from UPS wins this case' }));
+    expect(evaluated.checks.policy).toBe(false);
+    expect(evaluated.problems).toContain('would_change says the evidence wins');
+    expect(evaluate('EVa', input('EVa'), result({ evidence_missing: ['No proof of delivery.'], would_change: 'A UPS delivery record for the window display' })).problems).not.toContain('would_change says the evidence wins');
+  });
+
+  it('EVb must be FIGHT and may leave would_change null', () => {
+    const fight = evaluate('EVb', input('EVb'), { ...result({ recommendation: 'FIGHT', offer_amount: null, evidence_missing: [], reasons: ['UPS shows the parcel delivered to the address on the order.'], would_change: null }), validation: { ok: true, action: 'provide_evidence', cap: null } });
+    expect(fight.checks).toEqual({ recommendation: true, action: true, policy: true, fabrication: true, mentions: true });
+    expect(evaluate('EVb', input('EVb'), result({ reasons: ['UPS shows it delivered.'] })).checks.recommendation).toBe(false);
+  });
+
+  it('checks would_change for fabricated details and guarantee claims', () => {
+    const invented = evaluate('EVa', input('EVa'), result({ evidence_missing: ['No proof of delivery.'], would_change: 'A FedEx record showing delivery on 2026-11-20' }));
+    expect(invented.checks.fabrication).toBe(false);
+    expect(invented.problems).toContain('not in the prompt: date 2026-11-20, carrier FedEx');
+    const guarantee = evaluate('EVb', input('EVb'), { ...result({ recommendation: 'FIGHT', offer_amount: null, evidence_missing: [], reasons: ['UPS shows it delivered.'], would_change: 'A delivery photo guarantees you will win' }), validation: { ok: true, action: 'provide_evidence', cap: null } });
+    expect(guarantee.checks.policy).toBe(false);
+    expect(guarantee.problems).toContain('decision claims Seller Protection guarantees an outcome');
   });
 });

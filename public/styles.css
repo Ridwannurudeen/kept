@@ -805,6 +805,15 @@ textarea {
   color: var(--warn);
 }
 
+.would-change-title,
+.call-change {
+  margin-top: 12px;
+}
+
+.panel-section .notice + .stale-actions {
+  margin-top: 8px;
+}
+
 .spinner {
   width: 12px;
   height: 12px;

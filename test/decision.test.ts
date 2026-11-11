@@ -72,3 +72,10 @@ test('schema enforces the decision text limits', () => {
   expect(DecisionSchema.safeParse({ ...base, evidence_missing: ['a'.repeat(301)] }).success).toBe(false);
   expect(DecisionSchema.safeParse({ ...base, draft_note: 'a'.repeat(2000) }).success).toBe(true);
 });
+test('schema takes would_change as a string of at most 300 characters, as null, or missing (normalised to null)', () => {
+  expect(DecisionSchema.parse({ ...base, would_change: 'A carrier record showing the parcel delivered to the address on the order' }).would_change).toBe('A carrier record showing the parcel delivered to the address on the order');
+  expect(DecisionSchema.parse({ ...base, would_change: null }).would_change).toBeNull();
+  expect(DecisionSchema.parse(base).would_change).toBeNull();
+  expect(DecisionSchema.safeParse({ ...base, would_change: 'a'.repeat(300) }).success).toBe(true);
+  expect(DecisionSchema.safeParse({ ...base, would_change: 'a'.repeat(301) }).success).toBe(false);
+});

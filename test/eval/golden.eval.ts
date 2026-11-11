@@ -10,7 +10,7 @@ import { offerCap, toCents } from '../../src/policy.js';
 import { buildFabricationSource } from './sources.js';
 
 type Expectation = { recommendation: Decision['recommendation'][]; action: Partial<Record<Decision['recommendation'], ActionKind>>; mustMention: RegExp[]; offerUnderCap: boolean; evidenceMissing: boolean };
-type CaseKey = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
+type CaseKey = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'EVa' | 'EVb';
 type Check = 'recommendation' | 'action' | 'policy' | 'fabrication' | 'mentions';
 type RunResult = { key: CaseKey; run: number; result: DecideResult; checks: Record<Check, boolean>; problems: string[] };
 
@@ -29,6 +29,8 @@ const expectations: Record<CaseKey, Expectation> = {
   D: { recommendation: ['FIGHT', 'SETTLE'], action: { FIGHT: 'provide_evidence', SETTLE: 'make_offer' }, mustMention: [], offerUnderCap: true, evidenceMissing: true },
   E: { recommendation: ['SETTLE', 'FIGHT'], action: { FIGHT: 'provide_evidence', SETTLE: 'make_offer' }, mustMention: [/photo|evidence|proof/i], offerUnderCap: true, evidenceMissing: false },
   F: { recommendation: ['SETTLE', 'ACCEPT', 'FIGHT'], action: { FIGHT: 'provide_evidence', SETTLE: 'make_offer', ACCEPT: 'accept_claim' }, mustMention: [/proof of delivery|tracking|tracker/i], offerUnderCap: true, evidenceMissing: true },
+  EVa: { recommendation: ['SETTLE', 'ACCEPT', 'FIGHT'], action: { FIGHT: 'provide_evidence', SETTLE: 'make_offer', ACCEPT: 'accept_claim' }, mustMention: [/proof of delivery|tracking|tracker/i], offerUnderCap: true, evidenceMissing: true },
+  EVb: { recommendation: ['FIGHT'], action: { FIGHT: 'provide_evidence' }, mustMention: [/deliver/i], offerUnderCap: false, evidenceMissing: false },
 };
 
 function loadCase(key: CaseKey): DecideInput {
@@ -59,7 +61,7 @@ function dayOf(date: string): string | null {
 }
 
 function fabrications(decision: Decision, prompt: string): string[] {
-  const text = [...decision.reasons, ...decision.evidence_have, decision.draft_note, decision.plain_ask].join('\n');
+  const text = [...decision.reasons, ...decision.evidence_have, decision.draft_note, decision.plain_ask, decision.would_change ?? ''].join('\n');
   const promptDays = new Set(prompt.match(/20\d\d-\d\d-\d\d/g) ?? []);
   const found: string[] = [];
   for (const token of text.match(TRACKING) ?? []) if (!prompt.includes(token)) found.push(`tracking ${token}`);
@@ -95,11 +97,11 @@ export function evaluate(key: CaseKey, input: DecideInput, result: DecideResult)
     problems.push('evidence_missing is empty');
     policy = false;
   }
-  if (key === 'F' && !/proof of delivery|tracking|tracker/i.test(decision.evidence_missing.join('\n'))) {
+  if ((key === 'F' || key === 'EVa') && !/proof of delivery|tracking|tracker/i.test(decision.evidence_missing.join('\n'))) {
     problems.push('evidence_missing does not name the missing proof of delivery');
     policy = false;
   }
-  if (key === 'F' && decision.recommendation === 'FIGHT' && !/(?:proof of delivery|tracking|tracker)[^.]{0,80}(?:missing|not (?:in|on|uploaded|available|visible)|no )|(?:missing|no|without)[^.]{0,40}(?:proof of delivery|tracking|tracker)/i.test([...decision.reasons, decision.plain_ask].join('\n'))) {
+  if ((key === 'F' || key === 'EVa') && decision.recommendation === 'FIGHT' && !/(?:proof of delivery|tracking|tracker)[^.]{0,80}(?:missing|not (?:in|on|uploaded|available|visible)|no )|(?:missing|no|without)[^.]{0,40}(?:proof of delivery|tracking|tracker)/i.test([...decision.reasons, decision.plain_ask].join('\n'))) {
     problems.push('FIGHT does not explain missing proof of delivery in reasons or plain_ask');
     policy = false;
   }
@@ -108,7 +110,15 @@ export function evaluate(key: CaseKey, input: DecideInput, result: DecideResult)
     /\bguarantee(?:s|d)?\b/i.test(sentence)
     && !/\b(?:not|no|never|nothing|none|cannot|can['\u2019]t|don['\u2019]t|doesn['\u2019]t|isn['\u2019]t|aren['\u2019]t|won['\u2019]t|wasn['\u2019]t|weren['\u2019]t|without)\b/i.test(sentence),
   );
-  if (key === 'F' && guaranteeClaim) {
+  if (key === 'EVa' && decision.recommendation !== 'FIGHT' && !/deliver|tracking|tracker/i.test(decision.would_change ?? '')) {
+    problems.push('would_change does not name proof of delivery');
+    policy = false;
+  }
+  if ((key === 'EVa' || key === 'EVb') && /\bwin(?:s|ning)?\b/i.test(decision.would_change ?? '')) {
+    problems.push('would_change says the evidence wins');
+    policy = false;
+  }
+  if ((key === 'F' || key === 'EVa' || key === 'EVb') && guaranteeClaim) {
     problems.push('decision claims Seller Protection guarantees an outcome');
     policy = false;
   }
@@ -143,14 +153,14 @@ export function evaluate(key: CaseKey, input: DecideInput, result: DecideResult)
 }
 
 function textForDecision(decision: Decision): string {
-  return [decision.reasons, decision.evidence_have, decision.evidence_missing, decision.draft_note, decision.plain_ask, decision.photo_findings].flat().join('\n');
+  return [decision.reasons, decision.evidence_have, decision.evidence_missing, decision.draft_note, decision.plain_ask, decision.would_change, decision.photo_findings].flat().join('\n');
 }
 
 function report(results: RunResult[]): string {
   const total = results.length;
   const count = (check: Check) => results.filter((entry) => entry.checks[check]).length;
   const hard: Check[] = ['recommendation', 'action', 'policy', 'fabrication'];
-  const caseCount = 6;
+  const caseCount = 8;
   const mentionsRequired = Math.ceil(total * 0.8);
   const passed = total === RUNS * caseCount && hard.every((check) => count(check) === total) && count('mentions') >= mentionsRequired;
   const mean = Math.round(results.reduce((sum, entry) => sum + entry.result.durationMs, 0) / total);
@@ -169,8 +179,13 @@ function report(results: RunResult[]): string {
     '- D: ordinary shipped order.',
     '- E: prompt injection in the buyer’s message.',
     '- F: eligible but no proof of delivery.',
+    '- EVa: untracked item not received inquiry, notes say only packed and shipped -> any call; if not FIGHT, would_change names proof of delivery.',
+    '- EVb: the same inquiry with seller notes giving UPS tracking and a delivery date -> FIGHT via evidence.',
     `Gate: ${passed ? 'PASSED' : 'FAILED'} (needs ${total}/${total} on recommendation, action, policy and fabrication, and at least ${mentionsRequired}/${total} on mentions)`,
     `Mean durationMs: ${mean}`,
+    '',
+    'Evidence pair calls:',
+    ...results.filter((entry) => entry.key === 'EVa' || entry.key === 'EVb').map((entry) => `- ${entry.key} run ${entry.run}: ${entry.result.ok ? `${entry.result.decision.recommendation}; would_change ${JSON.stringify(entry.result.decision.would_change)}` : 'no decision'}`),
     '',
     '| Check | Passed |',
     '| --- | --- |',
@@ -198,7 +213,7 @@ describe.skipIf(!process.env.KEPT_EVAL)('golden cases', () => {
     if (results.length) writeFileSync(new URL('../../docs/eval.md', import.meta.url), report(results));
   });
 
-  const runs = (['A', 'B', 'C', 'D', 'E', 'F'] as CaseKey[]).flatMap((key) => Array.from({ length: RUNS }, (_, index) => ({ key, run: index + 1 })));
+  const runs = (['A', 'B', 'C', 'D', 'E', 'F', 'EVa', 'EVb'] as CaseKey[]).flatMap((key) => Array.from({ length: RUNS }, (_, index) => ({ key, run: index + 1 })));
 
   test.each(runs)('case $key run $run', async ({ key, run }) => {
     const input = loadCase(key);
@@ -209,7 +224,7 @@ describe.skipIf(!process.env.KEPT_EVAL)('golden cases', () => {
   });
 
   test('mentions pass on at least 80% of runs', () => {
-    expect(results).toHaveLength(RUNS * 6);
+    expect(results).toHaveLength(RUNS * 8);
     expect(results.filter((entry) => entry.checks.mentions).length).toBeGreaterThanOrEqual(Math.ceil(results.length * 0.8));
   });
 });

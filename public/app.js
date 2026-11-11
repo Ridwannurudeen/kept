@@ -18,6 +18,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
   const CALL_SLACK_MS = 10_000;
   const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
   const MAX_PHOTOS = 3;
+  const EVIDENCE_STALE = "Seller evidence changed since this recommendation";
   const VIEW_KEY = "kept.gridView";
   const VIEW_VERSION = 1;
   const VIEW_PARTS = [
@@ -759,6 +760,8 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
   }
 
   function staleNotice(detail) {
+    if (detail.staleReason === EVIDENCE_STALE)
+      return `${EVIDENCE_STALE}. Decide again before approving.`;
     const reason = detail.staleReason ? ` (${detail.staleReason})` : "";
     return `This case changed since Kept looked at it${reason}. Decide again before approving.`;
   }
@@ -1002,9 +1005,59 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
         el("p", "panel-error", `No decision yet. ${state.detail || ""}`.trim()),
       );
     if (decision) wrap.append(list(decision.reasons, "No reasons given"));
-    if (detail.recommendationStale)
-      wrap.append(el("p", "notice notice-stale", staleNotice(detail)));
+    if (decision?.would_change)
+      wrap.append(
+        el("h4", "evidence-title would-change-title", "What would change this call"),
+        el("p", "panel-text", decision.would_change),
+      );
+    const previous = detail.decision?.previous;
+    if (decision && previous) {
+      const columns = el("div", "evidence-columns call-change");
+      const call = (title, recommendation, offer, at) => {
+        const column = el("div", "evidence-column");
+        const row = el("div", "panel-row");
+        row.append(
+          el("span", `badge badge-${recommendation.toLowerCase()}`, recommendation),
+        );
+        if (offer)
+          row.append(
+            el("span", "panel-text", `Offer ${detail.amount.currency_code} ${offer}`),
+          );
+        column.append(
+          el("h4", "evidence-title", title),
+          row,
+          el("p", "panel-muted", stampFormat.format(new Date(at))),
+        );
+        return column;
+      };
+      columns.append(
+        call(previous.evidenceChanged ? "Before your evidence" : "Before", previous.recommendation, previous.offer_amount, previous.at),
+        call("After", decision.recommendation, decision.offer_amount, detail.decision.at),
+      );
+      wrap.append(columns);
+    }
+    if (detail.recommendationStale) {
+      const notice = el("p", "notice notice-stale", staleNotice(detail));
+      notice.id = "stale-notice";
+      wrap.append(notice);
+      if (detail.staleReason === EVIDENCE_STALE && detail.open && !isPending(state)) {
+        const again = el("button", "button button-small", "Decide again");
+        again.type = "button";
+        again.setAttribute("aria-describedby", notice.id);
+        again.addEventListener("click", () => decideInPanel(id));
+        const row = el("div", "panel-row stale-actions");
+        row.append(again);
+        wrap.append(row);
+      }
+    }
     return wrap;
+  }
+
+  async function reloadAfterEvidence(id) {
+    await loadCases();
+    if (panelId === id && !panelHasEdits()) await loadPanel(id);
+    if (panelId === id && panelDetail?.staleReason === EVIDENCE_STALE)
+      announce("Saved. The recommendation is now out of date; decide again.");
   }
 
   function renderDraftAndApprove(detail) {
@@ -1238,6 +1291,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
         });
         notes.defaultValue = notes.value;
         status.textContent = `Saved ${timeFormat.format(new Date())}`;
+        if (detail.decision) reloadAfterEvidence(detail.disputeId);
       } catch (error) {
         status.textContent = `Not saved. ${error.message}`;
       } finally {
@@ -1312,6 +1366,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
         detail.attachments = [...detail.attachments, saved];
         renderFiles();
         uploadStatus.textContent = `Attached ${saved.name} (${formatSize(saved.size)})`;
+        if (detail.decision) reloadAfterEvidence(detail.disputeId);
       } catch (error) {
         uploadStatus.classList.add("is-error");
         uploadStatus.textContent = `Not attached. ${error.message}`;

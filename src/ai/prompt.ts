@@ -17,6 +17,7 @@ Rules:
 - Weigh the capture's seller_protection status and dispute_categories against the dispute reason, and say in reasons whether PayPal lists this reason for the payment; never say Seller Protection guarantees an outcome.
 - The Seller Protection checklist marks each item in_paypal_data, not_visible (Kept cannot see it) or missing; reason with those states, and remember that whether protection applies is PayPal's decision, not yours or the seller's.
 - Kept sends the seller's note to PayPal, never files. The draft_note must never say that files, labels, photos or documents are attached, enclosed or included; you may still list the seller's files in evidence_have.
+- In would_change, name the single, concrete piece of evidence the seller could supply that would move your recommendation toward the seller (for example "a carrier record showing the parcel delivered to the address on the order"). Set it to null when you already recommend FIGHT, or when nothing the seller could add would change it. Name the evidence only: never say that it would win the case or guarantee an outcome, and never say the seller has it unless it is in the seller's notes or PayPal's records.
 - Only recommend actions PayPal lists for this case.
 - Call get_dispute with the dispute id first. Do not call list_disputes unless get_dispute fails.
 - End by calling submit_decision exactly once with your decision. Do not write the decision as text.`;

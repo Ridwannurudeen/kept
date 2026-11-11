@@ -1,0 +1,245 @@
+{
+  "_derived": [
+    "Built from test/eval/cases/F.json (item not received inquiry, no tracker on the payment, capture Seller Protection ELIGIBLE); amounts, links, reason, INQUIRY stage, due date and now are unchanged.",
+    "Timing: order, capture and transaction times moved from 2026-11-04 to 2026-11-02 (day 0) so the dispute opened 2026-11-04T18:22:34.555Z is day 2, matching the sandbox demo where UPS Next Day Air delivers on day 1.",
+    "item_type changed from DIGITAL_DOWNLOAD to PRODUCT (the physical-item value in PayPal's customer_disputes_v1 enum).",
+    "PayPal data is identical in EVa and EVb: no tracker on the order, record trackingNumber and carrier null.",
+    "EVa: seller notes say only that the item was packed and shipped, as in F. EVb differs only in record.notes."
+  ],
+  "dispute": {
+    "dispute_id": "PP-R-HND-00000006",
+    "create_time": "2026-11-04T18:22:34.555Z",
+    "update_time": "2026-11-04T18:22:34.555Z",
+    "disputed_transactions": [
+      {
+        "buyer_transaction_id": "1WU327708M217505J",
+        "seller_transaction_id": "CAPTUREF0000000001",
+        "create_time": "2026-11-02T18:17:01.000Z",
+        "transaction_status": "HELD",
+        "gross_amount": {
+          "currency_code": "USD",
+          "value": "36.00"
+        },
+        "buyer": {
+          "email": "redacted@example.com",
+          "payer_id": "REDACTED",
+          "name": "REDACTED"
+        },
+        "seller": {
+          "email": "redacted@example.com",
+          "merchant_id": "REDACTED",
+          "name": "REDACTED"
+        },
+        "items": [
+          {
+            "item_name": "Walnut phone stand",
+            "item_description": "Walnut phone stand",
+            "item_quantity": "1",
+            "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+            "item_type": "PRODUCT"
+          }
+        ],
+        "seller_protection_eligible": true,
+        "seller_protection_type": "EXPANDED_SELLER_PROTECTION"
+      }
+    ],
+    "reason": "MERCHANDISE_OR_SERVICE_NOT_RECEIVED",
+    "status": "OPEN",
+    "dispute_amount": {
+      "currency_code": "USD",
+      "value": "36.00"
+    },
+    "dispute_state": "REQUIRED_ACTION",
+    "dispute_life_cycle_stage": "INQUIRY",
+    "dispute_channel": "INTERNAL",
+    "messages": [
+      {
+        "posted_by": "BUYER",
+        "time_posted": "2026-11-04T18:22:34.555Z",
+        "content": "nil"
+      }
+    ],
+    "extensions": {
+      "buyer_contacted_time": "2026-11-04T18:22:33.764Z"
+    },
+    "evidences": [
+      {
+        "evidence_type": "CREATE",
+        "notes": "nil",
+        "source": "SUBMITTED_BY_BUYER",
+        "date": "2026-11-04T18:22:34.555Z",
+        "dispute_life_cycle_stage": "INQUIRY"
+      }
+    ],
+    "offer": {
+      "buyer_requested_amount": {
+        "currency_code": "USD",
+        "value": "36.00"
+      }
+    },
+    "refund_details": {
+      "allowed_refund_amount": {
+        "currency_code": "USD",
+        "value": "36.00"
+      }
+    },
+    "links": [
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-HND-00000006",
+        "rel": "self",
+        "method": "GET"
+      },
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-HND-00000006/make-offer",
+        "rel": "make_offer",
+        "method": "POST"
+      },
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-HND-00000006/accept-claim",
+        "rel": "accept_claim",
+        "method": "POST"
+      },
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-HND-00000006/escalate",
+        "rel": "escalate",
+        "method": "POST"
+      },
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-HND-00000006/send-message",
+        "rel": "send_message",
+        "method": "POST"
+      },
+      {
+        "href": "https://api-m.sandbox.paypal.com/v1/customer/disputes/PP-R-HND-00000006/provide-evidence",
+        "rel": "provide_evidence",
+        "method": "POST"
+      }
+    ],
+    "seller_response_due_date": "2026-11-24T18:22:34.555Z",
+    "allowed_response_options": {
+      "accept_claim": {
+        "accept_claim_types": [
+          "REFUND"
+        ]
+      },
+      "make_offer": {
+        "offer_types": [
+          "REFUND"
+        ]
+      }
+    }
+  },
+  "order": {
+    "id": "ORDERF0000000001",
+    "intent": "CAPTURE",
+    "status": "COMPLETED",
+    "purchase_units": [
+      {
+        "reference_id": "default",
+        "amount": {
+          "currency_code": "USD",
+          "value": "36.00",
+          "breakdown": {}
+        },
+        "description": "Spike test item",
+        "shipping": {
+          "name": {
+            "full_name": "REDACTED"
+          },
+          "address": {
+            "address_line_1": "REDACTED",
+            "admin_area_2": "San Jose",
+            "admin_area_1": "REDACTED",
+            "postal_code": "REDACTED",
+            "country_code": "US"
+          },
+          "trackers": []
+        },
+        "payments": {
+          "captures": [
+            {
+              "id": "CAPTUREF0000000001",
+              "status": "PENDING",
+              "status_details": {
+                "reason": "BUYER_COMPLAINT"
+              },
+              "amount": {
+                "currency_code": "USD",
+                "value": "36.00"
+              },
+              "final_capture": true,
+              "seller_protection": {
+                "status": "ELIGIBLE",
+                "dispute_categories": [
+                  "ITEM_NOT_RECEIVED",
+                  "UNAUTHORIZED_TRANSACTION"
+                ]
+              },
+              "links": [],
+              "create_time": "2026-11-02T18:15:53Z",
+              "update_time": "2026-11-02T18:35:03Z"
+            }
+          ]
+        }
+      }
+    ],
+    "create_time": "2026-11-02T18:15:53Z",
+    "update_time": "2026-11-02T18:35:03Z",
+    "links": []
+  },
+  "capture": {
+    "id": "CAPTUREF0000000001",
+    "amount": {
+      "currency_code": "USD",
+      "value": "36.00"
+    },
+    "final_capture": true,
+    "seller_protection": {
+      "status": "ELIGIBLE",
+      "dispute_categories": [
+        "ITEM_NOT_RECEIVED",
+        "UNAUTHORIZED_TRANSACTION"
+      ]
+    },
+    "status": "PENDING",
+    "status_details": {
+      "reason": "BUYER_COMPLAINT"
+    },
+    "supplementary_data": {
+      "related_ids": {
+        "order_id": "ORDERF0000000001"
+      }
+    },
+    "create_time": "2026-11-02T18:15:53Z",
+    "update_time": "2026-11-02T18:35:03Z",
+    "links": []
+  },
+  "record": {
+    "key": "D",
+    "orderId": "ORDERF0000000001",
+    "captureId": "CAPTUREF0000000001",
+    "amount": "36.00",
+    "currency": "USD",
+    "itemName": "Walnut phone stand",
+    "trackingNumber": null,
+    "carrier": null,
+    "trackedAt": null,
+    "notes": "The Walnut phone stand was packed and shipped.",
+    "attachments": [],
+    "disputeId": "PP-R-HND-00000006",
+    "createdAt": "2026-11-02T18:17:01.000Z",
+    "observed": null
+  },
+  "attachments": [],
+  "policy": {
+    "maxOfferPercent": 30,
+    "maxOfferAbsolute": "50.00",
+    "deadlineBufferHours": 48
+  },
+  "allowed": [
+    "make_offer",
+    "accept_claim",
+    "provide_evidence"
+  ],
+  "now": "2026-11-05T00:00:00.000Z"
+}

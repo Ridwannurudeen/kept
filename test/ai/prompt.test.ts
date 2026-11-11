@@ -45,3 +45,8 @@ test('includes the Seller Protection checklist states, and the system prompt say
   expect(p).toContain('Seller Protection checklist: {"applies_to_this_reason":true,"items":[{"item":"Shipped to the address on PayPal\'s transaction details","state":"not_visible"},{"item":"Online, verifiable tracking number","state":"in_paypal_data"},{"item":"\'Delivered\' status with a delivery date","state":"missing"},{"item":"Recipient address matches the transaction details","state":"not_visible"}]}');
   expect(SYSTEM_PROMPT).toContain("whether protection applies is PayPal's decision");
 });
+test('the system prompt asks for would_change as named evidence only, never a guaranteed win or evidence the seller does not have', () => {
+  expect(SYSTEM_PROMPT).toContain('In would_change, name the single, concrete piece of evidence the seller could supply that would move your recommendation toward the seller');
+  expect(SYSTEM_PROMPT).toContain('Set it to null when you already recommend FIGHT, or when nothing the seller could add would change it.');
+  expect(SYSTEM_PROMPT).toContain("never say that it would win the case or guarantee an outcome, and never say the seller has it unless it is in the seller's notes or PayPal's records");
+});

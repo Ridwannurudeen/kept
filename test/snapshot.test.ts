@@ -89,3 +89,21 @@ test('buildSnapshot drops photo findings and checkSnapshot rejects them', () => 
   withPhoto.decisions['PP-D-1'].decision.photo_findings = ['The photo shows a plain blue colour field.'];
   expect(checkSnapshot(JSON.stringify(withPhoto))).toEqual({ ok: false, problems: ["$.decisions.PP-D-1.decision.photo_findings is not allowlisted for decision"] });
 });
+test('buildSnapshot keeps would_change and the previous call, drops the evidence fingerprint, and checkSnapshot accepts it', () => {
+  const base = valid();
+  const decision = { ...base.decisions['PP-D-1'].decision, would_change: 'A carrier record showing the parcel delivered', photo_findings: ['The photo shows a box.'] };
+  const previous = { recommendation: 'FIGHT', offer_amount: null, would_change: null, at: 'at', evidenceChanged: true, extra: 'hidden' };
+  const stored = { ...base.decisions['PP-D-1'], decision, basis: { ...base.decisions['PP-D-1'].basis, evidence: '0123456789abcdef' }, previous };
+  const snapshot = buildSnapshot({ ...base, decisions: { 'PP-D-1': stored } } as unknown as State, new Date('2026-11-07T00:00:00.000Z'));
+  expect(snapshot.decisions['PP-D-1'].decision.would_change).toBe('A carrier record showing the parcel delivered');
+  expect(snapshot.decisions['PP-D-1'].decision).not.toHaveProperty('photo_findings');
+  expect(snapshot.decisions['PP-D-1'].previous).toEqual({ recommendation: 'FIGHT', offer_amount: null, would_change: null, at: 'at', evidenceChanged: true });
+  expect(snapshot.decisions['PP-D-1'].basis).not.toHaveProperty('evidence');
+  expect(checkSnapshot(JSON.stringify(snapshot))).toEqual({ ok: true });
+  expect(buildSnapshot(base as unknown as State, new Date('2026-11-07T00:00:00.000Z')).decisions['PP-D-1']).not.toHaveProperty('previous');
+});
+test('checkSnapshot rejects a non-allowlisted key in the previous call', () => {
+  const s = valid() as unknown as { decisions: Record<string, Record<string, unknown>> };
+  s.decisions['PP-D-1'].previous = { recommendation: 'FIGHT', offer_amount: null, would_change: null, at: 'at', photo_findings: ['x'] };
+  expect(checkSnapshot(JSON.stringify(s))).toEqual({ ok: false, problems: ['$.decisions.PP-D-1.previous.photo_findings is not allowlisted for previous'] });
+});

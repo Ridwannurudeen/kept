@@ -9,6 +9,7 @@ export const DecisionSchema = z.object({
   evidence_have: z.array(z.string().max(300)).max(10),
   evidence_missing: z.array(z.string().max(300)).max(10),
   reasons: z.array(z.string().min(1).max(400)).min(1).max(6),
+  would_change: z.string().max(300).nullable().optional().transform((value) => value ?? null),
   offer_amount: z.string().regex(/^\d+\.\d{2}$/).nullable().optional().transform((value) => value ?? null),
   draft_note: z.string().min(1).max(2000),
   photo_findings: z.array(z.string().min(1).max(300)).max(5).optional(),

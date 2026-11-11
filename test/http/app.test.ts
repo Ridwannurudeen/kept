@@ -9,7 +9,7 @@ import type { CaseImage } from '../../src/ai/decide.js';
 import type { Config } from '../../src/config.js';
 import type { Dispute } from '../../src/paypal/types.js';
 import { PayPalError } from '../../src/paypal/errors.js';
-import { Store } from '../../src/store.js';
+import { Store, evidenceOf } from '../../src/store.js';
 import { FakePayPal } from '../../src/replay/fakePaypal.js';
 
 const jpeg = readFileSync(new URL('../../seed/attachments/B/listing-colour.jpg', import.meta.url));
@@ -379,7 +379,58 @@ describe('HTTP app', () => {
     expect(paypal.getOrder).toHaveBeenCalledWith('ORDER-A');
     expect(paypal.getCapture).toHaveBeenCalledWith('CAP-a');
     expect(input).toMatchObject({ dispute: { dispute_id: 'd-early' }, order: { id: 'ORDER-A' }, capture: { id: 'CAP-a' }, record: { key: 'A' }, allowed: ['make_offer'], attachments: [{ name: 'packing-slip.txt', type: 'text/plain' }, { name: 'proof.txt', type: 'text/plain' }], now: new Date('2026-11-05T00:00:00.000Z') });
-    expect(store.get().decisions['d-early']).toEqual({ decision, validation, at: '2026-11-05T00:00:00.000Z', model: 'claude-opus-5-5', steps: 2, toolCalls: ['get_dispute', 'submit_decision'], durationMs: 42, basis: { stage: 'INQUIRY', status: 'OPEN', disputeState: null, links: ['make_offer'], amount: '10.00', dueAt: '2026-11-06T00:00:00.000Z' } });
+    expect(store.get().decisions['d-early']).toEqual({ decision, validation, at: '2026-11-05T00:00:00.000Z', model: 'claude-opus-5-5', steps: 2, toolCalls: ['get_dispute', 'submit_decision'], durationMs: 42, basis: { stage: 'INQUIRY', status: 'OPEN', disputeState: null, links: ['make_offer'], amount: '10.00', dueAt: '2026-11-06T00:00:00.000Z', evidence: evidenceOf(store.get().cases.A!, [{ name: 'proof.txt' }]) } });
+  });
+
+  test('POST decide again keeps the previous call, one level only, and the case detail returns it', async () => {
+    const auth = { 'x-kept-passcode': 'pass' };
+    const validation = { ok: true, action: 'make_offer', cap: '3.00' };
+    const first = { recommendation: 'SETTLE', plain_ask: 'Offer a little.', evidence_have: [], evidence_missing: ['delivery record'], reasons: ['weak'], would_change: 'A carrier record showing the parcel delivered to the address on the order', offer_amount: '3.00', draft_note: 'Sorry.' };
+    const second = { ...first, recommendation: 'FIGHT', would_change: null, offer_amount: null };
+    const third = { ...first, offer_amount: '2.00' };
+    for (const decision of [first, second, third]) decide.mockResolvedValueOnce({ ok: true, decision, validation, steps: 1, toolCalls: [], model: 'm', durationMs: 1 });
+    await request(app).post('/api/cases/d-early/decide').set(auth).expect(200);
+    expect(store.get().decisions['d-early']).not.toHaveProperty('previous');
+    await request(app).post('/api/cases/d-early/decide').set(auth).expect(200);
+    expect(store.get().decisions['d-early']!.previous).toEqual({ recommendation: 'SETTLE', offer_amount: '3.00', would_change: 'A carrier record showing the parcel delivered to the address on the order', at: '2026-11-05T00:00:00.000Z', evidenceChanged: false });
+    await request(app).post('/api/cases/d-early/decide').set(auth).expect(200);
+    expect(store.get().decisions['d-early']!.previous).toEqual({ recommendation: 'FIGHT', offer_amount: null, would_change: null, at: '2026-11-05T00:00:00.000Z', evidenceChanged: false });
+    const { body } = await request(app).get('/api/cases/d-early').set(auth).expect(200);
+    expect(body.decision.previous).toEqual({ recommendation: 'FIGHT', offer_amount: null, would_change: null, at: '2026-11-05T00:00:00.000Z', evidenceChanged: false });
+    expect(body.decision.decision).toMatchObject({ recommendation: 'SETTLE', offer_amount: '2.00', would_change: 'A carrier record showing the parcel delivered to the address on the order' });
+  });
+
+  test('new notes or a new attachment after a decision make it stale for seller evidence; saving the same notes does not', async () => {
+    const auth = { 'x-kept-passcode': 'pass' };
+    const decision = { recommendation: 'SETTLE', plain_ask: 'Offer a little.', evidence_have: [], evidence_missing: [], reasons: ['weak'], would_change: null, offer_amount: '3.00', draft_note: 'Sorry.' };
+    decide.mockResolvedValue({ ok: true, decision, validation: { ok: true, action: 'make_offer', cap: '3.00' }, steps: 1, toolCalls: [], model: 'm', durationMs: 1 });
+    const detail = async () => (await request(app).get('/api/cases/d-early').set(auth).expect(200)).body;
+    const evidenceStale = { recommendationStale: true, staleReason: 'Seller evidence changed since this recommendation' };
+    await request(app).post('/api/cases/d-early/decide').set(auth).expect(200);
+    expect(await detail()).toMatchObject({ recommendationStale: false, staleReason: null });
+    await request(app).put('/api/cases/d-early/notes').set(auth).send({ notes: 'seed' }).expect(200);
+    expect(await detail()).toMatchObject({ recommendationStale: false });
+    await request(app).put('/api/cases/d-early/notes').set(auth).send({ notes: 'UPS shows the parcel delivered on 2026-11-04 to the address on the order.' }).expect(200);
+    expect(await detail()).toMatchObject(evidenceStale);
+    const { body } = await request(app).get('/api/cases').set(auth).expect(200);
+    expect(body.cases.find((row: { disputeId: string }) => row.disputeId === 'd-early')).toMatchObject(evidenceStale);
+    await request(app).post('/api/cases/d-early/decide').set(auth).expect(200);
+    expect(await detail()).toMatchObject({ recommendationStale: false, decision: { previous: { evidenceChanged: true } } });
+    await request(app).post('/api/cases/d-early/decide').set(auth).expect(200);
+    expect(store.get().decisions['d-early']!.previous?.evidenceChanged).toBe(false);
+    await request(app).post('/api/cases/d-early/attachments?name=pod.txt&type=text%2Fplain').set(auth).set('Content-Type', 'application/octet-stream').send('delivered').expect(200);
+    expect(await detail()).toMatchObject(evidenceStale);
+  });
+
+  test('a decision stored without an evidence fingerprint is not stale after new notes, and its re-decide keeps would_change null', async () => {
+    const auth = { 'x-kept-passcode': 'pass' };
+    const legacy = { recommendation: 'SETTLE', plain_ask: 'Offer a little.', evidence_have: [], evidence_missing: [], reasons: ['weak'], offer_amount: '3.00', draft_note: 'Sorry.' };
+    await store.update((state) => { state.decisions['d-early'] = { decision: legacy, validation: { ok: true, action: 'make_offer', cap: '3.00' }, at: '2026-11-04T00:00:00.000Z', model: 'm', steps: 1, toolCalls: [], durationMs: 1, basis: { stage: 'INQUIRY', status: 'OPEN', disputeState: null, links: ['make_offer'], amount: '10.00', dueAt: '2026-11-06T00:00:00.000Z' } } as never; });
+    await request(app).put('/api/cases/d-early/notes').set(auth).send({ notes: 'New notes' }).expect(200);
+    expect(await request(app).get('/api/cases/d-early').set(auth).expect(200).then(({ body }) => body.recommendationStale)).toBe(false);
+    decide.mockResolvedValueOnce({ ok: true, decision: { ...legacy, recommendation: 'FIGHT', offer_amount: null, would_change: null }, validation: { ok: true, action: 'make_offer', cap: '3.00' }, steps: 1, toolCalls: [], model: 'm', durationMs: 1 });
+    await request(app).post('/api/cases/d-early/decide').set(auth).expect(200);
+    expect(store.get().decisions['d-early']!.previous).toEqual({ recommendation: 'SETTLE', offer_amount: '3.00', would_change: null, at: '2026-11-04T00:00:00.000Z', evidenceChanged: false });
   });
 
   test('POST decide returns 200 with ok false and stores nothing when the model gives no decision', async () => {
