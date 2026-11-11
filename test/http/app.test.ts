@@ -10,7 +10,9 @@ import type { Config } from '../../src/config.js';
 import type { Dispute } from '../../src/paypal/types.js';
 import { PayPalError } from '../../src/paypal/errors.js';
 import { Store, evidenceOf } from '../../src/store.js';
-import { FakePayPal } from '../../src/replay/fakePaypal.js';
+import { FakePayPal, fakeToolkit } from '../../src/replay/fakePaypal.js';
+import { checkSnapshot } from '../../src/snapshot.js';
+import { performAction } from '../../src/actions.js';
 
 const jpeg = readFileSync(new URL('../../seed/attachments/B/listing-colour.jpg', import.meta.url));
 const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
@@ -56,7 +58,7 @@ describe('HTTP app', () => {
       getOrder: vi.fn(async () => { throw new Error('order unavailable'); }),
       getCapture: vi.fn(async () => { throw new Error('capture unavailable'); }),
     };
-    config = { paypalClientId: 'id', paypalClientSecret: 'secret', anthropicApiKey: 'key', passcode: 'pass', port: 3000, dataDir: join(dir, 'data'), seedPath, snapshotPath: join(dir, 'absent.json'), mode: 'live' };
+    config = { paypalClientId: 'id', paypalClientSecret: 'secret', anthropicApiKey: 'key', passcode: 'pass', port: 3000, dataDir: join(dir, 'data'), seedPath, snapshotPath: join(dir, 'absent.json'), mode: 'live', publicReplay: false };
     decide = vi.fn(async () => { throw new Error('Not wired yet'); });
     act = vi.fn();
     app = createApp({ config, paypal: paypal as never, store, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: null });
@@ -259,6 +261,82 @@ describe('HTTP app', () => {
       expect(body.cases.find((row: { disputeId: string }) => row.disputeId === B)).toMatchObject({ status: 'RESOLVED', open: false, outcome: { refunded: { value: '9.00' }, kept: { value: '27.00' } } });
     });
     await request(replay).post(`/api/replay/cases/${B}/buyer-accepts`).set('x-kept-passcode', 'pass').expect(502);
+  });
+
+  test('KEPT_PUBLIC_REPLAY opens /api without a passcode only in replay mode', async () => {
+    const live = createApp({ config: { ...config, publicReplay: true }, paypal: paypal as never, store, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: null });
+    await request(live).get('/api/cases').expect(401);
+    await request(live).get('/healthz').expect(200).expect(({ body }) => expect(body.publicReplay).toBe(false));
+    const replay = createApp({ config: { ...config, mode: 'replay' }, paypal: paypal as never, store, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: '2026-11-04' });
+    await request(replay).get('/api/cases').expect(401);
+    const open = createApp({ config: { ...config, mode: 'replay', publicReplay: true }, paypal: paypal as never, store, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: '2026-11-04' });
+    await request(open).get('/api/cases').expect(200);
+    await request(open).get('/healthz').expect(200).expect(({ body }) => expect(body).toMatchObject({ mode: 'replay', publicReplay: true }));
+  });
+
+  test('public replay refuses notes, uploads, policy, tracking and deciding with 403, and still simulates approve', async () => {
+    const open = createApp({ config: { ...config, mode: 'replay', publicReplay: true }, paypal: paypal as never, store, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: '2026-11-04' });
+    const before = JSON.stringify(store.get());
+    const writes = { error: 'public_replay', message: 'The public replay does not save notes, attachments, policy or tracking, so one visitor cannot change what the next one sees.' };
+    const model = { error: 'public_replay', message: 'The public replay shows recorded decisions only and does not call a model.' };
+    await request(open).put('/api/cases/d-late/notes').send({ notes: 'x' }).expect(403, writes);
+    await request(open).post('/api/cases/d-late/attachments?name=a.png&type=image/png').set('content-type', 'image/png').send(png).expect(403, writes);
+    await request(open).put('/api/policy').send({ maxOfferPercent: 1 }).expect(403, writes);
+    await request(open).post('/api/shipping-checks/ORDERP1/tracking').send({ carrier: 'UPS', trackingNumber: '1Z999AA10000000001' }).expect(403, writes);
+    await request(open).post('/api/cases/d-late/decide').expect(403, model);
+    await request(open).post('/api/cases/decide-all').expect(403, model);
+    expect(decide).not.toHaveBeenCalled();
+    expect(JSON.stringify(store.get())).toBe(before);
+    act.mockResolvedValueOnce({ status: 'refused', blockers: ['simulated'] });
+    await request(open).post('/api/cases/d-late/approve').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(409, { blockers: ['simulated'] });
+    expect(act).toHaveBeenCalledTimes(1);
+  });
+
+  test('public replay sends the recorded draft note, or a fixed one, never the visitor\'s text', async () => {
+    const fake = new FakePayPal({ dir: './seed/replay' });
+    const B = 'PP-R-HND-00000001';
+    const open = createApp({ config: { ...config, mode: 'replay', publicReplay: true }, paypal: fake as never, store, decide: decide as never, act: performAction, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: fake.recordedOn });
+    await request(open).get('/healthz').expect(200).expect(({ body }) => expect(body.decisions).toBe(0));
+    await request(open).post(`/api/cases/${B}/approve`).send({ action: 'make_offer', note: 'visitor text', offerAmount: '5.00' }).expect(200);
+    const { body } = await request(open).get('/api/log?kind=actions').expect(200);
+    expect(JSON.stringify(body)).not.toContain('visitor text');
+    expect(body.entries.at(-1).submitted.note).toBe('Simulated in the public replay.');
+    expect(JSON.stringify(await fake.getDispute(B))).not.toContain('visitor text');
+    await store.update((state) => { state.decisions['PP-R-LKL-10196413'] = { decision: { draft_note: 'Recorded draft.' } } as never; });
+    act.mockResolvedValueOnce({ status: 'refused', blockers: ['simulated'] });
+    const recorded = createApp({ config: { ...config, mode: 'replay', publicReplay: true }, paypal: fake as never, store, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: fake.recordedOn });
+    await request(recorded).post('/api/cases/PP-R-LKL-10196413/approve').send({ action: 'provide_supporting_info', note: 'visitor text' }).expect(409);
+    expect(act.mock.calls[0][1].note).toBe('Recorded draft.');
+  });
+
+  test('an offer amount on a non-offer action is dropped before it is stored, logged or shown, and make_offer still checks its format', async () => {
+    const text = 'VISITOR TEXT go to evil dot example';
+    for (const [action, id] of [['accept_claim', 'PP-R-HND-00000001'], ['provide_evidence', 'PP-R-HND-00000001'], ['provide_supporting_info', 'PP-R-LKL-10196413']] as const) {
+      const fake = new FakePayPal({ dir: './seed/replay' });
+      const own = await Store.open({ dataDir: join(dir, action), seedPath: 'seed/replay/cases.json', snapshotPath: null });
+      const replay = createApp({ config: { ...config, mode: 'replay' }, paypal: fake as never, store: own, decide: decide as never, act: performAction, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: fakeToolkit(fake) as never, recordedOn: fake.recordedOn });
+      await request(replay).post(`/api/cases/${id}/approve`).set('x-kept-passcode', 'pass').send({ action, note: 'Shipped with tracking.', offerAmount: text, evidenceType: 'OTHER' }).expect(200);
+      expect(own.get().actions.at(-1)).toMatchObject({ action, submitted: { offerAmount: null }, paypal: { ok: true } });
+      const log = await request(replay).get('/api/log?kind=actions').set('x-kept-passcode', 'pass').expect(200);
+      const calls = await request(replay).get('/api/log?kind=calls').set('x-kept-passcode', 'pass').expect(200);
+      const detail = await request(replay).get(`/api/cases/${id}`).set('x-kept-passcode', 'pass').expect(200);
+      if (action === 'accept_claim') expect(detail.body.whatHappened.approved).toMatchObject({ action, offer: null });
+      for (const body of [log.body, calls.body, detail.body]) expect(JSON.stringify(body)).not.toContain(text);
+    }
+    const fake = new FakePayPal({ dir: './seed/replay' });
+    const replay = createApp({ config: { ...config, mode: 'replay' }, paypal: fake as never, store, decide: decide as never, act: performAction, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: fakeToolkit(fake) as never, recordedOn: fake.recordedOn });
+    await request(replay).post('/api/cases/PP-R-HND-00000001/approve').set('x-kept-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: text }).expect(409);
+    expect(JSON.stringify(store.get().actions)).not.toContain(text);
+  });
+
+  test('the committed replay snapshot passes the snapshot check and none of its decisions is stale against the recorded fake', async () => {
+    expect(checkSnapshot(readFileSync('seed/replay/snapshot.json', 'utf8'))).toEqual({ ok: true });
+    const fake = new FakePayPal({ dir: './seed/replay' });
+    const restored = await Store.open({ dataDir: join(dir, 'public'), seedPath: 'seed/replay/cases.json', snapshotPath: 'seed/replay/snapshot.json' });
+    const open = createApp({ config: { ...config, mode: 'replay', publicReplay: true }, paypal: fake as never, store: restored, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: fake.recordedOn });
+    const { body } = await request(open).get('/api/cases').expect(200);
+    expect(body.cases.length).toBeGreaterThan(0);
+    for (const row of body.cases) expect(row.recommendationStale).toBe(false);
   });
 
   test('a notes stub with no order id asks PayPal for no order when its capture does not load', async () => {

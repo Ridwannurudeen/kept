@@ -16,10 +16,11 @@ async function startServer(): Promise<void> {
   const replay = config.mode === 'replay' ? await import('./replay/fakePaypal.js') : null;
   const fake = replay ? new replay.FakePayPal({ dir: resolve(process.cwd(), 'seed/replay') }) : null;
   const store = await Store.open({ dataDir: config.dataDir, seedPath: config.seedPath, snapshotPath: config.snapshotPath, onReset: fake ? () => fake.reset() : undefined });
+  if (config.publicReplay) await store.reset();
   const paypal = fake ? (fake as unknown as PayPalClient) : new PayPalClient({ clientId: config.paypalClientId, clientSecret: config.paypalClientSecret, onCall: recordCalls(store) });
   const toolkit = replay && fake ? (replay.fakeToolkit(fake) as unknown as PayPalAgentToolkit) : new PayPalAgentToolkit({ clientId: config.paypalClientId, clientSecret: config.paypalClientSecret, configuration: { actions: { disputes: { list: true, get: true, create: true } }, context: { sandbox: true } } });
   const noKey: DecideResult = { ok: false, error: 'no_decision', detail: 'Replay mode has no ANTHROPIC_API_KEY, so Kept cannot decide here.', steps: 0, toolCalls: [], durationMs: 0 };
-  const model = config.anthropicApiKey ? createKeptModel(config.anthropicApiKey) : null;
+  const model = config.anthropicApiKey && !config.publicReplay ? createKeptModel(config.anthropicApiKey) : null;
   const tools = { ...modelToolset(toolkit), submit_decision: submitDecisionTool() };
   const app = createApp({ config, paypal, store, toolkit, now: () => new Date(), decide: async (input) => (model ? decideCase(input, { model, tools }) : noKey), act: performAction, recordedOn: fake?.recordedOn ?? null });
   app.listen(config.port, '0.0.0.0', () => console.log(`Kept listening on :${config.port}`));

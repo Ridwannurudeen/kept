@@ -152,7 +152,7 @@ describe('Shipping check', () => {
     paypal.addTracking.mockImplementationOnce(async () => current);
     expect(await track()).toMatchObject({ status: 'sent', check: { tracker: null, tracking: { ok: true } } });
     await checkOrder('ORDERP1', later(deps));
-    expect(await addOrderTracking('ORDERP1', { carrier: 'DHL', trackingNumber: '1234567890' }, later(deps))).toEqual({ status: 'refused', blockers: ['Sent, waiting for PayPal to show it. Check the order again later'] });
+    expect(await addOrderTracking('ORDERP1', { carrier: 'DHL', trackingNumber: '1234567890' }, later(deps))).toEqual({ status: 'refused', blockers: ['Sent, waiting for PayPal to show it. Check the order again later. If it never appears, add or fix the tracker in PayPal, then Check again'] });
     expect(paypal.addTracking).toHaveBeenCalledTimes(1);
   });
 

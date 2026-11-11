@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import type { Request, Router } from 'express';
+import type { Request, RequestHandler, Router } from 'express';
 import { z, ZodError } from 'zod';
 import type { CaseImage, DecideResult } from '../ai/decide.js';
 import { createDecideQueue } from '../ai/queue.js';
@@ -55,6 +55,17 @@ const orderIdSchema = z.string().regex(ORDER_ID_PATTERN);
 const shippingCheckSchema = z.object({ orderId: orderIdSchema }).strict();
 const trackingSchema = z.object({ carrier: z.enum(CARRIERS), trackingNumber: z.string().regex(TRACKING_NUMBER_PATTERN) }).strict();
 
+const PUBLIC_WRITES_OFF = 'The public replay does not save notes, attachments, policy or tracking, so one visitor cannot change what the next one sees.';
+const PUBLIC_NO_MODEL = 'The public replay shows recorded decisions only and does not call a model.';
+const PUBLIC_NOTE = 'Simulated in the public replay.';
+
+function refuseInPublicReplay(deps: Deps, message: string): RequestHandler {
+  return (_req, res, next) => {
+    if (deps.config.mode === 'replay' && deps.config.publicReplay) { res.status(403).json({ error: 'public_replay', message }); return; }
+    next();
+  };
+}
+
 const MAX_IMAGES = 3;
 const JPEG_MAGIC = Buffer.from([0xff, 0xd8, 0xff]);
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -102,7 +113,9 @@ async function decideOne(disputeId: string, deps: Deps): Promise<DecideResult> {
 
 export function registerRoutes(router: Router, deps: Deps): void {
   const queue = createDecideQueue((disputeId) => decideOne(disputeId, deps));
-  router.get('/healthz', (_req, res) => res.json({ ok: true, startedAt: deps.store.get().startedAt, cases: Object.keys(deps.store.get().cases).length, mode: deps.config.mode, recordedOn: deps.recordedOn, restoredFrom: deps.store.get().restoredFrom }));
+  const writesOff = refuseInPublicReplay(deps, PUBLIC_WRITES_OFF);
+  const noModel = refuseInPublicReplay(deps, PUBLIC_NO_MODEL);
+  router.get('/healthz', (_req, res) => res.json({ ok: true, startedAt: deps.store.get().startedAt, cases: Object.keys(deps.store.get().cases).length, mode: deps.config.mode, publicReplay: deps.config.mode === 'replay' && deps.config.publicReplay, decisions: Object.keys(deps.store.get().decisions).length, recordedOn: deps.recordedOn, restoredFrom: deps.store.get().restoredFrom }));
 
   router.get('/api/cases', async (req, res, next) => {
     try {
@@ -154,7 +167,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
   });
 
   router.get('/api/policy', (_req, res) => res.json(deps.store.get().policy));
-  router.put('/api/policy', async (req, res, next) => {
+  router.put('/api/policy', writesOff, async (req, res, next) => {
     try {
       const policy = parsePolicy(req.body);
       await deps.store.update((state) => { state.policy = policy; });
@@ -162,7 +175,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
     } catch (error) { next(error); }
   });
 
-  router.put('/api/cases/:id/notes', async (req, res, next) => {
+  router.put('/api/cases/:id/notes', writesOff, async (req, res, next) => {
     try {
       const notes = req.body?.notes;
       if (typeof notes !== 'string' || notes.length > 4000) throw new ZodError([{ code: 'custom', path: ['notes'], message: 'Expected notes up to 4000 characters' }]);
@@ -179,7 +192,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
     } catch (error) { next(error); }
   });
 
-  router.post('/api/cases/:id/attachments', async (req, res, next) => {
+  router.post('/api/cases/:id/attachments', writesOff, async (req, res, next) => {
     try {
       if (!/^[A-Za-z0-9_-]+$/.test(req.params.id)) { res.status(400).json({ error: 'dispute_id' }); return; }
       const name = String(req.query.name ?? '');
@@ -230,7 +243,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
       res.json({ ok: true });
     } catch (error) { next(error); }
   });
-  router.post('/api/cases/decide-all', async (_req, res, next) => {
+  router.post('/api/cases/decide-all', noModel, async (_req, res, next) => {
     try {
       const listed = await deps.paypal.listDisputes();
       const queued = listed.filter((entry) => entry.status !== 'RESOLVED').map((entry) => entry.dispute_id);
@@ -239,7 +252,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
     } catch (error) { next(error); }
   });
   router.get('/api/decide/status', (_req, res) => res.json(queue.status()));
-  router.post('/api/cases/:id/decide', async (req, res, next) => {
+  router.post('/api/cases/:id/decide', noModel, async (req, res, next) => {
     try {
       const result = await queue.enqueue(req.params.id);
       if (result.ok) res.json({ ok: true, decision: result.decision, validation: result.validation, durationMs: result.durationMs });
@@ -252,7 +265,9 @@ export function registerRoutes(router: Router, deps: Deps): void {
       if (typeof body?.action !== 'string' || !ACTION_KINDS.includes(body.action as (typeof ACTION_KINDS)[number]) || typeof body.note !== 'string' || (body.offerAmount !== undefined && body.offerAmount !== null && typeof body.offerAmount !== 'string') || (body.evidenceType !== undefined && body.evidenceType !== 'PROOF_OF_FULFILLMENT' && body.evidenceType !== 'OTHER')) {
         throw new ZodError([{ code: 'custom', path: [], message: 'Invalid approval request' }]);
       }
-      const outcome = await deps.act(req.params.id, { action: body.action as (typeof ACTION_KINDS)[number], note: body.note, offerAmount: body.offerAmount as string | null | undefined, evidenceType: body.evidenceType as 'PROOF_OF_FULFILLMENT' | 'OTHER' | undefined }, { paypal: deps.paypal, toolkit: deps.toolkit, store: deps.store, now: deps.now });
+      const note = deps.config.mode === 'replay' && deps.config.publicReplay ? deps.store.get().decisions[req.params.id]?.decision.draft_note || PUBLIC_NOTE : body.note;
+      const offerAmount = body.action === 'make_offer' ? body.offerAmount as string | null | undefined : null;
+      const outcome = await deps.act(req.params.id, { action: body.action as (typeof ACTION_KINDS)[number], note, offerAmount, evidenceType: body.evidenceType as 'PROOF_OF_FULFILLMENT' | 'OTHER' | undefined }, { paypal: deps.paypal, toolkit: deps.toolkit, store: deps.store, now: deps.now });
       if (outcome.status === 'refused') { res.status(409).json({ blockers: outcome.blockers }); return; }
       if (outcome.status === 'failed') { res.status(502).json({ entry: outcome.entry, error: outcome.error }); return; }
       generations.set(deps.store, (generations.get(deps.store) ?? 0) + 1);
@@ -273,7 +288,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
       res.json(await checkOrder(orderId, deps));
     } catch (error) { next(error); }
   });
-  router.post('/api/shipping-checks/:orderId/tracking', async (req, res, next) => {
+  router.post('/api/shipping-checks/:orderId/tracking', writesOff, async (req, res, next) => {
     try {
       const orderId = orderIdSchema.parse(req.params.orderId);
       const outcome = await addOrderTracking(orderId, trackingSchema.parse(req.body), deps);

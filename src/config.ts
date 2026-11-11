@@ -10,6 +10,7 @@ export type Config = {
   seedPath: string;
   snapshotPath: string | null;
   mode: 'live' | 'replay';
+  publicReplay: boolean;
 };
 
 function required(env: NodeJS.ProcessEnv, name: string): string {
@@ -23,15 +24,18 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
   if (!Number.isInteger(port)) throw new Error('PORT must be a number');
   const mode = env.KEPT_FAKE_PAYPAL === '1' ? 'replay' : 'live';
   const replay = mode === 'replay';
+  const publicReplay = env.KEPT_PUBLIC_REPLAY === '1';
+  if (publicReplay && !replay) throw new Error('KEPT_PUBLIC_REPLAY=1 needs KEPT_FAKE_PAYPAL=1');
   return {
-    paypalClientId: replay ? env.PAYPAL_CLIENT_ID ?? '' : required(env, 'PAYPAL_CLIENT_ID'),
-    paypalClientSecret: replay ? env.PAYPAL_CLIENT_SECRET ?? '' : required(env, 'PAYPAL_CLIENT_SECRET'),
-    anthropicApiKey: replay ? env.ANTHROPIC_API_KEY ?? '' : required(env, 'ANTHROPIC_API_KEY'),
-    passcode: required(env, 'KEPT_PASSCODE'),
+    paypalClientId: publicReplay ? '' : replay ? env.PAYPAL_CLIENT_ID ?? '' : required(env, 'PAYPAL_CLIENT_ID'),
+    paypalClientSecret: publicReplay ? '' : replay ? env.PAYPAL_CLIENT_SECRET ?? '' : required(env, 'PAYPAL_CLIENT_SECRET'),
+    anthropicApiKey: publicReplay ? '' : replay ? env.ANTHROPIC_API_KEY ?? '' : required(env, 'ANTHROPIC_API_KEY'),
+    passcode: publicReplay ? '' : required(env, 'KEPT_PASSCODE'),
     port,
     dataDir: env.KEPT_DATA_DIR ?? (replay ? './data/replay' : './data'),
     seedPath: env.KEPT_SEED_PATH ? resolve(env.KEPT_SEED_PATH) : resolve(process.cwd(), replay ? 'seed/replay/cases.json' : 'seed/cases.json'),
-    snapshotPath: replay ? null : resolve(process.cwd(), 'seed/snapshot.json'),
+    snapshotPath: publicReplay ? resolve(process.cwd(), 'seed/replay/snapshot.json') : replay ? null : resolve(process.cwd(), 'seed/snapshot.json'),
     mode,
+    publicReplay,
   };
 }

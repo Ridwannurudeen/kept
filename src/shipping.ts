@@ -36,7 +36,7 @@ const unknownUnloggedMessage = 'The outcome at PayPal is unknown and Kept could 
 const unknownMessage = 'PayPal sent no answer or a server error; the outcome is unknown. Check the order before retrying.';
 const mayHaveReachedMessage = 'The last tracker may have reached PayPal. Check the order in PayPal before retrying.';
 const landedMessage = "PayPal's order shows the tracker from the last attempt";
-const sentMessage = 'Sent, waiting for PayPal to show it. Check the order again later';
+const sentMessage = 'Sent, waiting for PayPal to show it. Check the order again later. If it never appears, add or fix the tracker in PayPal, then Check again';
 
 export function resetShippingGuards(): void {
   inFlight.clear();
