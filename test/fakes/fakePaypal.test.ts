@@ -52,6 +52,14 @@ describe('FakePayPal replay', () => {
     expect(explainState(after, at).headline).toBe('PayPal is reviewing your supporting information');
   });
 
+  test('provideSupportingInfo with files lists their names as documents, marked as a replay', async () => {
+    const paypal = fake();
+    await paypal.provideSupportingInfo(A, 'Shipped via UPS.', undefined, undefined, [{ name: 'packing-slip.pdf', type: 'application/pdf', bytes: Buffer.from('%PDF-1.4') }]);
+    const after = await paypal.getDispute(A);
+    expect(after.supporting_info).toEqual([{ notes: 'Shipped via UPS.', documents: [{ name: 'packing-slip.pdf' }], _replay: 'Simulated upload; no file left Kept', source: 'SUBMITTED_BY_SELLER', provided_time: at.toISOString() }]);
+    expect(JSON.stringify(after)).not.toContain('%PDF');
+  });
+
   test('accept_dispute_claim through the fake toolkit resolves the dispute as ACCEPTED', async () => {
     const paypal = fake();
     const result = await fakeToolkit(paypal).getTools().accept_dispute_claim!.execute!({ dispute_id: B, note: 'We accept.' }, { toolCallId: 't', messages: [] });

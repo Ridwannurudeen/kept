@@ -21,7 +21,7 @@ export type Dispute = {
   dispute_outcome?: { outcome_code: string; outcome_reason?: string; amount_refunded?: Money };
   adjudications?: { type?: string; adjudication_time?: string; reason?: string; dispute_life_cycle_stage?: string }[];
   offer?: { seller_offered_amount?: Money; buyer_requested_amount?: Money; offer_type?: string; history?: OfferEvent[] };
-  supporting_info?: { notes?: string; source?: string; provided_time?: string }[];
+  supporting_info?: { notes?: string; documents?: { name: string; url?: string }[]; source?: string; provided_time?: string }[];
   evidences?: { evidence_type: string; notes?: string; source?: string; date?: string }[];
   allowed_response_options?: { accept_claim?: { accept_claim_types?: string[] }; make_offer?: { offer_types?: string[] } };
   links?: Link[];

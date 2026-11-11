@@ -1,4 +1,5 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, vi } from 'vitest';
@@ -48,7 +49,7 @@ describe('performAction', () => {
       provideEvidence: vi.fn(async () => ({})),
     };
     execute = vi.fn(async () => JSON.stringify({ dispute_id: 'd-action' }));
-    deps = { paypal: paypal as never, toolkit: { getTools: () => ({ accept_dispute_claim: { execute } }) } as never, store, now: () => new Date('2026-11-05T00:00:00.000Z') };
+    deps = { paypal: paypal as never, toolkit: { getTools: () => ({ accept_dispute_claim: { execute } }) } as never, store, now: () => new Date('2026-11-05T00:00:00.000Z'), dataDir: join(dir, 'data') };
   });
 
   afterEach(async () => { await rm(dir, { recursive: true, force: true }); });
@@ -138,7 +139,123 @@ describe('performAction', () => {
     fresh = { ...fresh, dispute_life_cycle_stage: 'CHARGEBACK', links: [{ href: '', rel: 'provide_supporting_info' }] };
     await store.update((state) => { delete state.decisions['d-action']; });
     await performAction('d-action', { action: 'provide_supporting_info', note: 'Tracking details.' }, deps);
-    expect(paypal.provideSupportingInfo).toHaveBeenCalledWith('d-action', 'Tracking details.', expect.any(Function), expect.stringMatching(/^kept-/));
+    const sameAsBefore = `kept-d-action-provide_supporting_info-${createHash('sha256').update(JSON.stringify('Tracking details.')).digest('hex').slice(0, 12)}`;
+    expect(paypal.provideSupportingInfo).toHaveBeenCalledWith('d-action', 'Tracking details.', expect.any(Function), sameAsBefore, []);
+    expect(store.get().actions[0]).not.toHaveProperty('files');
+    expect(store.get().actions[0]).not.toHaveProperty('readBack');
+  });
+
+  describe("supporting information with the seller's files", () => {
+    const pdf = Buffer.from('%PDF-1.4\n1 0 obj\n');
+    const pngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0]);
+    const uploads = () => join(dir, 'data', 'attachments', 'd-action');
+    const claim = async () => {
+      fresh = { ...fresh, dispute_life_cycle_stage: 'CHARGEBACK', links: [{ href: '', rel: 'provide_supporting_info' }] };
+      await store.update((state) => { state.decisions['d-action'] = { decision: { ...decision, recommendation: 'FIGHT', offer_amount: null, draft_note: 'Tracking details.' }, validation: { ok: true, action: 'provide_supporting_info', cap: null }, at: '2026-11-04T00:00:00.000Z', model: 'test', steps: 1, toolCalls: [], durationMs: 1, basis: { stage: 'CHARGEBACK', status: 'OPEN', disputeState: null, links: ['provide_supporting_info'], amount: '36.00', dueAt: '2026-11-10T00:00:00.000Z' } }; });
+    };
+    const upload = async (name: string, bytes: Buffer, type = 'application/pdf') => {
+      await mkdir(uploads(), { recursive: true });
+      await writeFile(join(uploads(), name), bytes);
+      await store.update((state) => { state.attachments['d-action'] = [...(state.attachments['d-action'] ?? []), { name, type, size: bytes.length, at: '2026-11-04T00:00:00.000Z' }]; });
+    };
+    const listing = (names: string[]): Dispute => ({ ...fresh, status: 'UNDER_REVIEW', supporting_info: [{ notes: 'n', documents: names.map((name) => ({ name })), source: 'SUBMITTED_BY_SELLER', provided_time: '2026-11-05T00:00:00.000Z' }] });
+    const send = (files: string[], d = deps) => performAction('d-action', { action: 'provide_supporting_info', note: 'Tracking details.', files }, d);
+
+    test('sends the ticked PDF as a file part, appends a plain Attached line, and records that PayPal lists it', async () => {
+      await claim();
+      await upload('packing-slip.pdf', pdf);
+      paypal.getDispute.mockResolvedValueOnce(fresh).mockResolvedValueOnce(listing(['packing-slip.pdf']));
+      const result = await send(['packing-slip.pdf']);
+      expect(paypal.provideSupportingInfo).toHaveBeenCalledWith('d-action', 'Tracking details.\n\nAttached: packing-slip.pdf', expect.any(Function), expect.stringMatching(/^kept-d-action-provide_supporting_info-[0-9a-f]{12}$/), [{ name: 'packing-slip.pdf', type: 'application/pdf', bytes: pdf }]);
+      expect(result).toMatchObject({ status: 'sent', entry: { submitted: { note: 'Tracking details.\n\nAttached: packing-slip.pdf' }, sellerEdited: false, files: ['packing-slip.pdf'], filesListed: ['packing-slip.pdf'], readBack: "PayPal's record lists packing-slip.pdf" } });
+      expect(store.get().actions[0]).toMatchObject({ files: ['packing-slip.pdf'], readBack: "PayPal's record lists packing-slip.pdf" });
+    });
+
+    test('says plainly when PayPal accepted the notes but its record lists no file, and when the read-back failed', async () => {
+      await claim();
+      await upload('packing-slip.pdf', pdf);
+      await upload('label.png', pngBytes, 'image/png');
+      expect(await send(['packing-slip.pdf'])).toMatchObject({ status: 'sent', entry: { filesListed: [], readBack: 'PayPal accepted the notes; its record does not list the file' } });
+      await store.update((state) => { state.actions = []; });
+      paypal.getDispute.mockResolvedValueOnce(fresh).mockRejectedValueOnce(new PayPalError('busy', 503, null, {}, '/d'));
+      expect(await send(['packing-slip.pdf', 'label.png'])).toMatchObject({ status: 'sent', entry: { files: ['packing-slip.pdf', 'label.png'], filesListed: null, readBack: "Kept could not read PayPal's record after the send; refresh the case to see which files it lists" } });
+      await store.update((state) => { state.actions = []; });
+      paypal.getDispute.mockResolvedValueOnce(fresh).mockResolvedValueOnce(listing(['label.png']));
+      expect(await send(['packing-slip.pdf', 'label.png'])).toMatchObject({ status: 'sent', entry: { filesListed: ['label.png'], readBack: "PayPal's record lists label.png; it does not list packing-slip.pdf" } });
+    });
+
+    test('the request id is stable for the same send and changes with the files', async () => {
+      await claim();
+      await upload('packing-slip.pdf', pdf);
+      await upload('label.png', pngBytes, 'image/png');
+      paypal.provideSupportingInfo.mockRejectedValueOnce(new PayPalError('bad', 422, null, {}, '/psi')).mockRejectedValueOnce(new PayPalError('bad', 422, null, {}, '/psi'));
+      await send(['packing-slip.pdf']);
+      await send(['packing-slip.pdf']);
+      await send(['label.png']);
+      const ids = paypal.provideSupportingInfo.mock.calls.map((call) => call[3]);
+      expect(ids[0]).toBe(ids[1]);
+      expect(ids[2]).not.toBe(ids[0]);
+    });
+
+    test("reads a seeded file from the case's seed folder", async () => {
+      const root = await mkdtemp(join(tmpdir(), 'kept-seeded-'));
+      await mkdir(join(root, 'seed', 'attachments', 'B'), { recursive: true });
+      await writeFile(join(root, 'seed', 'attachments', 'B', 'slip.pdf'), pdf);
+      const cwd = vi.spyOn(process, 'cwd').mockReturnValue(root);
+      try {
+        await claim();
+        await store.update((state) => { state.cases.B!.attachments = [{ name: 'slip.pdf', type: 'application/pdf' }]; });
+        expect(await send(['slip.pdf'])).toMatchObject({ status: 'sent', entry: { files: ['slip.pdf'] } });
+        expect(paypal.provideSupportingInfo.mock.calls[0][4]).toEqual([{ name: 'slip.pdf', type: 'application/pdf', bytes: pdf }]);
+      } finally {
+        cwd.mockRestore();
+        await rm(root, { recursive: true, force: true });
+      }
+    });
+
+    test("refuses files that are the wrong type by their bytes, mislabelled, badly named, not the case's, missing, too many, too big, or on another action", async () => {
+      await claim();
+      await upload('slip.pdf', Buffer.from('just text, not a PDF'));
+      await upload('photo.pdf', pngBytes);
+      await upload('two.dots.pdf', pdf);
+      await upload('gone.pdf', pdf);
+      await rm(join(uploads(), 'gone.pdf'));
+      await upload('big.pdf', Buffer.concat([pdf, Buffer.alloc(10 * 1024 * 1024)]));
+      const refused = async (files: string[], text: string | RegExp) => expect(await send(files)).toEqual({ status: 'refused', blockers: [typeof text === 'string' ? text : expect.stringMatching(text)] });
+      await refused(['slip.pdf'], 'slip.pdf is not a PDF, PNG, JPEG or GIF file, so PayPal will not take it');
+      await refused(['photo.pdf'], 'photo.pdf is a image/png file with the wrong extension');
+      await refused(['two.dots.pdf'], /^two\.dots\.pdf: PayPal takes file names/);
+      await refused(['../state.json'], /^\.\.\/state\.json: PayPal takes file names/);
+      await refused(['other.pdf'], "other.pdf is not one of this case's files");
+      await refused(['gone.pdf'], 'Kept could not read gone.pdf; attach it again');
+      await refused(['big.pdf'], 'big.pdf is 10.0 MB; PayPal takes files under 10 MB');
+      await refused(Array.from({ length: 11 }, (_, index) => `f${index}.pdf`), 'Kept sends at most 10 files at once');
+      await refused(['slip.pdf', 'slip.pdf'], 'The same file is ticked twice');
+      fresh = { ...fresh, links: [{ href: '', rel: 'provide_supporting_info' }, { href: '', rel: 'make_offer' }] };
+      await store.update((state) => { delete state.decisions['d-action']; });
+      expect(await performAction('d-action', { action: 'make_offer', note: 'Sorry.', offerAmount: '5.00', files: ['gone.pdf'] }, deps)).toEqual({ status: 'refused', blockers: ['Kept sends files only with supporting information'] });
+      expect(paypal.provideSupportingInfo).not.toHaveBeenCalled();
+      expect(paypal.makeOffer).not.toHaveBeenCalled();
+    });
+
+    test('refuses a send whose files add up to more than 50 MB', async () => {
+      await claim();
+      const nine = Buffer.concat([pdf, Buffer.alloc(9 * 1024 * 1024)]);
+      for (const index of [1, 2, 3, 4, 5, 6]) await upload(`part${index}.pdf`, nine);
+      expect(await send(['part1.pdf', 'part2.pdf', 'part3.pdf', 'part4.pdf', 'part5.pdf', 'part6.pdf'])).toEqual({ status: 'refused', blockers: ['These files add up to 54.0 MB; PayPal takes up to 50 MB per send'] });
+      expect(paypal.provideSupportingInfo).not.toHaveBeenCalled();
+    });
+
+    test('an unknown outcome with files records what was tried, claims no listing, and never resends on its own', async () => {
+      await claim();
+      await upload('packing-slip.pdf', pdf);
+      paypal.provideSupportingInfo.mockRejectedValueOnce(new PayPalError('network', 0, null, null, '/psi'));
+      const result = await send(['packing-slip.pdf']);
+      expect(result).toMatchObject({ status: 'failed', error: { unknown: true }, entry: { files: ['packing-slip.pdf'], paypal: { ok: false } } });
+      expect(store.get().actions[0]).not.toHaveProperty('readBack');
+      expect(await send(['packing-slip.pdf'])).toEqual({ status: 'refused', blockers: [mayHaveReached] });
+      expect(paypal.provideSupportingInfo).toHaveBeenCalledTimes(1);
+    });
   });
 
   test('provide_evidence uses PROOF_OF_FULFILLMENT with tracking when the record has tracking, OTHER otherwise', async () => {

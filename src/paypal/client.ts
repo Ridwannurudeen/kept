@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { PayPalError } from './errors.js';
-import { buildMultipartInput } from './multipart.js';
+import { buildMultipartInput, type MultipartFile } from './multipart.js';
 import type { Capture, Dispute, DisputeList, DisputeListItem, Link, Money, Order } from './types.js';
 
 export type CallRecord = {
@@ -13,10 +13,11 @@ export type CallRecord = {
   debugId: string | null;
   error?: string;
   retried?: boolean;
+  files?: { name: string; size: number }[];
 };
 
-type Send = { headers: Record<string, string>; body?: string | Uint8Array<ArrayBuffer>; requestId: string | null };
-type Write = { json?: unknown; multipart?: unknown; requestId?: string };
+type Send = { headers: Record<string, string>; body?: string | Uint8Array<ArrayBuffer>; requestId: string | null; files?: { name: string; size: number }[] };
+type Write = { json?: unknown; multipart?: unknown; files?: MultipartFile[]; requestId?: string };
 
 export class PayPalClient {
   private readonly clientId: string;
@@ -107,8 +108,8 @@ export class PayPalClient {
     return (await this.request('POST', `/v1/customer/disputes/${encodeURIComponent(id)}/make-offer`, { json: body, requestId }, onCall)) as { links?: Link[] };
   }
 
-  async provideSupportingInfo(id: string, notes: string, onCall?: (call: CallRecord) => void, requestId?: string): Promise<{ links?: Link[] }> {
-    return (await this.request('POST', `/v1/customer/disputes/${encodeURIComponent(id)}/provide-supporting-info`, { multipart: { notes }, requestId }, onCall)) as {
+  async provideSupportingInfo(id: string, notes: string, onCall?: (call: CallRecord) => void, requestId?: string, files: MultipartFile[] = []): Promise<{ links?: Link[] }> {
+    return (await this.request('POST', `/v1/customer/disputes/${encodeURIComponent(id)}/provide-supporting-info`, { multipart: { notes }, files, requestId }, onCall)) as {
       links?: Link[];
     };
   }
@@ -126,9 +127,10 @@ export class PayPalClient {
     const requestId = method === 'POST' ? (write?.requestId ?? randomUUID()) : null;
     const headers: Record<string, string> = {};
     let body: string | Uint8Array<ArrayBuffer> | undefined;
+    const files = write?.files?.length ? write.files.map((file) => ({ name: file.name, size: file.bytes.length })) : undefined;
     if (requestId) headers['PayPal-Request-Id'] = requestId;
     if (write?.multipart !== undefined) {
-      const part = buildMultipartInput(write.multipart);
+      const part = buildMultipartInput(write.multipart, undefined, write.files);
       headers['Content-Type'] = part.contentType;
       body = new Uint8Array(part.body);
     } else if (write?.json !== undefined) {
@@ -137,7 +139,7 @@ export class PayPalClient {
     }
     const attempt = async (retried = false) => {
       const token = await this.getAccessToken();
-      return this.send(method, path, { headers: { ...headers, Authorization: `Bearer ${token}` }, body, requestId }, onCall, retried);
+      return this.send(method, path, { headers: { ...headers, Authorization: `Bearer ${token}` }, body, requestId, files }, onCall, retried);
     };
     if (method === 'GET') await this.getAccessToken();
     try {
@@ -165,6 +167,7 @@ export class PayPalClient {
         requestId: req.requestId,
         debugId,
         ...(retried ? { retried: true } : {}),
+        ...(req.files ? { files: req.files } : {}),
         ...(error === undefined ? {} : { error }),
       };
       this.onCall(call);

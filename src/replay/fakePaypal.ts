@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { disputedAmount, type ActionKind } from '../paypal/dispute.js';
 import { PayPalError } from '../paypal/errors.js';
 import type { CallRecord, PayPalClient } from '../paypal/client.js';
+import type { MultipartFile } from '../paypal/multipart.js';
 import type { Capture, Dispute, DisputeListItem, Link, Money, Order } from '../paypal/types.js';
 
 type Used = 'listDisputes' | 'getDispute' | 'getOrder' | 'getCapture' | 'addTracking' | 'makeOffer' | 'provideSupportingInfo' | 'provideEvidence';
@@ -98,11 +99,12 @@ export class FakePayPal implements Pick<PayPalClient, Used> {
     return { links: structuredClone(d.links) };
   }
 
-  async provideSupportingInfo(id: string, notes: string, onCall?: (call: CallRecord) => void): Promise<{ links?: Link[] }> {
+  async provideSupportingInfo(id: string, notes: string, onCall?: (call: CallRecord) => void, _requestId?: string, files: MultipartFile[] = []): Promise<{ links?: Link[] }> {
     const d = this.actionable(id, 'provide_supporting_info', 'provide-supporting-info');
     const at = this.now().toISOString();
     written(`/v1/customer/disputes/${id}/provide-supporting-info`, at, onCall);
-    d.supporting_info = [...(d.supporting_info ?? []), { notes, source: 'SUBMITTED_BY_SELLER', provided_time: at }];
+    const documents = files.length ? { documents: files.map(({ name }) => ({ name })), _replay: 'Simulated upload; no file left Kept' } : {};
+    d.supporting_info = [...(d.supporting_info ?? []), { notes, ...documents, source: 'SUBMITTED_BY_SELLER', provided_time: at }];
     d.status = 'UNDER_REVIEW';
     d.dispute_state = 'UNDER_PAYPAL_REVIEW';
     d.update_time = at;

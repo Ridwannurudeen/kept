@@ -59,7 +59,7 @@ export type ProtectionChecklist = { applies: boolean; summary: string; items: Ch
 export type WhatHappened = {
   recommended: string | null;
   recommendedOffer: string | null;
-  approved: { action: string; offer: string | null; at: string } | null;
+  approved: { action: string; offer: string | null; at: string; readBack: string | null } | null;
   paypalReported: { outcome: string; refunded: string | null; kept: string | null; closedAt: string };
 };
 
@@ -177,7 +177,7 @@ function whatHappenedOf(d: Dispute, stored: StoredDecision | null, actions: Acti
   return {
     recommended: stored?.decision.recommendation ?? null,
     recommendedOffer: stored?.decision.offer_amount ?? null,
-    approved: approved ? { action: approved.action, offer: approved.submitted.offerAmount, at: approved.at } : null,
+    approved: approved ? { action: approved.action, offer: approved.submitted.offerAmount, at: approved.at, readBack: approved.readBack ?? null } : null,
     paypalReported: { outcome: outcome.code, refunded: text(outcome.refunded), kept: text(outcome.kept), closedAt: d.update_time },
   };
 }

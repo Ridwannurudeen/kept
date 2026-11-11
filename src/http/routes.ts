@@ -15,6 +15,7 @@ import type { Deps } from './app.js';
 import type { FakePayPal } from '../replay/fakePaypal.js';
 import { ACTION_KINDS } from '../paypal/dispute.js';
 import { reconcileUnknown } from '../actions.js';
+import { documentTypeOf } from '../documents.js';
 import { addOrderTracking, CARRIERS, checkOrder, ORDER_ID_PATTERN, TRACKING_NUMBER_PATTERN } from '../shipping.js';
 
 type CachedCases = { disputes: Dispute[]; captures: Map<string, Capture>; fetchedAt: string; at: number; warnings: string[] };
@@ -206,7 +207,7 @@ export function registerRoutes(router: Router, deps: Deps): void {
       if (!/^[A-Za-z0-9._-]{1,100}$/.test(name) || name === '.' || name === '..') { res.status(400).json({ error: 'attachment_name' }); return; }
       const body = req.body as Buffer;
       if (!Buffer.isBuffer(body) || body.length > 5 * 1024 * 1024) { res.status(413).json({ error: 'attachment_size' }); return; }
-      if (type.startsWith('image/') && imageTypeOf(body) !== type) { res.status(400).json({ error: 'attachment_image', message: 'Only real JPEG or PNG photos can be attached as images. This file is not one.' }); return; }
+      if (type.startsWith('image/') && (type === 'image/gif' ? documentTypeOf(body) : imageTypeOf(body)) !== type) { res.status(400).json({ error: 'attachment_image', message: 'Only real JPEG or PNG photos, or GIF images, can be attached as images. This file is not one.' }); return; }
       await deps.paypal.getDispute(req.params.id);
       const dir = join(deps.config.dataDir, 'attachments', req.params.id);
       await mkdir(dir, { recursive: true });
@@ -267,13 +268,15 @@ export function registerRoutes(router: Router, deps: Deps): void {
   });
   router.post('/api/cases/:id/approve', async (req, res, next) => {
     try {
-      const body = req.body as { action?: unknown; note?: unknown; offerAmount?: unknown; evidenceType?: unknown };
-      if (typeof body?.action !== 'string' || !ACTION_KINDS.includes(body.action as (typeof ACTION_KINDS)[number]) || typeof body.note !== 'string' || (body.offerAmount !== undefined && body.offerAmount !== null && typeof body.offerAmount !== 'string') || (body.evidenceType !== undefined && body.evidenceType !== 'PROOF_OF_FULFILLMENT' && body.evidenceType !== 'OTHER')) {
+      const body = req.body as { action?: unknown; note?: unknown; offerAmount?: unknown; evidenceType?: unknown; files?: unknown };
+      if (typeof body?.action !== 'string' || !ACTION_KINDS.includes(body.action as (typeof ACTION_KINDS)[number]) || typeof body.note !== 'string' || (body.offerAmount !== undefined && body.offerAmount !== null && typeof body.offerAmount !== 'string') || (body.evidenceType !== undefined && body.evidenceType !== 'PROOF_OF_FULFILLMENT' && body.evidenceType !== 'OTHER') || (body.files !== undefined && (!Array.isArray(body.files) || !body.files.every((name) => typeof name === 'string')))) {
         throw new ZodError([{ code: 'custom', path: [], message: 'Invalid approval request' }]);
       }
-      const note = deps.config.mode === 'replay' && deps.config.publicReplay ? deps.store.get().decisions[req.params.id]?.decision.draft_note || PUBLIC_NOTE : body.note;
+      const publicReplay = deps.config.mode === 'replay' && deps.config.publicReplay;
+      const note = publicReplay ? deps.store.get().decisions[req.params.id]?.decision.draft_note || PUBLIC_NOTE : body.note;
       const offerAmount = body.action === 'make_offer' ? body.offerAmount as string | null | undefined : null;
-      const outcome = await deps.act(req.params.id, { action: body.action as (typeof ACTION_KINDS)[number], note, offerAmount, evidenceType: body.evidenceType as 'PROOF_OF_FULFILLMENT' | 'OTHER' | undefined }, { paypal: deps.paypal, toolkit: deps.toolkit, store: deps.store, now: deps.now });
+      const files = publicReplay ? [] : (body.files as string[] | undefined) ?? [];
+      const outcome = await deps.act(req.params.id, { action: body.action as (typeof ACTION_KINDS)[number], note, offerAmount, evidenceType: body.evidenceType as 'PROOF_OF_FULFILLMENT' | 'OTHER' | undefined, files }, { paypal: deps.paypal, toolkit: deps.toolkit, store: deps.store, now: deps.now, dataDir: deps.config.dataDir });
       if (outcome.status === 'refused') { res.status(409).json({ blockers: outcome.blockers }); return; }
       if (outcome.status === 'failed') { res.status(502).json({ entry: outcome.entry, error: outcome.error }); return; }
       generations.set(deps.store, (generations.get(deps.store) ?? 0) + 1);

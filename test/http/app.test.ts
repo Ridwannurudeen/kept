@@ -305,8 +305,9 @@ describe('HTTP app', () => {
     await store.update((state) => { state.decisions['PP-R-LKL-10196413'] = { decision: { draft_note: 'Recorded draft.' } } as never; });
     act.mockResolvedValueOnce({ status: 'refused', blockers: ['simulated'] });
     const recorded = createApp({ config: { ...config, mode: 'replay', publicReplay: true }, paypal: fake as never, store, decide: decide as never, act: act as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: fake.recordedOn });
-    await request(recorded).post('/api/cases/PP-R-LKL-10196413/approve').send({ action: 'provide_supporting_info', note: 'visitor text' }).expect(409);
+    await request(recorded).post('/api/cases/PP-R-LKL-10196413/approve').send({ action: 'provide_supporting_info', note: 'visitor text', files: ['packing-slip.pdf'] }).expect(409);
     expect(act.mock.calls[0][1].note).toBe('Recorded draft.');
+    expect(act.mock.calls[0][1].files).toEqual([]);
   });
 
   test('an offer amount on a non-offer action is dropped before it is stored, logged or shown, and make_offer still checks its format', async () => {
@@ -368,16 +369,18 @@ describe('HTTP app', () => {
     expect(store.get().attachments['d-early']).toHaveLength(1);
   });
 
-  test('image attachments must really be JPEG or PNG; text attachments still work', async () => {
+  test('image attachments must really be JPEG, PNG or GIF; text attachments still work', async () => {
     const auth = { 'x-kept-passcode': 'pass' };
     const fake = await request(app).post('/api/cases/d-early/attachments?name=photo.jpg&type=image%2Fjpeg').set(auth).set('Content-Type', 'image/jpeg').send(Buffer.from('not really a jpeg')).expect(400);
     expect(fake.body).toMatchObject({ error: 'attachment_image', message: expect.stringContaining('JPEG or PNG') });
     await request(app).post('/api/cases/d-early/attachments?name=photo.png&type=image%2Fpng').set(auth).set('Content-Type', 'image/png').send(jpeg).expect(400);
-    await request(app).post('/api/cases/d-early/attachments?name=photo.gif&type=image%2Fgif').set(auth).set('Content-Type', 'image/gif').send(Buffer.from('GIF89a')).expect(400);
+    await request(app).post('/api/cases/d-early/attachments?name=photo.gif&type=image%2Fgif').set(auth).set('Content-Type', 'image/gif').send(jpeg).expect(400);
+    await request(app).post('/api/cases/d-early/attachments?name=photo.gif&type=image%2Fgif').set(auth).set('Content-Type', 'image/gif').send(Buffer.from('GIF87')).expect(400);
     expect(store.get().attachments['d-early']).toBeUndefined();
     await request(app).post('/api/cases/d-early/attachments?name=photo.jpg&type=image%2Fjpeg').set(auth).set('Content-Type', 'image/jpeg').send(jpeg).expect(200);
+    await request(app).post('/api/cases/d-early/attachments?name=label.gif&type=image%2Fgif').set(auth).set('Content-Type', 'image/gif').send(Buffer.from('GIF89a')).expect(200);
     await request(app).post('/api/cases/d-early/attachments?name=note.txt&type=text%2Fplain').set(auth).set('Content-Type', 'text/plain').send('plain words').expect(200);
-    expect(store.get().attachments['d-early']!.map(({ name, type }) => ({ name, type }))).toEqual([{ name: 'photo.jpg', type: 'image/jpeg' }, { name: 'note.txt', type: 'text/plain' }]);
+    expect(store.get().attachments['d-early']!.map(({ name, type }) => ({ name, type }))).toEqual([{ name: 'photo.jpg', type: 'image/jpeg' }, { name: 'label.gif', type: 'image/gif' }, { name: 'note.txt', type: 'text/plain' }]);
   });
 
   test('POST decide sends up to 3 photos, uploads newest first then the seeded ones, and none for a text-only case', async () => {
@@ -637,7 +640,49 @@ describe('HTTP app', () => {
     act.mockResolvedValueOnce({ status: 'sent', entry, dispute: current });
     const { body } = await request(app).post('/api/cases/d-early/approve').set('x-kept-passcode', 'pass').send({ action: 'make_offer', note: 'Sorry.', offerAmount: '2.00' }).expect(200);
     expect(body).toMatchObject({ entry, dispute: current, detail: { dispute: current, caseKey: 'A' } });
-    expect(act).toHaveBeenCalledWith('d-early', { action: 'make_offer', note: 'Sorry.', offerAmount: '2.00', evidenceType: undefined }, expect.any(Object));
+    expect(act).toHaveBeenCalledWith('d-early', { action: 'make_offer', note: 'Sorry.', offerAmount: '2.00', evidenceType: undefined, files: [] }, expect.objectContaining({ dataDir: config.dataDir }));
+  });
+
+  test('POST approve passes the ticked file names and refuses a malformed list before acting', async () => {
+    act.mockResolvedValueOnce({ status: 'refused', blockers: ['checked'] });
+    await request(app).post('/api/cases/d-early/approve').set('x-kept-passcode', 'pass').send({ action: 'provide_supporting_info', note: 'Shipped.', files: ['packing-slip.pdf'] }).expect(409, { blockers: ['checked'] });
+    expect(act.mock.calls[0][1].files).toEqual(['packing-slip.pdf']);
+    await request(app).post('/api/cases/d-early/approve').set('x-kept-passcode', 'pass').send({ action: 'provide_supporting_info', note: 'Shipped.', files: 'packing-slip.pdf' }).expect(400);
+    await request(app).post('/api/cases/d-early/approve').set('x-kept-passcode', 'pass').send({ action: 'provide_supporting_info', note: 'Shipped.', files: [1] }).expect(400);
+    expect(act).toHaveBeenCalledTimes(1);
+  });
+
+  test('replay: an uploaded PDF goes with supporting information, the fake lists it, and the log has its name and size only', async () => {
+    const fake = new FakePayPal({ dir: './seed/replay' });
+    const A = 'PP-R-LKL-10196413';
+    const own = await Store.open({ dataDir: join(dir, 'replay-files'), seedPath: 'seed/replay/cases.json', snapshotPath: null });
+    const replay = createApp({ config: { ...config, mode: 'replay' }, paypal: fake as never, store: own, decide: decide as never, act: performAction, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: fakeToolkit(fake) as never, recordedOn: fake.recordedOn });
+    const pdf = Buffer.from('%PDF-1.4\nsecret-bytes\n');
+    await request(replay).post(`/api/cases/${A}/attachments?name=packing-slip.pdf&type=application/pdf`).set('x-kept-passcode', 'pass').set('content-type', 'application/pdf').send(pdf).expect(200);
+    await request(replay).post(`/api/cases/${A}/attachments?name=notes.txt&type=text/plain`).set('x-kept-passcode', 'pass').set('content-type', 'text/plain').send('Shipped on time.').expect(200);
+    await request(replay).post(`/api/cases/${A}/approve`).set('x-kept-passcode', 'pass').send({ action: 'provide_supporting_info', note: 'Shipped with tracking.', files: ['notes.txt'] }).expect(409, { blockers: ['notes.txt is not a PDF, PNG, JPEG or GIF file, so PayPal will not take it'] });
+    const { body } = await request(replay).post(`/api/cases/${A}/approve`).set('x-kept-passcode', 'pass').send({ action: 'provide_supporting_info', note: 'Shipped with tracking.', files: ['packing-slip.pdf'] }).expect(200);
+    expect(body.entry).toMatchObject({ files: ['packing-slip.pdf'], filesListed: ['packing-slip.pdf'], readBack: "PayPal's record lists packing-slip.pdf", submitted: { note: 'Shipped with tracking.\n\nAttached: packing-slip.pdf' } });
+    expect(body.dispute.supporting_info.at(-1)).toMatchObject({ documents: [{ name: 'packing-slip.pdf' }], _replay: 'Simulated upload; no file left Kept' });
+    const calls = await request(replay).get('/api/log?kind=calls').set('x-kept-passcode', 'pass').expect(200);
+    expect(JSON.stringify(calls.body)).not.toContain('secret-bytes');
+    expect(checkSnapshot(JSON.stringify(own.snapshot()))).toEqual({ ok: true });
+    expect(own.snapshot().actions.at(-1)).toMatchObject({ files: ['packing-slip.pdf'], filesListed: ['packing-slip.pdf'], readBack: "PayPal's record lists packing-slip.pdf" });
+  });
+
+  test('replay: a real GIF uploads, is never shown to Claude as a photo, and goes with supporting information', async () => {
+    const fake = new FakePayPal({ dir: './seed/replay' });
+    const A = 'PP-R-LKL-10196413';
+    const own = await Store.open({ dataDir: join(dir, 'replay-gif'), seedPath: 'seed/replay/cases.json', snapshotPath: null });
+    const replay = createApp({ config: { ...config, mode: 'replay' }, paypal: fake as never, store: own, decide: decide as never, act: performAction, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: fakeToolkit(fake) as never, recordedOn: fake.recordedOn });
+    const auth = { 'x-kept-passcode': 'pass' };
+    const gif = Buffer.from('GIF89a\x01\x00\x01\x00\x00\x00\x00;', 'latin1');
+    const notGif = await request(replay).post(`/api/cases/${A}/attachments?name=fake.gif&type=image/gif`).set(auth).set('content-type', 'image/gif').send(Buffer.from('not a gif')).expect(400);
+    expect(notGif.body).toMatchObject({ error: 'attachment_image' });
+    await request(replay).post(`/api/cases/${A}/attachments?name=label.gif&type=image/gif`).set(auth).set('content-type', 'image/gif').send(gif).expect(200);
+    await request(replay).get(`/api/cases/${A}/attachments/label.gif`).set(auth).expect(404);
+    const { body } = await request(replay).post(`/api/cases/${A}/approve`).set(auth).send({ action: 'provide_supporting_info', note: 'Shipped with tracking.', files: ['label.gif'] }).expect(200);
+    expect(body.entry).toMatchObject({ files: ['label.gif'], readBack: "PayPal's record lists label.gif", submitted: { note: 'Shipped with tracking.\n\nAttached: label.gif' } });
   });
 
   test('POST approve returns 409 for a refused action', async () => {

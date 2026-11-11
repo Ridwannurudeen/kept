@@ -321,7 +321,7 @@ test('what happened on a resolved case: the recommendation, the first sent actio
   expect(buildCaseDetail(resolved, null, null, null, state({ decisions: { [resolved.dispute_id]: stored(decision) }, actions }), now).whatHappened).toEqual({
     recommended: 'SETTLE',
     recommendedOffer: '5.00',
-    approved: { action: 'make_offer', offer: '5.00', at: '2026-11-04T18:26:30.000Z' },
+    approved: { action: 'make_offer', offer: '5.00', at: '2026-11-04T18:26:30.000Z', readBack: null },
     paypalReported: { outcome: 'RESOLVED_BUYER_FAVOUR', refunded: 'USD 5.00', kept: 'USD 15.00', closedAt: resolved.update_time },
   });
 });

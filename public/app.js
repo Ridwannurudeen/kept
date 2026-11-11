@@ -17,6 +17,11 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
   const WATCH_BACKOFF_MS = 60_000;
   const CALL_SLACK_MS = 10_000;
   const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+  const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
+  const MAX_DOCUMENTS_BYTES = 50 * 1024 * 1024;
+  const MAX_DOCUMENTS = 10;
+  const DOCUMENT_NAME = /^[A-Za-z0-9_, -]+\.[A-Za-z]+$/;
+  const DOCUMENT_EXTENSIONS = ["pdf", "png", "jpg", "jpeg", "gif"];
   const MAX_PHOTOS = 3;
   const EVIDENCE_STALE = "Seller evidence changed since this recommendation";
   const VIEW_KEY = "kept.gridView";
@@ -113,6 +118,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
   let panelDetail = null;
   let returnFocus = null;
   let approving = false;
+  let refreshPicker = null;
   let replay = false;
   let publicReplay = false;
   let compareReturn = null;
@@ -852,7 +858,27 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
     return `This case changed since Kept looked at it${reason}. Decide again before approving.`;
   }
 
-  function approveBlockers(detail, action, note, offer) {
+  function documentProblem(file) {
+    if (!DOCUMENT_NAME.test(file.name))
+      return "PayPal does not take this file name";
+    if (!DOCUMENT_EXTENSIONS.includes(file.name.split(".").pop().toLowerCase()))
+      return "Not a PDF, PNG, JPEG or GIF file";
+    if (file.size !== undefined && file.size >= MAX_DOCUMENT_BYTES)
+      return "10 MB or larger";
+    return null;
+  }
+
+  function listedDocuments(dispute) {
+    return [
+      ...new Set(
+        (dispute.supporting_info || [])
+          .filter((info) => info.source === "SUBMITTED_BY_SELLER")
+          .flatMap((info) => (info.documents || []).map((doc) => doc.name)),
+      ),
+    ];
+  }
+
+  function approveBlockers(detail, action, note, offer, files = []) {
     if (detail.sent) return ["This case already has a sent action"];
     if (detail.unknownOutcome)
       return ["Outcome unknown: check PayPal before retrying"];
@@ -867,6 +893,18 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
     if (note.trim().length === 0) blockers.push("Note is empty");
     if (note.length > 2000)
       blockers.push("Note is longer than 2000 characters");
+    else if (
+      files.length &&
+      `${note}\n\nAttached: ${files.map((file) => file.name).join(", ")}`
+        .length > 2000
+    )
+      blockers.push(
+        "Note and the Attached line are longer than 2000 characters",
+      );
+    if (files.length > MAX_DOCUMENTS)
+      blockers.push(`Tick at most ${MAX_DOCUMENTS} files`);
+    if (files.reduce((sum, file) => sum + (file.size || 0), 0) > MAX_DOCUMENTS_BYTES)
+      blockers.push("The ticked files add up to more than 50 MB");
     if (action === "make_offer") {
       const check = checkOffer(offer, detail.amount.value, detail.policy);
       if (!check.ok) blockers.push(check.message);
@@ -1243,6 +1281,64 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       button.replaceChildren(spinner(), document.createTextNode("Sending…"));
     const reason = el("ul", "approve-reason");
     reason.id = "approve-reason";
+    const ticked = new Map();
+    if (action === "provide_supporting_info" && !sent && !publicReplay) {
+      const picker = el("fieldset", "send-files");
+      const rows = el("div", "send-file-rows");
+      const fillPicker = () => {
+        const caseFiles = new Map(
+          [...(detail.record?.attachments || []), ...detail.attachments].map(
+            (file) => [file.name, file],
+          ),
+        );
+        rows.replaceChildren();
+        if (!caseFiles.size)
+          rows.append(el("p", "panel-muted", "This case has no files."));
+        [...caseFiles.values()].forEach((file, index) => {
+          const problem = documentProblem(file);
+          const row = el("div", "send-file");
+          const box = el("input", "send-file-box");
+          box.type = "checkbox";
+          box.id = `send-file-${index}`;
+          box.disabled = Boolean(problem);
+          box.checked = ticked.has(file.name);
+          box.addEventListener("change", () => {
+            if (box.checked) ticked.set(file.name, file);
+            else ticked.delete(file.name);
+            update();
+          });
+          const label = el("label", "cell-mono", file.name);
+          label.htmlFor = box.id;
+          row.append(
+            box,
+            label,
+            el(
+              "span",
+              "field-hint",
+              problem || (file.size === undefined ? "" : formatSize(file.size)),
+            ),
+          );
+          rows.append(row);
+        });
+      };
+      fillPicker();
+      refreshPicker = () => {
+        fillPicker();
+        update();
+      };
+      picker.append(
+        el("legend", "field-label", "Files to send to PayPal with this note"),
+        rows,
+      );
+      picker.append(
+        el(
+          "p",
+          "field-hint",
+          "Nothing is sent unless ticked. PayPal takes PDF, PNG, JPEG and GIF files under 10 MB each, up to 50 MB per send. Kept adds a line to your note naming the files.",
+        ),
+      );
+      approve.append(picker);
+    }
     approve.append(button, reason);
 
     const update = () => {
@@ -1288,6 +1384,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
         action,
         note.value,
         offer ? offer.value.trim() : null,
+        [...ticked.values()],
       );
       button.setAttribute(
         "aria-disabled",
@@ -1309,6 +1406,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
         action,
         note: note.value,
         offerAmount: offer ? offer.value.trim() : null,
+        ...(ticked.size ? { files: [...ticked.keys()] } : {}),
       });
     });
     update();
@@ -1340,6 +1438,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
             : "PayPal did not answer the follow-up read. Refresh the case to see its state.",
         ),
       );
+      if (entry.readBack) wrap.append(el("p", "panel-text", entry.readBack));
     } else if (result.status === 409) {
       wrap.classList.add("result-refused");
       wrap.append(el("p", "panel-lead", "Kept did not send this."));
@@ -1475,6 +1574,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
         );
         detail.attachments = [...detail.attachments, saved];
         renderFiles();
+        refreshPicker?.();
         uploadStatus.textContent = `Attached ${saved.name} (${formatSize(saved.size)})`;
         if (detail.decision) reloadAfterEvidence(detail.disputeId);
       } catch (error) {
@@ -1496,7 +1596,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       el(
         "p",
         "panel-muted",
-        "Kept keeps attachments on the seller's side. Claude sees JPEG and PNG photos, and only the name and type of other files.",
+        "Kept keeps attachments on the seller's side unless you tick them when sending supporting information. Claude sees JPEG and PNG photos, and only the name and type of other files.",
       ),
       files,
       upload,
@@ -1737,10 +1837,19 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       card.append(el("p", "panel-lead", explanation.headline));
       if (explanation.detail)
         card.append(el("p", "panel-text", explanation.detail));
-      if (info.provided_time) {
+      if (info.provided_time)
         fact("Sent", stampFormat.format(new Date(info.provided_time)));
-        card.append(facts);
-      }
+      const listed = listedDocuments(dispute);
+      const missing = (sentEntry(detail)?.files || []).filter(
+        (name) => !listed.includes(name),
+      );
+      if (listed.length) fact("PayPal's record lists", listed.join(", "));
+      if (missing.length)
+        fact(
+          "Files",
+          `Sent ${missing.join(", ")}; PayPal's record does not list ${missing.length === 1 ? "it" : "them"}`,
+        );
+      if (facts.children.length) card.append(facts);
       card.append(
         el("h4", "evidence-title", "What you sent"),
         el("blockquote", "state-quote", info.notes || "No note text"),
@@ -1891,7 +2000,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
         el(
           "li",
           "",
-          `You approved ${APPROVED_WORDS[record.approved.action] || record.approved.action}${record.approved.offer ? ` of ${currency} ${record.approved.offer}` : ""}, sent ${stampFormat.format(new Date(record.approved.at))}.`,
+          `You approved ${APPROVED_WORDS[record.approved.action] || record.approved.action}${record.approved.offer ? ` of ${currency} ${record.approved.offer}` : ""}, sent ${stampFormat.format(new Date(record.approved.at))}.${record.approved.readBack ? ` ${record.approved.readBack}.` : ""}`,
         ),
       );
     const reported = record.paypalReported;
@@ -1911,6 +2020,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
   }
 
   function renderPanel(detail) {
+    refreshPicker = null;
     els.panelTitle.textContent = `Case ${panelLabel(detail)}${detail.itemName ? `: ${detail.itemName}` : ""}`;
     const state = panelState(detail);
     els.panelBody.replaceChildren(
@@ -1956,7 +2066,13 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
 
   function confirmAndApprove(detail, body) {
     if (approving || els.confirmDialog.open) return;
-    els.confirmSummary.textContent = `${approveLabel(body.action, detail)}${body.offerAmount ? ` (${detail.amount.currency_code} ${body.offerAmount})` : ""} for case ${panelLabel(detail)}.`;
+    const files =
+      body.action !== "provide_supporting_info"
+        ? ""
+        : body.files
+          ? ` Files sent with it: ${body.files.join(", ")}.`
+          : " No files are sent.";
+    els.confirmSummary.textContent = `${approveLabel(body.action, detail)}${body.offerAmount ? ` (${detail.amount.currency_code} ${body.offerAmount})` : ""} for case ${panelLabel(detail)}.${files}`;
     els.confirmDialog.returnValue = "";
     const onClose = () => {
       els.confirmDialog.removeEventListener("close", onClose);
@@ -2272,7 +2388,10 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
 
   function panelHasEdits() {
     return [...els.panelBody.querySelectorAll("textarea, input:not([type=file])")].some(
-      (field) => field.value !== field.defaultValue,
+      (field) =>
+        field.type === "checkbox"
+          ? field.checked !== field.defaultChecked
+          : field.value !== field.defaultValue,
     );
   }
 

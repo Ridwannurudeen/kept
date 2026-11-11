@@ -4,7 +4,7 @@ import type { Decision } from './decision.js';
 import type { CallRecord } from './paypal/client.js';
 import type { Store } from './store.js';
 
-export type ActionEntry = { id: string; at: string; disputeId: string; caseKey: string | null; action: ActionKind; recommended: Decision | null; submitted: { note: string; offerAmount: string | null }; sellerEdited: boolean; paypal: { ok: boolean; status: number | null; requestId: string | null; debugId: string | null; durationMs: number; message: string | null }; after: { status: string; stage: string; outcome: string | null } | null };
+export type ActionEntry = { id: string; at: string; disputeId: string; caseKey: string | null; action: ActionKind; recommended: Decision | null; submitted: { note: string; offerAmount: string | null }; sellerEdited: boolean; paypal: { ok: boolean; status: number | null; requestId: string | null; debugId: string | null; durationMs: number; message: string | null }; after: { status: string; stage: string; outcome: string | null } | null; files?: string[]; filesListed?: string[] | null; readBack?: string };
 export type CallEntry = CallRecord & { id: string };
 export const MAX_CALLS = 500;
 

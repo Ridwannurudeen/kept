@@ -9,7 +9,7 @@ export const SNAPSHOT_ALLOWLIST: Record<string, string[]> = {
   StoredDecision: ['decision', 'validation', 'at', 'model', 'steps', 'toolCalls', 'durationMs', 'basis', 'previous'],
   basis: ['stage', 'status', 'disputeState', 'links', 'amount', 'dueAt'],
   previous: ['recommendation', 'offer_amount', 'would_change', 'at', 'evidenceChanged'],
-  SnapshotAction: ['id', 'at', 'disputeId', 'caseKey', 'action', 'submitted', 'sellerEdited', 'paypal', 'after'],
+  SnapshotAction: ['id', 'at', 'disputeId', 'caseKey', 'action', 'submitted', 'sellerEdited', 'paypal', 'after', 'files', 'filesListed', 'readBack'],
   submitted: ['note', 'offerAmount'],
   paypal: ['ok', 'status', 'requestId', 'debugId', 'durationMs', 'message'],
   after: ['status', 'stage', 'outcome'],

@@ -195,6 +195,32 @@ test('provideSupportingInfo posts multipart with the input part', async () => {
   expect(req.body).toContain('{"notes":"n"}');
 });
 
+test('provideSupportingInfo sends each file as its own part after the input part and logs names and sizes, never bytes', async () => {
+  const calls: CallRecord[] = [];
+  const { client, requests } = makeClient([tokenReply(), { status: 200, json: { links: [] } }], (c) => calls.push(c));
+  const pdf = Buffer.from('%PDF-1.4 secret-bytes');
+  const gif = Buffer.from('GIF89a more-secret');
+  await client.provideSupportingInfo('PP-1', 'n', undefined, 'kept-PP-1-provide_supporting_info-abc', [{ name: 'packing-slip.pdf', type: 'application/pdf', bytes: pdf }, { name: 'label.gif', type: 'image/gif', bytes: gif }]);
+  const req = requests[1];
+  const boundary = req.headers['content-type'].split('boundary=')[1];
+  expect(req.body).toBe(
+    `--${boundary}\r\nContent-Disposition: form-data; name="input"\r\nContent-Type: application/json\r\n\r\n{"notes":"n"}\r\n` +
+    `--${boundary}\r\nContent-Disposition: form-data; name="file1"; filename="packing-slip.pdf"\r\nContent-Type: application/pdf\r\n\r\n%PDF-1.4 secret-bytes\r\n` +
+    `--${boundary}\r\nContent-Disposition: form-data; name="file2"; filename="label.gif"\r\nContent-Type: image/gif\r\n\r\nGIF89a more-secret\r\n` +
+    `--${boundary}--\r\n`,
+  );
+  expect(req.headers['paypal-request-id']).toBe('kept-PP-1-provide_supporting_info-abc');
+  expect(calls[1]).toMatchObject({ method: 'POST', path: '/v1/customer/disputes/PP-1/provide-supporting-info', status: 200, files: [{ name: 'packing-slip.pdf', size: pdf.length }, { name: 'label.gif', size: gif.length }] });
+  expect(JSON.stringify(calls)).not.toMatch(/secret/);
+});
+
+test('provideSupportingInfo without files logs no files field', async () => {
+  const calls: CallRecord[] = [];
+  const { client } = makeClient([tokenReply(), { status: 200, json: { links: [] } }], (c) => calls.push(c));
+  await client.provideSupportingInfo('PP-1', 'n');
+  expect(calls[1]).not.toHaveProperty('files');
+});
+
 test('surfaces network errors as PayPalError with status null', async () => {
   const calls: CallRecord[] = [];
   const { client } = makeClient([tokenReply(), new Error('socket hang up')], (c) => calls.push(c));
