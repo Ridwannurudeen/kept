@@ -5,8 +5,6 @@ import type { ActionEntry, CallEntry } from '../src/log.js';
 import type { ShippingCheck } from '../src/shipping.js';
 import type { State, StoredDecision, UnknownOutcome } from '../src/store.js';
 
-const outputPath = resolve('seed/snapshot.json');
-
 async function getJson<T>(base: string, path: string, passcode: string): Promise<T> {
   const response = await fetch(new URL(path, base), { headers: { 'x-kept-passcode': passcode } });
   if (!response.ok) throw new Error(`GET ${path} returned ${response.status}`);
@@ -32,6 +30,9 @@ async function fromUrl(base: string, passcode: string): Promise<SnapshotSource> 
 
 async function run(): Promise<void> {
   const args = process.argv.slice(2);
+  const outIndex = args.indexOf('--out');
+  if (outIndex >= 0 && !args[outIndex + 1]) throw new Error('--out needs a file path');
+  const outputPath = resolve(outIndex >= 0 ? args[outIndex + 1] : 'seed/snapshot.json');
   if (args.includes('--check')) {
     const result = checkSnapshot(await readFile(outputPath, 'utf8'));
     if (!result.ok) throw new Error(result.problems.join('\n'));

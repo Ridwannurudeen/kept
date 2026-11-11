@@ -25,7 +25,7 @@ describe('Shipping check routes', () => {
     await writeFile(seedPath, JSON.stringify({ cases: {} }));
     fake = new FakePayPal({ dir: './seed/replay', now: () => new Date('2026-11-05T00:00:00.000Z') });
     store = await Store.open({ dataDir: join(dir, 'data'), seedPath, snapshotPath: null, onReset: () => fake.reset() });
-    const config: Config = { paypalClientId: '', paypalClientSecret: '', anthropicApiKey: '', passcode: 'pass', port: 3000, dataDir: join(dir, 'data'), seedPath, snapshotPath: null, mode: 'replay' };
+    const config: Config = { paypalClientId: '', paypalClientSecret: '', anthropicApiKey: '', passcode: 'pass', port: 3000, dataDir: join(dir, 'data'), seedPath, snapshotPath: null, mode: 'replay', publicReplay: false };
     app = createApp({ config, paypal: fake as never, store, decide: vi.fn() as never, act: vi.fn() as never, now: () => new Date('2026-11-05T00:00:00.000Z'), toolkit: {} as never, recordedOn: fake.recordedOn });
   });
 

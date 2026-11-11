@@ -71,3 +71,36 @@ describe('AG Grid fix round 1', () => {
     expect(app).toMatch(/type: "rightAligned",[\s\S]*flex: 0\.8/);
   });
 });
+
+describe('Public replay', () => {
+  it('turns on from /healthz, hides Decide all and Save policy, and refreshes cells already drawn', () => {
+    expect(app).toMatch(/if \(health\.publicReplay\) \{\n\s*publicReplay = true;/);
+    expect(app).toContain('els.decideAll.remove();');
+    expect(app).toContain('els.policySave.remove();');
+    expect(app).toContain('shippingApi.refreshCells({ columns: ["shippingAction"], force: true });');
+  });
+
+  it('never decides, says no recorded decision instead, and labels recorded calls', () => {
+    expect(app).toContain('if (publicReplay || isPending(decideState.get(id))) return;');
+    expect(app).toMatch(/!p\.data\.recommendation &&\n\s*p\.data\.open &&\n\s*!publicReplay\n\s*\) \{\n\s*decide\(p\.data\.disputeId\);/);
+    expect(app).toContain('if (publicReplay) return el("span", "cell-muted", "No recorded decision");');
+    expect(app).toContain('publicReplay ? "No recorded decision for this case" : "Not decided yet"');
+    expect(app).toContain('if (detail.open && !publicReplay) {');
+    expect(app).toContain('detail.open && !isPending(state) && !publicReplay');
+    expect(app).toContain('`Recorded ${stampFormat.format(new Date(detail.decision.at))}`');
+  });
+
+  it('shows the recorded approve note read-only and never asks to decide', () => {
+    expect(app).toContain('decision?.draft_note || (publicReplay ? "Simulated in the public replay." : "");');
+    expect(app).toContain('note.readOnly = Boolean(sent) || publicReplay;');
+    expect(app).not.toMatch(/el\("p", "panel-muted", "Decide to see"\)/);
+    expect(app).toContain('health.decisions ? "Recommendations shown were recorded earlier; a case without one says so." : "No recommendations were recorded for this replay."');
+    expect(app).toContain('health.restoredFrom && (!health.publicReplay || health.decisions)');
+  });
+
+  it('makes notes read-only and disables attaching and Add tracking', () => {
+    expect(app).toMatch(/if \(publicReplay\) \{\n\s*notes\.readOnly = true;\n\s*save\.disabled = true;/);
+    expect(app).toMatch(/if \(publicReplay\) \{\n\s*input\.disabled = true;/);
+    expect(app).toMatch(/if \(publicReplay\)\n\s*return el\("span", "cell-muted", "Off in the public replay"\);/);
+  });
+});

@@ -36,8 +36,12 @@ describe('Shipping check grid', () => {
   it('reports a failed first read as not sent, reloads the rows after a refusal, and holds Add tracking while a sent tracker is not shown', () => {
     expect(shipping).toMatch(/res\.status === 502 && !result\.check\) \{\n\s*text =\n\s*`Not sent\. Kept could not read the order from PayPal first, so nothing was sent\./);
     expect(shipping).toMatch(/res\.status === 409\) \{\n.*\n\s*loadShippingChecks\(\);/);
-    expect(shipping).toMatch(/if \(waitingForPayPal\(row\)\)\n\s*return el\("span", "cell-muted", "Sent, waiting for PayPal to show it"\);/);
+    expect(shipping).toMatch(/if \(waitingForPayPal\(row\)\) \{\n\s*const waiting = el\("span", "cell-muted", "Sent, waiting for PayPal to show it"\);\n\s*waiting\.title = "If it never appears, add or fix the tracker in PayPal, then Check again\.";/);
     expect(shipping).toContain("PayPal's tracker record does not include the carrier");
+  });
+
+  it('names the carrier in the Tracker tooltip only after PayPal accepted the send', () => {
+    expect(shipping).toContain('${p.data.tracking?.ok ? `; you sent ${p.data.tracking.carrier}` : ""}');
   });
 
   it('never says covered, protected or guaranteed', () => {

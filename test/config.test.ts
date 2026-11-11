@@ -19,6 +19,20 @@ test('replay keeps its own data dir, reads no snapshot and needs only the passco
   expect(c.paypalClientId).toBe(''); expect(c.paypalClientSecret).toBe('');
   expect(loadConfig({ KEPT_FAKE_PAYPAL: '1', KEPT_PASSCODE: 'dev', KEPT_DATA_DIR: '/tmp/r' }).dataDir).toBe('/tmp/r');
 });
+test('KEPT_PUBLIC_REPLAY=1 with replay needs no passcode and restores the committed replay snapshot', () => {
+  const c = loadConfig({ ...base, KEPT_FAKE_PAYPAL: '1', KEPT_PUBLIC_REPLAY: '1' });
+  expect(c.mode).toBe('replay'); expect(c.publicReplay).toBe(true); expect(c.passcode).toBe('');
+  expect(c.paypalClientId).toBe(''); expect(c.paypalClientSecret).toBe(''); expect(c.anthropicApiKey).toBe('');
+  expect(loadConfig({ KEPT_FAKE_PAYPAL: '1', KEPT_PUBLIC_REPLAY: '1' }).passcode).toBe('');
+  expect(c.snapshotPath).toBe(resolve(process.cwd(), 'seed/replay/snapshot.json'));
+});
+test('KEPT_PUBLIC_REPLAY=1 without replay mode fails at startup', () => {
+  expect(() => loadConfig({ ...base, KEPT_PUBLIC_REPLAY: '1' })).toThrow('KEPT_PUBLIC_REPLAY=1 needs KEPT_FAKE_PAYPAL=1');
+});
+test('replay without KEPT_PUBLIC_REPLAY still requires the passcode', () => {
+  expect(loadConfig({ KEPT_FAKE_PAYPAL: '1', KEPT_PASSCODE: 'dev' }).publicReplay).toBe(false);
+  expect(() => loadConfig({ KEPT_FAKE_PAYPAL: '1' })).toThrow('Missing environment variable KEPT_PASSCODE');
+});
 test('names the missing variable', () => {
   expect(() => loadConfig({ ...base, PAYPAL_CLIENT_SECRET: undefined })).toThrow('Missing environment variable PAYPAL_CLIENT_SECRET');
 });

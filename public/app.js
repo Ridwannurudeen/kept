@@ -114,6 +114,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
   let returnFocus = null;
   let approving = false;
   let replay = false;
+  let publicReplay = false;
   let compareReturn = null;
   let calls = [];
   let heldNow = [];
@@ -598,6 +599,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       return wrap;
     }
     if (!row.open) return "";
+    if (publicReplay) return el("span", "cell-muted", "No recorded decision");
     const failed = state?.state === "failed";
     const button = el(
       "button",
@@ -627,7 +629,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
   // ---------- decide in place ----------
 
   async function decide(id) {
-    if (isPending(decideState.get(id))) return;
+    if (publicReplay || isPending(decideState.get(id))) return;
     const label = gridApi.getRowNode(id).data.caseKey || shortId(id);
     decideState.set(id, { state: "running", posting: true });
     refreshRecommendations();
@@ -969,8 +971,8 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       have.append(list(decision.evidence_have, "None listed"));
       missing.append(list(decision.evidence_missing, "Nothing missing"));
     } else {
-      have.append(el("p", "panel-muted", "Decide to see"));
-      missing.append(el("p", "panel-muted", "Decide to see"));
+      have.append(el("p", "panel-muted", publicReplay ? "No recorded decision" : "Decide to see"));
+      missing.append(el("p", "panel-muted", publicReplay ? "No recorded decision" : "Decide to see"));
     }
     columns.append(have, missing);
     wrap.append(columns);
@@ -1010,10 +1012,12 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       wrap.append(
         list(
           findings,
-          "No photo findings in this decision. Decide again to have Claude read these photos.",
+          publicReplay
+            ? "The recorded decision keeps no photo findings."
+            : "No photo findings in this decision. Decide again to have Claude read these photos.",
         ),
       );
-    else wrap.append(el("p", "panel-muted", "Decide to see"));
+    else wrap.append(el("p", "panel-muted", publicReplay ? "No recorded decision" : "Decide to see"));
     const strip = el("div", "photo-strip");
     for (const file of photos) {
       const figure = el("figure", "photo");
@@ -1060,8 +1064,23 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
           decision.recommendation,
         ),
       );
-    else top.append(el("span", "panel-muted", "Not decided yet"));
-    if (detail.open) {
+    else
+      top.append(
+        el(
+          "span",
+          "panel-muted",
+          publicReplay ? "No recorded decision for this case" : "Not decided yet",
+        ),
+      );
+    if (decision && publicReplay)
+      top.append(
+        el(
+          "span",
+          "panel-muted",
+          `Recorded ${stampFormat.format(new Date(detail.decision.at))}`,
+        ),
+      );
+    if (detail.open && !publicReplay) {
       const button = el("button", "button button-small");
       button.type = "button";
       if (isPending(state)) {
@@ -1124,7 +1143,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       const notice = el("p", "notice notice-stale", staleNotice(detail));
       notice.id = "stale-notice";
       wrap.append(notice);
-      if (detail.staleReason === EVIDENCE_STALE && detail.open && !isPending(state)) {
+      if (detail.staleReason === EVIDENCE_STALE && detail.open && !isPending(state) && !publicReplay) {
         const again = el("button", "button button-small", "Decide again");
         again.type = "button";
         again.setAttribute("aria-describedby", notice.id);
@@ -1160,8 +1179,10 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
     note.id = noteId;
     note.rows = 6;
     note.maxLength = 2000;
-    note.defaultValue = sent ? sent.submitted.note : decision?.draft_note || "";
-    note.readOnly = Boolean(sent);
+    note.defaultValue = sent
+      ? sent.submitted.note
+      : decision?.draft_note || (publicReplay ? "Simulated in the public replay." : "");
+    note.readOnly = Boolean(sent) || publicReplay;
     note.placeholder = "Write what PayPal and the buyer will read";
     const count = el("p", "field-hint");
     draft.append(noteLabel, note, count);
@@ -1382,6 +1403,11 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
         save.disabled = false;
       }
     });
+    if (publicReplay) {
+      notes.readOnly = true;
+      save.disabled = true;
+      status.textContent = "Saving is off in the public replay.";
+    }
     row.append(save, status);
     wrap.append(label, notes, row);
 
@@ -1459,6 +1485,10 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
         input.disabled = false;
       }
     });
+    if (publicReplay) {
+      input.disabled = true;
+      uploadStatus.textContent = "Attaching is off in the public replay.";
+    }
     upload.append(uploadLabel, input, uploadStatus);
 
     wrap.append(
@@ -2731,9 +2761,14 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
     const row = p.data;
     if (row.tracking?.unknown)
       return el("span", "cell-muted", "Outcome unknown; check PayPal");
-    if (waitingForPayPal(row))
-      return el("span", "cell-muted", "Sent, waiting for PayPal to show it");
+    if (waitingForPayPal(row)) {
+      const waiting = el("span", "cell-muted", "Sent, waiting for PayPal to show it");
+      waiting.title = "If it never appears, add or fix the tracker in PayPal, then Check again.";
+      return waiting;
+    }
     if (isActive(row.tracker) || !row.captureId) return "";
+    if (publicReplay)
+      return el("span", "cell-muted", "Off in the public replay");
     const button = el("button", "button button-small", "Add tracking");
     button.type = "button";
     button.addEventListener("click", () => openTracking(row.orderId));
@@ -2809,7 +2844,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       autoHeight: true,
       cellClass: "cell-wrap-stack",
       tooltipValueGetter: (p) =>
-        `The first tracker on PayPal's order, with the status PayPal reports. PayPal's tracker record does not include the carrier${p.data.tracking?.carrier ? `; you sent ${p.data.tracking.carrier}` : ""}.`,
+        `The first tracker on PayPal's order, with the status PayPal reports. PayPal's tracker record does not include the carrier${p.data.tracking?.ok ? `; you sent ${p.data.tracking.carrier}` : ""}.`,
     },
     {
       colId: "checked",
@@ -3222,7 +3257,8 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
         if (
           p.column.getColId() === "recommendation" &&
           !p.data.recommendation &&
-          p.data.open
+          p.data.open &&
+          !publicReplay
         ) {
           decide(p.data.disputeId);
           return;
@@ -3407,7 +3443,7 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
   async function loadFooter() {
     const res = await fetch("/healthz");
     const health = await res.json();
-    const snapshot = health.restoredFrom
+    const snapshot = health.restoredFrom && (!health.publicReplay || health.decisions)
       ? `; decisions and the action log are restored from the snapshot recorded ${stampFormat.format(new Date(health.restoredFrom))}`
       : "";
     if (health.mode === "replay") {
@@ -3416,6 +3452,15 @@ function breakEvenPercent(disputedCents, offerCents, tier) {
       els.replayBanner.hidden = false;
       els.confirmText.textContent =
         "Replay: this simulates a sandbox action. Nothing is sent to PayPal. Continue?";
+      if (health.publicReplay) {
+        publicReplay = true;
+        els.replayBanner.textContent = `Public replay of recorded sandbox data from ${recordedFormat.format(new Date(health.recordedOn))}. ${health.decisions ? "Recommendations shown were recorded earlier; a case without one says so." : "No recommendations were recorded for this replay."} Nothing here calls PayPal or a model. Approvals, the buyer's reply and shipping checks are simulated, shared with other visitors, and gone when the server restarts. Notes, attachments, policy and tracking cannot be changed here.`;
+        els.decideAll.remove();
+        els.policySave.remove();
+        refreshRecommendations();
+        shippingApi.refreshCells({ columns: ["shippingAction"], force: true });
+        if (panelId) loadPanel(panelId);
+      }
     }
     els.footer.textContent = `Demo state resets to the seed when the server restarts (Render free tier keeps no disk)${snapshot}. Started ${stampFormat.format(new Date(health.startedAt))}. Sandbox only.`;
   }

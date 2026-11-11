@@ -25,8 +25,9 @@ export function createApp(deps: Deps): Express {
   const app = express();
   app.set('trust proxy', 1);
   app.use((_req, res, next) => { res.locals.requestId = randomUUID(); next(); });
-  app.use('/api', requirePasscode(deps.config.passcode));
-  app.use('/api/cases/:id/attachments', express.raw({ type: '*/*', limit: '5mb' }));
+  const publicReplay = deps.config.mode === 'replay' && deps.config.publicReplay;
+  if (!publicReplay) app.use('/api', requirePasscode(deps.config.passcode));
+  if (!publicReplay) app.use('/api/cases/:id/attachments', express.raw({ type: '*/*', limit: '5mb' }));
   app.use(express.json());
   const router = express.Router();
   registerRoutes(router, deps);

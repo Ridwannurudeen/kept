@@ -114,6 +114,8 @@ Replay mode serves recorded sandbox data, with some cases derived from it (marke
 
 On Windows PowerShell, set variables first, for example `$env:KEPT_FAKE_PAYPAL='1'; $env:KEPT_PASSCODE='anything'; npm run dev`.
 
+**Public replay demo.** A second Render service, `kept-replay`, runs replay mode with `KEPT_PUBLIC_REPLAY=1` and needs no passcode. It shows recorded sandbox data and any recommendations recorded in `seed/replay/snapshot.json`; a case without one says "No recorded decision for this case". It makes no live PayPal calls and no live model calls. Approving (with the recorded note), the buyer's reply and shipping checks are simulated, shared by everyone viewing, and reset when the server restarts; notes, attachments, policy and tracking cannot be changed there. `KEPT_PUBLIC_REPLAY=1` without `KEPT_FAKE_PAYPAL=1` stops the server at startup.
+
 ## Running it as a judge
 
 No credentials of ours are in this repo or needed. Two paths:
