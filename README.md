@@ -15,13 +15,13 @@ Under those numbers, Claude reads each open dispute, says in plain words what Pa
 The loop is proven live in the PayPal sandbox. In the 2026-11-04 spike, a 5.00 partial refund offer went out on a 20.00 inquiry (`PP-R-CWP-10196411`), the sandbox buyer accepted it, PayPal moved the case to `RESOLVED` with `amount_refunded` 5.00, and the seller kept 15.00 of 20.00. Kept reads that result from PayPal; it does not predict it. Each approved action is sent to the PayPal sandbox and read back, and the held and kept totals are PayPal's reported figures, not estimates.
 
 ![Kept case board](docs/img/grid.png)
-The case board: Held now and Kept from PayPal's figures, the Held, Kept and Seller Protection columns, and the pinned total row (replay of recorded and derived sandbox data)
+The case board: Held now and Kept from PayPal's figures, open cases outside the payment's Seller Protection categories, Your record, and what PayPal reports next to what Claude recommends (public replay of recorded sandbox data)
 
 ![Case B panel](docs/img/panel.png)
-Case B before Claude has run: not as described, and the payment's Seller Protection does not list this reason (replay of recorded and derived sandbox data)
+Case B: Claude's recorded call to settle, a refund offer at the seller's policy cap, and the break-even line from PayPal's published dispute fees (public replay of recorded sandbox data)
 
 ![Case A panel](docs/img/claim.png)
-Case A, a PayPal claim: PayPal's hold, Seller Protection that lists this reason, and the send supporting information action (replay of recorded and derived sandbox data)
+Case A, a PayPal claim: Claude's reasons, and its call before and after the seller's shipping notes were added, accept then fight (public replay of recorded sandbox data)
 
 ## PayPal APIs and AI model used, and where
 
