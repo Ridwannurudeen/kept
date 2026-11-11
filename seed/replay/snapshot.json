@@ -1,8 +1,296 @@
 {
-  "snapshotAt": "2026-11-11T15:01:22.142Z",
-  "decisions": {},
+  "snapshotAt": "2026-11-11T15:56:16.929Z",
+  "decisions": {
+    "PP-R-HND-00000001": {
+      "decision": {
+        "recommendation": "SETTLE",
+        "plain_ask": "The buyer says the colour of the item is different from the listing. Your records can't answer that well. You have one listing image, but no photo of the item you actually sent, and PayPal shows no shipping address or tracking. I suggest offering a partial refund of USD 10.80. That's the most your policy allows (30% of USD 36.00). Two things to check before you send it: 1) PayPal lists this item as a DIGITAL_DOWNLOAD, but your notes say it was \"sent\". Please confirm which is right. 2) I can't read listing-photo-note.txt, so if it shows the exact colour named in the listing, tell me. Please decide by 2026-11-22 18:22 UTC, which keeps your 48-hour buffer. PayPal's own deadline is 2026-11-24 18:22 UTC.",
+        "evidence_have": [
+          "listing-colour.jpg: a listing image showing a blue patterned surface. It shows how the listing looked, not the item that was sent.",
+          "listing-photo-note.txt: a text file about the listing photo. I can't see what it says, so it's listed here only as a file you have.",
+          "Seller notes: item sent as listed. The buyer reports a colour difference."
+        ],
+        "evidence_missing": [
+          "Photos of the actual item taken before it was sent. Your notes say there are none.",
+          "The listing's written description naming the colour. It isn't in PayPal's records or your notes.",
+          "Shipping address and tracking. PayPal's order shows shipping: null and no trackers.",
+          "A clear explanation of why PayPal lists the item as DIGITAL_DOWNLOAD when your notes say it was sent.",
+          "The buyer's own photos or details. Their message and evidence notes just say \"nil\"."
+        ],
+        "reasons": [
+          "The dispute reason is MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED. PayPal's Seller Protection for this payment covers only ITEM_NOT_RECEIVED and UNAUTHORIZED_TRANSACTION, so it doesn't list this reason. The checklist also marks it as not applying to this reason.",
+          "This is a colour complaint, and nothing in your records shows what colour the item you sent was. Your notes confirm there are no photos from before it was sent.",
+          "The listing image shows the colour you advertised. It can't show that the delivered item matched it.",
+          "This is a USD 36.00 sale with weak records, so a partial refund within your cap is a sensible way to try to close it. USD 10.80 is the most your policy allows.",
+          "PayPal lists make_offer for this case, so a partial refund is an action you can take. The case is still at the inquiry stage."
+        ],
+        "would_change": "A photo of the actual item taken before it was sent, showing it matches the colour in the listing.",
+        "offer_amount": "10.80",
+        "draft_note": "Hello, thank you for letting us know about the colour. We're sorry the item wasn't what you expected. We sent it as shown in our listing, but we'd like to put this right. We are offering a partial refund of USD 10.80, and you can keep the item. If you accept, the refund will be issued through PayPal. Thank you for your understanding."
+      },
+      "validation": {
+        "ok": true,
+        "action": "make_offer",
+        "cap": "10.80"
+      },
+      "at": "2026-11-11T15:54:37.043Z",
+      "model": "claude-opus-5-5",
+      "steps": 2,
+      "toolCalls": [
+        "get_dispute",
+        "submit_decision"
+      ],
+      "durationMs": 17378,
+      "basis": {
+        "stage": "INQUIRY",
+        "status": "OPEN",
+        "disputeState": "REQUIRED_ACTION",
+        "links": [
+          "self",
+          "make_offer",
+          "accept_claim",
+          "escalate",
+          "send_message",
+          "provide_evidence"
+        ],
+        "amount": "36.00",
+        "dueAt": "2026-11-24T18:22:34.555Z"
+      }
+    },
+    "PP-R-LKL-10196413": {
+      "decision": {
+        "recommendation": "FIGHT",
+        "plain_ask": "I recommend sending PayPal your shipping details. The buyer opened this \"not received\" case at 18:32 on Nov 4, 17 minutes after paying (18:15) and before any parcel could have arrived. You shipped the same day by UPS, and PayPal already has your tracking number. The weak spot: PayPal's tracker shows only SHIPPED. It has no \"Delivered\" status or date. Before you send, please look up 1Z999AA10123456784 on UPS. If it shows delivered, add the date and city to the note. Also, PayPal's order has no shipping address on file, so I can't confirm your note that the addresses match. The case is now at the chargeback stage, and $18.81 is on hold. Whether that money is released is up to PayPal. PayPal gave no response deadline, so send this soon. For reference, your one past \"not received\" case closed in the buyer's favour with a $5.00 partial refund after nothing was sent. That doesn't change this advice. If you'd rather not contest $20.00, accepting and refunding is the other option PayPal allows.",
+        "evidence_have": [
+          "Seller notes: shipped 2026-11-04 via UPS, tracking 1Z999AA10123456784",
+          "PayPal order tracker 1Z999AA10123456784 on the transaction, status SHIPPED",
+          "Seller Protection checklist: online, verifiable tracking number is in PayPal's data",
+          "Buyer opened the case 2026-11-04 18:32, 17 minutes after payment at 18:15",
+          "Seller files: packing-slip.txt and ups-label.txt (text files)"
+        ],
+        "evidence_missing": [
+          "A 'Delivered' status with a delivery date. PayPal's tracker shows only SHIPPED, and the checklist marks this as missing",
+          "A shipping address on PayPal's order (shipping is null), so 'address matches' can't be checked. The checklist marks it not_visible",
+          "The buyer gave no details (notes are 'nil')",
+          "PayPal lists the item type as SERVICE, but the seller's notes describe a UPS shipment. This mismatch is unexplained",
+          "PayPal gave no response deadline"
+        ],
+        "reasons": [
+          "The buyer's reason is item not received. PayPal does list ITEM_NOT_RECEIVED among the payment's seller_protection dispute_categories (status ELIGIBLE), and the checklist says protection applies to this reason. Whether protection is granted is PayPal's decision.",
+          "The seller has verifiable UPS tracking on file with PayPal and shipped the same day the order was paid.",
+          "The claim was filed 17 minutes after payment, before any delivery was possible. The shipping record answers that timing directly.",
+          "There's a gap: no delivery confirmation or date is on record, and PayPal has no shipping address to match against, so the case isn't fully covered.",
+          "PayPal lists only provide_supporting_info and accept_claim, with no make_offer. Sending the information costs little on a $20.00 order. Refunding remains possible."
+        ],
+        "would_change": null,
+        "offer_amount": null,
+        "draft_note": "Hello,\n\nThis order (transaction 1VS093774J460400T, USD 20.00) was paid on 2026-11-04 at 18:15 UTC. I shipped it the same day by UPS with tracking number 1Z999AA10123456784, and that number has been added to the transaction in PayPal. It went to the shipping address the buyer gave with the order.\n\nThe buyer opened this case at 18:32 UTC on 2026-11-04, about 17 minutes after paying and before the parcel could have arrived. The buyer gave no further details.\n\nThe shipment can be checked online with UPS using the tracking number above. I have a packing slip and the UPS label record for this order and can provide them if you need them.\n\nThank you for reviewing this case."
+      },
+      "validation": {
+        "ok": true,
+        "action": "provide_supporting_info",
+        "cap": null
+      },
+      "at": "2026-11-11T15:55:55.990Z",
+      "model": "claude-opus-5-5",
+      "steps": 2,
+      "toolCalls": [
+        "get_dispute",
+        "submit_decision"
+      ],
+      "durationMs": 26305,
+      "basis": {
+        "stage": "CHARGEBACK",
+        "status": "UNDER_REVIEW",
+        "disputeState": "UNDER_PAYPAL_REVIEW",
+        "links": [
+          "self",
+          "accept_claim",
+          "provide_supporting_info"
+        ],
+        "amount": "20.00",
+        "dueAt": null
+      },
+      "previous": {
+        "recommendation": "ACCEPT",
+        "offer_amount": null,
+        "would_change": "A UPS tracking record showing the parcel delivered, with a delivery date, to the address on PayPal's transaction details.",
+        "at": "2026-11-11T15:55:18.415Z",
+        "evidenceChanged": true
+      }
+    }
+  },
   "actions": [],
   "calls": [],
   "unknownOutcomes": {},
-  "shippingChecks": {}
+  "shippingChecks": {
+    "205118069H056835L": {
+      "orderId": "205118069H056835L",
+      "itemName": "Spike test item",
+      "amount": {
+        "currency_code": "USD",
+        "value": "20.00"
+      },
+      "captureId": "7FH08202AN770703L",
+      "protection": {
+        "status": "ELIGIBLE",
+        "categories": [
+          "ITEM_NOT_RECEIVED",
+          "UNAUTHORIZED_TRANSACTION"
+        ]
+      },
+      "checklist": [
+        {
+          "label": "Shipped to the address on PayPal's transaction details",
+          "state": "not_visible",
+          "detail": "PayPal's order does not show both a shipping address and a tracker."
+        },
+        {
+          "label": "Online, verifiable tracking number",
+          "state": "missing",
+          "detail": "PayPal's order has no tracker."
+        },
+        {
+          "label": "'Delivered' status with a delivery date",
+          "state": "missing",
+          "detail": "PayPal's order has no tracker, so no delivery status."
+        },
+        {
+          "label": "Recipient address matches the transaction details",
+          "state": "not_visible",
+          "detail": "Kept cannot see the carrier's delivery address."
+        }
+      ],
+      "tracker": null,
+      "checkedAt": "2026-11-11T15:56:02.296Z",
+      "tracking": null
+    },
+    "92U413849D170012F": {
+      "orderId": "92U413849D170012F",
+      "itemName": "Spike test item",
+      "amount": {
+        "currency_code": "USD",
+        "value": "20.00"
+      },
+      "captureId": "1VS093774J460400T",
+      "protection": {
+        "status": "ELIGIBLE",
+        "categories": [
+          "ITEM_NOT_RECEIVED",
+          "UNAUTHORIZED_TRANSACTION"
+        ]
+      },
+      "checklist": [
+        {
+          "label": "Shipped to the address on PayPal's transaction details",
+          "state": "not_visible",
+          "detail": "PayPal's order does not show both a shipping address and a tracker."
+        },
+        {
+          "label": "Online, verifiable tracking number",
+          "state": "in_paypal_data",
+          "detail": "Tracker 1VS093774J460400T-1Z999AA10123456784 on PayPal's order."
+        },
+        {
+          "label": "'Delivered' status with a delivery date",
+          "state": "missing",
+          "detail": "PayPal's record shows SHIPPED, not delivered"
+        },
+        {
+          "label": "Recipient address matches the transaction details",
+          "state": "not_visible",
+          "detail": "Kept cannot see the carrier's delivery address."
+        }
+      ],
+      "tracker": {
+        "id": "1VS093774J460400T-1Z999AA10123456784",
+        "status": "SHIPPED",
+        "trackingNumber": "1Z999AA10123456784"
+      },
+      "checkedAt": "2026-11-11T15:56:03.113Z",
+      "tracking": null
+    },
+    "ORDERB0000000001": {
+      "orderId": "ORDERB0000000001",
+      "itemName": "Spike test item",
+      "amount": {
+        "currency_code": "USD",
+        "value": "36.00"
+      },
+      "captureId": "CAPTUREB0000000001",
+      "protection": {
+        "status": "ELIGIBLE",
+        "categories": [
+          "ITEM_NOT_RECEIVED",
+          "UNAUTHORIZED_TRANSACTION"
+        ]
+      },
+      "checklist": [
+        {
+          "label": "Shipped to the address on PayPal's transaction details",
+          "state": "not_visible",
+          "detail": "PayPal's order does not show both a shipping address and a tracker."
+        },
+        {
+          "label": "Online, verifiable tracking number",
+          "state": "missing",
+          "detail": "PayPal's order has no tracker."
+        },
+        {
+          "label": "'Delivered' status with a delivery date",
+          "state": "missing",
+          "detail": "PayPal's order has no tracker, so no delivery status."
+        },
+        {
+          "label": "Recipient address matches the transaction details",
+          "state": "not_visible",
+          "detail": "Kept cannot see the carrier's delivery address."
+        }
+      ],
+      "tracker": null,
+      "checkedAt": "2026-11-11T15:56:03.381Z",
+      "tracking": null
+    },
+    "ORDERP1000000001": {
+      "orderId": "ORDERP1000000001",
+      "itemName": "Stoneware mug pair",
+      "amount": {
+        "currency_code": "USD",
+        "value": "16.00"
+      },
+      "captureId": "CAPTUREP1000000001",
+      "protection": {
+        "status": "ELIGIBLE",
+        "categories": [
+          "ITEM_NOT_RECEIVED",
+          "UNAUTHORIZED_TRANSACTION"
+        ]
+      },
+      "checklist": [
+        {
+          "label": "Shipped to the address on PayPal's transaction details",
+          "state": "not_visible",
+          "detail": "PayPal's order does not show both a shipping address and a tracker."
+        },
+        {
+          "label": "Online, verifiable tracking number",
+          "state": "missing",
+          "detail": "PayPal's order has no tracker."
+        },
+        {
+          "label": "'Delivered' status with a delivery date",
+          "state": "missing",
+          "detail": "PayPal's order has no tracker, so no delivery status."
+        },
+        {
+          "label": "Recipient address matches the transaction details",
+          "state": "not_visible",
+          "detail": "Kept cannot see the carrier's delivery address."
+        }
+      ],
+      "tracker": null,
+      "checkedAt": "2026-11-11T15:56:03.649Z",
+      "tracking": null
+    }
+  }
 }
