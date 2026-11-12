@@ -1,87 +1,213 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const site = new URL('../site/', import.meta.url);
 const html = () => readFileSync(new URL('index.html', site), 'utf8');
+const css = () => readFileSync(new URL('styles.css', site), 'utf8');
+const readme = () => readFileSync(new URL('../README.md', site), 'utf8');
+const devpost = () => readFileSync(new URL('../docs/devpost.md', site), 'utf8');
+const plain = (markup: string) => markup.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace(/ ([,.;])/g, '$1').trim();
+const ledger = () => html().split('<table class="ledger">')[1]?.split('</table>')[0] ?? '';
+
+function webpSize(path: string): [number, number] {
+  const file = readFileSync(new URL(path, site));
+  expect(file.toString('ascii', 0, 4)).toBe('RIFF');
+  expect(file.toString('ascii', 8, 12)).toBe('WEBP');
+  expect(file.toString('ascii', 12, 16)).toBe('VP8 ');
+  return [file.readUInt16LE(26) & 0x3fff, file.readUInt16LE(28) & 0x3fff];
+}
+
+function pngSize(path: string): [number, number] {
+  const file = readFileSync(new URL(path, site));
+  expect(file.toString('ascii', 1, 4)).toBe('PNG');
+  return [file.readUInt32BE(16), file.readUInt32BE(20)];
+}
+
+function expectInBothDocs(fragment: string) {
+  expect(readme()).toContain(fragment);
+  expect(devpost()).toContain(fragment);
+}
 
 describe('Kept landing page', () => {
-  it('has one h1', () => {
+  it('has one h1 with the reviewed headline and sub', () => {
     expect(html().match(/<h1\b/gi)).toHaveLength(1);
+    expect(html()).toContain('>What PayPal is holding, and what you kept.</h1>');
+    expect(html()).toContain('Kept reads each PayPal dispute, Claude recommends fight, settle or accept with its reasons, and nothing is sent until you approve.</p>');
   });
 
-  it('gives every image alt text, dimensions and an existing local file', () => {
+  it('gives every image alt text, its real dimensions and an existing local file', () => {
     const images = html().match(/<img\b[^>]*>/gi) ?? [];
-    expect(images.length).toBeGreaterThanOrEqual(3);
+    expect(images).toHaveLength(2);
     for (const image of images) {
       expect(image).toMatch(/\balt="[^"]+"/);
-      expect(image).toMatch(/\bwidth="[1-9]\d*"/);
-      expect(image).toMatch(/\bheight="[1-9]\d*"/);
       const src = image.match(/\bsrc="([^"]+)"/)?.[1];
       expect(src).toBeDefined();
       expect(existsSync(new URL(src!, site))).toBe(true);
-    }
-    for (const source of html().matchAll(/\bsrcset="([^"]+)"/g)) {
-      expect(existsSync(new URL(source[1], site))).toBe(true);
+      const width = Number(image.match(/\bwidth="(\d+)"/)?.[1]);
+      const height = Number(image.match(/\bheight="(\d+)"/)?.[1]);
+      expect(webpSize(src!)).toEqual([width, height]);
     }
   });
 
-  it('avoids unsupported claims and long dashes', () => {
-    expect(html()).not.toMatch(/\b(saved|earned|recovered|won|win rate|odds|autopilot|automatic|guaranteed)\b/i);
-    expect(html()).not.toMatch(/[\u2013\u2014]/);
+  it('uses the native take crops and the composed social card listed in the manifest', () => {
+    const manifest = readFileSync(new URL('img/CROPS.md', site), 'utf8');
+    for (const [name, width, height] of [
+      ['case-b-what-happened.webp', 440, 466],
+      ['board-0746.webp', 1472, 454],
+    ] as const) {
+      expect(html()).toContain(`src="img/${name}" width="${width}" height="${height}"`);
+      expect(webpSize(`img/${name}`)).toEqual([width, height]);
+      expect(manifest).toContain(`| ${name} |`);
+      expect(manifest).toContain(`| ${width}x${height} |`);
+    }
+    expect(pngSize('img/og-grid.png')).toEqual([1200, 630]);
+    expect(manifest).toContain('| og-grid.png |');
+    expect(manifest).toContain('| 1200x630 |');
+    expect(html()).toContain('<meta property="og:image" content="https://kept.gudman.xyz/img/og-grid.png">');
+    const hero = html().match(/<img\b[^>]*case-b-what-happened[^>]*>/)![0];
+    expect(hero).toContain('fetchpriority="high"');
+    expect(hero).not.toContain('loading="lazy"');
+    expect(html().match(/<img\b[^>]*board-0746[^>]*>/)![0]).toContain('loading="lazy"');
+    const shipped = readdirSync(new URL('img/', site)).filter((name) => name !== 'CROPS.md');
+    for (const name of shipped) expect(html()).toContain(`img/${name}`);
+  });
+
+  it('ends every caption with the time zone and keeps the hero chips as HTML', () => {
+    const captions = [...html().matchAll(/<figcaption>([\s\S]*?)<\/figcaption>/g)].map((match) => plain(match[1]));
+    expect(captions).toHaveLength(2);
+    for (const caption of captions) expect(caption.endsWith('times in WAT (UTC+1).')).toBe(true);
+    expect(captions[1]).toContain('AG Grid Community: PayPal reports, Claude recommends, You approved.');
+    expect(html()).toContain('<span class="chip-label">Your approval</span>');
+    expect(html()).toContain("<span class=\"chip-label\">PayPal's record</span>");
+  });
+
+  it('gives small screens the board as static case records with all three column groups', () => {
+    const records = [...(html().split('<div class="board-records">')[1]?.split('</figure>')[0] ?? '').matchAll(/<article class="record">([\s\S]*?)<\/article>/g)].map((match) => plain(match[1]));
+    const expected = [
+      ['B2 LGS-10199627', 'Linen table runner. Not as described.', 'Amount USD 36.00', 'Held USD 34.25', 'Seller Protection Eligible not this reason', 'Stage Inquiry', 'Status Open The buyer opened an inquiry', 'Seller response due Tue 1 Dec in 19 days', 'Recommendation SETTLE', "Offer USD 10.80 Kept's offer"],
+      ['DEV1 GNF-10199630', 'Cotton tote. Not as described.', 'Amount USD 18.00', 'Held USD 16.88', 'Seller Protection Eligible not this reason', 'Status Open The buyer opened an inquiry', 'Seller response due Tue 1 Dec in 19 days', 'Recommendation SETTLE', "Offer USD 5.40 Kept's offer"],
+      ['EV1 PXL-10199716', 'Bamboo cutting board. Item not received.', 'Amount USD 33.00', 'Held USD 31.36', 'Seller Protection Eligible lists this reason', 'Seller response due Wed 2 Dec in 19 days', 'Recommendation FIGHT'],
+      ['A RPI-10199636', 'Ceramic pour-over set. Item not received.', 'Amount USD 48.00', 'Held USD 45.83', 'Stage PayPal claim', 'Status Under review PayPal is reviewing your supporting information', 'Seller response due No date from PayPal', 'Recommendation FIGHT', 'Action Sent provide_supporting_info'],
+      ['A3 ADY-10199633', 'Ceramic pour-over set. Item not received.', 'Status Under review PayPal is reviewing your supporting information', 'Recommendation FIGHT', 'Action Sent provide_supporting_info'],
+      ['A2 GMF-10199635', 'Ceramic pour-over set. Item not received.', 'Status Under review PayPal opened a claim', 'Seller response due No date from PayPal', 'Recommendation FIGHT'],
+    ];
+    expect(records).toHaveLength(expected.length);
+    records.forEach((record, index) => {
+      for (const group of ['PayPal reports', 'Claude recommends', 'You approved']) expect(record).toContain(group);
+      for (const fragment of expected[index]) expect(record).toContain(fragment);
+    });
+    const below900 = css().split('@media (max-width: 899px) {')[1]?.split('\n}\n')[0] ?? '';
+    expect(below900).toContain('.board-frame { display: none; }');
+    expect(below900).toContain('.board-records { display: block; }');
+  });
+
+  it('avoids banned words and long dashes, and keeps the disclaimer and canonical link', () => {
+    expect(html()).not.toMatch(/\b(saved|earned|recovered|won|win|odds|chance|first|only|guaranteed|autopilot)\b/i);
+    expect(html()).not.toContain('PayPal released funds');
+    expect(html()).not.toContain('What PayPal reports you kept');
+    expect(html() + css()).not.toMatch(/[–—·]/);
     expect(html()).toContain('Not affiliated with PayPal.');
     expect(html()).toContain('<link rel="canonical" href="https://kept.gudman.xyz/">');
   });
 
-  it('backs the capped refund receipt in both source documents', () => {
-    const receipt = 'On 12 November 2026 Kept sent two capped partial refund offers in the sandbox (7.20 on 24.00 and 8.10 on 27.00); the sandbox buyer accepted both, PayPal resolved both, and the seller kept 16.80 and 18.90.';
-    for (const [path, heading] of [
-      ['../README.md', '### Live resolution and grid features'],
-      ['../docs/devpost.md', '## What it does'],
-    ]) {
-      const section = readFileSync(new URL(path, site), 'utf8').split(heading)[1]?.split(/\n#{1,3} /)[0];
-      expect(section).toContain(receipt);
+  it('is light only, with the ledger tokens', () => {
+    expect(html()).toContain('<meta name="color-scheme" content="light">');
+    expect(css()).toMatch(/:root \{\s*color-scheme: light;/);
+    expect(css()).not.toMatch(/prefers-color-scheme/);
+    for (const token of ['--paper: #F3F1EA', '--ink: #15181B', '--graphite: #5D646B', '--rule: #D8D3C6', '--held: #93370D', '--kept: #067647']) {
+      expect(css()).toContain(token);
     }
+    expect(html()).toContain("fill='%2315181B'");
   });
 
-  it('uses readable case panel crops and removes the full frames', () => {
-    for (const name of ['panel', 'claim']) {
-      expect(html()).toContain(`srcset="img/${name}-crop.webp"`);
-      expect(html()).toContain(`src="img/${name}-crop.png" width="480" height="842"`);
-      for (const extension of ['png', 'webp']) {
-        expect(existsSync(new URL(`img/${name}.${extension}`, site))).toBe(false);
-      }
-      const png = readFileSync(new URL(`img/${name}-crop.png`, site));
-      expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([480, 842]);
+  it('self-hosts the latin fonts and preloads the serif and Plex Sans 400', () => {
+    const fonts = [
+      'source-serif-4-latin-opsz-normal.woff2',
+      'ibm-plex-sans-latin-400-normal.woff2',
+      'ibm-plex-sans-latin-600-normal.woff2',
+      'ibm-plex-mono-latin-400-normal.woff2',
+      'ibm-plex-mono-latin-500-normal.woff2',
+    ];
+    for (const font of fonts) {
+      expect(existsSync(new URL(`fonts/${font}`, site))).toBe(true);
+      expect(css()).toContain(`url("fonts/${font}")`);
     }
-    const css = readFileSync(new URL('styles.css', site), 'utf8');
-    expect(css).toContain('grid-template-columns: 1fr minmax(0, 480px)');
-    expect(css).toContain('font-family: system-ui, "Segoe UI", Helvetica, Arial, sans-serif;');
+    expect(css().match(/@font-face/g)).toHaveLength(5);
+    expect(css().match(/font-display: swap;/g)).toHaveLength(5);
+    expect(css()).toContain('font-weight: 200 900;');
+    expect(css()).toContain('font-optical-sizing: auto;');
+    expect(css()).toContain('font-variant-numeric: tabular-nums;');
+    expect(html().match(/<link rel="preload"[^>]*>/g)).toEqual([
+      '<link rel="preload" href="fonts/source-serif-4-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>',
+      '<link rel="preload" href="fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>',
+    ]);
   });
 
-  it('keeps receipts chronological and uses the reviewed copy and metadata', () => {
-    const dates = [...html().matchAll(/<time datetime="([^"]+)"/g)].map((match) => match[1]);
-    expect(dates).toEqual([...dates].sort());
-    expect(html()).toContain('Kept follows a PayPal sale from shipping to dispute to outcome, and sends nothing until you approve.</h1>');
-    expect(html()).toContain("Kept shows both calls side by side, with Claude's reasons.");
-    expect(html()).toContain('Built with the PayPal Disputes API, the PayPal Agent Toolkit, Claude, AG Grid Community and Render.</p>');
-    expect(html()).toContain('https://github.com/Ridwannurudeen/kept/blob/main/LICENSE');
+  it('keeps the 700 ms hero settle motion, off under reduced motion', () => {
+    expect(css()).toMatch(/@media \(prefers-reduced-motion: no-preference\) \{\s*\.hero-figure \.frame \{ animation: settle 700ms /);
+  });
+
+  it('shows the two 07:46 figures with their label and field definitions, backed in both documents', () => {
+    expect(html()).toContain('Hosted sandbox demo, 12 Nov 2026, 07:46 WAT (UTC+1), 11 sandbox cases.');
+    expect(html()).toContain('<span class="money">USD 238.79</span>');
+    expect(html()).toContain('<span class="money">USD 75.90</span>');
+    expect(plain(html())).toContain('Includes USD 15.00 on one case resolved without an action sent by Kept.');
+    expect(html()).toContain('<code>fund_movements</code>, reason <code>HOLD_PLACED</code>');
+    expect(html()).toContain('disputed amount minus <code>dispute_outcome.amount_refunded</code>');
+    expect(html()).toContain("The disputed amount minus PayPal's refund, on resolved disputes.");
+    expectInBothDocs('At 07:46 WAT the hosted sandbox demo (11 sandbox cases) showed Held now USD 238.79 and Kept USD 75.90, including USD 15.00 on one case resolved without an action sent by Kept.');
+  });
+
+  it('keeps the proof ledger in time order', () => {
+    const times = [...ledger().matchAll(/<time datetime="([^"]+)"/g)].map((match) => match[1]);
+    expect(times).toHaveLength(9);
+    expect(times).toEqual([...times].sort());
+  });
+
+  it('backs every proof ledger row, with its times, in README and Devpost', () => {
+    const rows: { site: string[]; docs: string[] }[] = [
+      { site: ['PP-R-CWP-10196411', 'Resolved, refunded 5.00', '15.00'], docs: ['a 5.00 partial refund offer went out on a 20.00 inquiry', 'kept 15.00 of 20.00'] },
+      { site: ['9 cases × 3 runs, 27/27'], docs: ['9 hand-built cases', '27/27'] },
+      { site: ['A3 PP-R-ADY-10199633', 'Supporting information with packing-slip.pdf'], docs: ['A3 at', 'packing-slip.pdf'] },
+      { site: ['12 Nov, 03:04', 'B3 PP-R-BDX-10199626', 'Offer 7.20 on 24.00', '16.80'], docs: ['7.20 on 24.00', '16.80', 'the B3 and B4 offers were sent at 03:04 WAT'] },
+      { site: ['12 Nov, 03:04', 'B4 PP-R-KRB-10199621', 'Offer 8.10 on 27.00', '18.90'], docs: ['8.10 on 27.00', '18.90', 'the B3 and B4 offers were sent at 03:04 WAT'] },
+      { site: ['12 Nov, 07:25', 'A PP-R-RPI-10199636', "PayPal's record lists packing-slip.pdf; under review"], docs: ['A at 07:25 WAT', "PayPal's record lists the document both times"] },
+      { site: ['12 Nov, 07:27:13', 'P1 order 0KY4190824060933V', 'Tracker 1Z4F82V70395184027'], docs: ['UPS tracking 1Z4F82V70395184027 to sandbox order 0KY4190824060933V', "P1's tracker was checked at 07:27:13 WAT"] },
+      { site: ['12 Nov, 07:36', 'B PP-R-PGK-10199629', 'Offer 10.80 on 36.00', 'Resolved 07:39:34, refunded 10.80', '25.20'], docs: ['10.80 on 36.00 (case B, sent 07:36 WAT, resolved 07:39 WAT)', '25.20 kept', 'case B resolved at 07:39:34 WAT'] },
+      { site: ['12 Nov, 07:43', 'EV1 PP-R-PXL-10199716', 'SETTLE with an offer of 9.90 at 07:43, then FIGHT at 07:45; nothing sent.'], docs: ['On case EV1', 'Nothing was sent on EV1.', 'EV1 received SETTLE with an offer of USD 9.90 at 07:43 WAT, then FIGHT at 07:45 WAT.'] },
+    ];
+    const cells = [...ledger().matchAll(/<tr>([\s\S]*?)<\/tr>/g)].slice(1).map((match) => plain(match[1]));
+    expect(cells).toHaveLength(rows.length);
+    rows.forEach((row, index) => {
+      for (const fragment of row.site) expect(cells[index]).toContain(fragment);
+      for (const fragment of row.docs) expectInBothDocs(fragment);
+    });
+    expectInBothDocs("Times: the B3 and B4 offers were sent at 03:04 WAT, P1's tracker was checked at 07:27:13 WAT, case B resolved at 07:39:34 WAT, and EV1 received SETTLE with an offer of USD 9.90 at 07:43 WAT, then FIGHT at 07:45 WAT.");
+    expect(readme()).toContain('the hosted demo restarted at 08:08 WAT');
+    expect(html()).toContain("The hosted demo restarted on 12 Nov at 08:08 WAT. Kept's own log of the 07:25 to 07:46 sends on A, P1 and B and EV1's two decisions is not on it; PayPal's record of each still shows.");
+  });
+
+  it('labels the calls to action "Open the public replay" and has no film button yet', () => {
+    expect(html()).toContain('<a class="button button-ink nav-cta" href="https://kept-replay.onrender.com"><span class="label-long">Open the public replay</span><span class="label-short">Public replay</span></a>');
+    expect(html()).toContain('<a class="button button-ink" href="https://kept-replay.onrender.com">Open the public replay</a>');
+    expect(html()).toContain('<a class="text-link" href="https://github.com/Ridwannurudeen/kept">Read the code</a>');
+    expect(html()).not.toMatch(/Open the (public )?demo|Watch the/);
+  });
+
+  it('carries the endpoint table, its re-check note, limits and footer lines', () => {
+    expect(html()).toContain('<h3>Claude can call: two PayPal read tools</h3>');
+    expect(html()).toContain('<h3>Sent after you approve</h3>');
+    for (const file of ['src/ai/tools.ts', 'src/actions.ts', 'src/shipping.ts', 'src/policy.ts']) expect(html()).toContain(file);
+    expect(html()).toContain('<p class="endpoint-note">Before a dispute action, the server re-reads the dispute from PayPal and refuses an action PayPal does not list for the case. Before adding tracking, it re-reads the order and refuses if a tracker is already present. Every PayPal call Kept makes from app code is recorded in the call log.</p>');
+    expect(html()).toContain('<li>Runs on the PayPal sandbox. No production mode.');
+    expect(html()).toContain('<li>Files are sent when you tick them,');
+    expect(html()).toContain('Built with the PayPal Disputes, Orders and Payments APIs, PayPal Agent Toolkit, Claude Opus 5.5, AG Grid Community and Render.</p>');
+    expect(html()).toContain('<a href="https://github.com/Ridwannurudeen/kept/blob/main/LICENSE">MIT license</a>. PayPal sandbox. Not affiliated with PayPal.</p>');
     expect(html()).toContain('<meta name="twitter:card" content="summary_large_image">');
   });
 
-  it('uses the exact public demo and code links in both CTA pairs', () => {
-    const links = [...html().matchAll(/<a\b[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/g)];
-    for (const [label, href] of [
-      ['Open the public demo', 'https://kept-replay.onrender.com'],
-      ['Read the code', 'https://github.com/Ridwannurudeen/kept'],
-    ]) {
-      const matches = links.filter((link) => link[2] === label);
-      expect(matches).toHaveLength(2);
-      for (const link of matches) expect(link[1]).toBe(href);
-    }
-  });
-
-  it('loads no remote scripts or analytics', () => {
-    expect(html()).not.toMatch(/<script\b[^>]*src=["']https?:/i);
+  it('loads no scripts or analytics', () => {
+    expect(html()).not.toMatch(/<script\b/i);
     expect(html()).not.toMatch(/analytics|googletagmanager|gtag\(|google-analytics|plausible|posthog|segment\.com|hotjar/i);
   });
 });

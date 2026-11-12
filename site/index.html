@@ -3,143 +3,328 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="light dark">
-    <title>Kept: what PayPal holds, and what you kept</title>
-    <meta name="description" content="Kept follows a PayPal sale from shipping to dispute to outcome: it checks PayPal's Seller Protection record when you ship, recommends fight, settle or accept when a buyer disputes, sends nothing until you approve, and shows what PayPal reports you kept.">
+    <meta name="color-scheme" content="light">
+    <title>Kept: what PayPal is holding, and what you kept</title>
+    <meta name="description" content="Kept reads each PayPal dispute, Claude recommends fight, settle or accept with its reasons, and nothing is sent until you approve.">
     <link rel="canonical" href="https://kept.gudman.xyz/">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://kept.gudman.xyz/">
-    <meta property="og:title" content="Kept: what PayPal holds, and what you kept">
-    <meta property="og:description" content="Kept follows a PayPal sale from shipping to dispute to outcome: it checks PayPal's Seller Protection record when you ship, recommends fight, settle or accept when a buyer disputes, sends nothing until you approve, and shows what PayPal reports you kept.">
+    <meta property="og:title" content="Kept: what PayPal is holding, and what you kept">
+    <meta property="og:description" content="Kept reads each PayPal dispute, Claude recommends fight, settle or accept with its reasons, and nothing is sent until you approve.">
     <meta property="og:image" content="https://kept.gudman.xyz/img/og-grid.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Kept case board showing PayPal's held and kept figures in a public replay of recorded sandbox data">
+    <meta property="og:image:alt" content="Kept: What PayPal is holding, and what you kept. Held now USD 238.79, Kept USD 75.90, hosted sandbox demo, 12 Nov 2026, 07:46 WAT (UTC+1).">
     <meta name="twitter:card" content="summary_large_image">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23292433'/%3E%3Ctext x='32' y='46' text-anchor='middle' font-family='Georgia,serif' font-size='48' fill='%23ffffff'%3EK%3C/text%3E%3C/svg%3E">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2315181B'/%3E%3Ctext x='32' y='46' text-anchor='middle' font-family='Georgia,serif' font-size='48' fill='%23F3F1EA'%3EK%3C/text%3E%3C/svg%3E">
+    <link rel="preload" href="fonts/source-serif-4-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="styles.css?v=2">
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
-    <header class="container header">
-      <a class="wordmark" href="#" aria-label="Kept home">Kept</a>
-      <nav aria-label="Main navigation">
-        <a href="#how-it-works">How it works</a>
-        <a href="#limits">Limits</a>
-        <a href="https://github.com/Ridwannurudeen/kept">GitHub</a>
-      </nav>
+    <header class="header">
+      <div class="container header-row">
+        <div class="brand">
+          <a class="wordmark" href="#" aria-label="Kept home">Kept</a>
+          <span class="tag">Sandbox</span>
+        </div>
+        <nav class="nav" aria-label="Main navigation">
+          <a href="#how-it-works">How it works</a>
+          <a href="#proof">Proof</a>
+          <a href="#limits">Limits</a>
+          <a href="https://github.com/Ridwannurudeen/kept">GitHub</a>
+        </nav>
+        <a class="button button-ink nav-cta" href="https://kept-replay.onrender.com"><span class="label-long">Open the public replay</span><span class="label-short">Public replay</span></a>
+      </div>
     </header>
+
     <main id="main">
       <section class="container hero" aria-labelledby="hero-title">
-        <h1 id="hero-title">Kept follows a PayPal sale from shipping to dispute to outcome, and sends nothing until you approve.</h1>
-        <p class="hero-note">PayPal sandbox only. Free and open source (MIT).</p>
-        <div class="actions">
-          <a class="button primary" href="https://kept-replay.onrender.com">Open the public demo</a>
-          <a class="button secondary" href="https://github.com/Ridwannurudeen/kept">Read the code</a>
+        <div class="hero-copy">
+          <h1 id="hero-title">What PayPal is holding, and what you kept.</h1>
+          <p class="hero-sub">Kept reads each PayPal dispute, Claude recommends fight, settle or accept with its reasons, and nothing is sent until you approve.</p>
+          <div class="actions">
+            <a class="button button-ink" href="https://kept-replay.onrender.com">Open the public replay</a>
+            <a class="text-link" href="https://github.com/Ridwannurudeen/kept">Read the code</a>
+          </div>
+          <p class="replay-note">Recorded 4 Nov 2026 sandbox data with simulated actions, so its figures differ from the hosted demo. The free server can take a minute to wake.</p>
         </div>
-        <figure class="hero-media">
-          <picture>
-            <source srcset="img/grid.webp" type="image/webp">
-            <img src="img/grid.png" width="1440" height="900" alt="Kept case board with Held now, Kept, Seller Protection categories and PayPal's dispute records" fetchpriority="high">
-          </picture>
-          <figcaption>Public replay of recorded PayPal sandbox data</figcaption>
+        <figure class="hero-figure">
+          <div class="frame">
+            <div class="shot">
+              <img src="img/case-b-what-happened.webp" width="440" height="466" alt="Case B on the hosted sandbox demo: What happened, then What PayPal reports, ending with PayPal's 07:39:34 entry, Resolved buyer favour, refunded USD 10.80" fetchpriority="high" decoding="async">
+              <span class="chip chip-approval"><span class="chip-label">Your approval</span><span class="chip-lead" aria-hidden="true"></span></span>
+              <span class="chip chip-record"><span class="chip-label">PayPal's record</span><span class="chip-lead" aria-hidden="true"></span></span>
+              <span class="marker marker-approval" aria-hidden="true">1</span>
+              <span class="marker marker-record" aria-hidden="true">2</span>
+            </div>
+          </div>
+          <figcaption>
+            <ol class="marker-key">
+              <li>Your approval</li>
+              <li>PayPal's record</li>
+            </ol>
+            Case B, <span class="mono">PP-R-PGK-10199629</span>, on the hosted sandbox demo, 12 Nov 2026; times in WAT (UTC+1).
+          </figcaption>
         </figure>
       </section>
 
-      <section class="receipts" aria-labelledby="receipts-title">
+      <section class="container" aria-label="Case board">
+        <figure>
+          <div class="frame board-frame">
+            <img src="img/board-0746.webp" width="1472" height="454" alt="Kept case grid, rows B2 to A2, under the column groups PayPal reports, Claude recommends and You approved" loading="lazy" decoding="async">
+          </div>
+          <div class="board-records">
+            <article class="record">
+              <h3><span class="case-name">B2</span> <code class="case-id">LGS-10199627</code></h3>
+              <p class="record-item">Linen table runner. Not as described.</p>
+              <h4>PayPal reports</h4>
+              <dl class="record-fields"><div><dt>Amount</dt><dd><span class="money">USD 36.00</span></dd></div><div><dt>Held</dt><dd><span class="money">USD 34.25</span></dd></div><div><dt>Kept</dt><dd></dd></div><div><dt>Seller Protection</dt><dd>Eligible<span class="record-sub">not this reason</span></dd></div><div><dt>Stage</dt><dd>Inquiry</dd></div><div><dt>Status</dt><dd>Open<span class="record-sub">The buyer opened an inquiry</span></dd></div><div><dt>Seller response due</dt><dd>Tue 1 Dec<span class="record-sub">in 19 days</span></dd></div></dl>
+              <h4>Claude recommends</h4>
+              <dl class="record-fields"><div><dt>Recommendation</dt><dd><span class="rec">SETTLE</span></dd></div><div><dt>Offer</dt><dd><span class="money">USD 10.80</span><span class="record-sub">Kept's offer</span></dd></div></dl>
+              <h4>You approved</h4>
+              <dl class="record-fields"><div><dt>Action</dt><dd></dd></div></dl>
+            </article>
+            <article class="record">
+              <h3><span class="case-name">DEV1</span> <code class="case-id">GNF-10199630</code></h3>
+              <p class="record-item">Cotton tote. Not as described.</p>
+              <h4>PayPal reports</h4>
+              <dl class="record-fields"><div><dt>Amount</dt><dd><span class="money">USD 18.00</span></dd></div><div><dt>Held</dt><dd><span class="money">USD 16.88</span></dd></div><div><dt>Kept</dt><dd></dd></div><div><dt>Seller Protection</dt><dd>Eligible<span class="record-sub">not this reason</span></dd></div><div><dt>Stage</dt><dd>Inquiry</dd></div><div><dt>Status</dt><dd>Open<span class="record-sub">The buyer opened an inquiry</span></dd></div><div><dt>Seller response due</dt><dd>Tue 1 Dec<span class="record-sub">in 19 days</span></dd></div></dl>
+              <h4>Claude recommends</h4>
+              <dl class="record-fields"><div><dt>Recommendation</dt><dd><span class="rec">SETTLE</span></dd></div><div><dt>Offer</dt><dd><span class="money">USD 5.40</span><span class="record-sub">Kept's offer</span></dd></div></dl>
+              <h4>You approved</h4>
+              <dl class="record-fields"><div><dt>Action</dt><dd></dd></div></dl>
+            </article>
+            <article class="record">
+              <h3><span class="case-name">EV1</span> <code class="case-id">PXL-10199716</code></h3>
+              <p class="record-item">Bamboo cutting board. Item not received.</p>
+              <h4>PayPal reports</h4>
+              <dl class="record-fields"><div><dt>Amount</dt><dd><span class="money">USD 33.00</span></dd></div><div><dt>Held</dt><dd><span class="money">USD 31.36</span></dd></div><div><dt>Kept</dt><dd></dd></div><div><dt>Seller Protection</dt><dd>Eligible<span class="record-sub">lists this reason</span></dd></div><div><dt>Stage</dt><dd>Inquiry</dd></div><div><dt>Status</dt><dd>Open<span class="record-sub">The buyer opened an inquiry</span></dd></div><div><dt>Seller response due</dt><dd>Wed 2 Dec<span class="record-sub">in 19 days</span></dd></div></dl>
+              <h4>Claude recommends</h4>
+              <dl class="record-fields"><div><dt>Recommendation</dt><dd><span class="rec">FIGHT</span></dd></div><div><dt>Offer</dt><dd></dd></div></dl>
+              <h4>You approved</h4>
+              <dl class="record-fields"><div><dt>Action</dt><dd></dd></div></dl>
+            </article>
+            <article class="record">
+              <h3><span class="case-name">A</span> <code class="case-id">RPI-10199636</code></h3>
+              <p class="record-item">Ceramic pour-over set. Item not received.</p>
+              <h4>PayPal reports</h4>
+              <dl class="record-fields"><div><dt>Amount</dt><dd><span class="money">USD 48.00</span></dd></div><div><dt>Held</dt><dd><span class="money">USD 45.83</span></dd></div><div><dt>Kept</dt><dd></dd></div><div><dt>Seller Protection</dt><dd>Eligible<span class="record-sub">lists this reason</span></dd></div><div><dt>Stage</dt><dd>PayPal claim</dd></div><div><dt>Status</dt><dd>Under review<span class="record-sub">PayPal is reviewing your supporting information</span></dd></div><div><dt>Seller response due</dt><dd>No date from PayPal</dd></div></dl>
+              <h4>Claude recommends</h4>
+              <dl class="record-fields"><div><dt>Recommendation</dt><dd><span class="rec">FIGHT</span></dd></div><div><dt>Offer</dt><dd></dd></div></dl>
+              <h4>You approved</h4>
+              <dl class="record-fields"><div><dt>Action</dt><dd><code>Sent provide_supporting_info</code></dd></div></dl>
+            </article>
+            <article class="record">
+              <h3><span class="case-name">A3</span> <code class="case-id">ADY-10199633</code></h3>
+              <p class="record-item">Ceramic pour-over set. Item not received.</p>
+              <h4>PayPal reports</h4>
+              <dl class="record-fields"><div><dt>Amount</dt><dd><span class="money">USD 48.00</span></dd></div><div><dt>Held</dt><dd><span class="money">USD 45.83</span></dd></div><div><dt>Kept</dt><dd></dd></div><div><dt>Seller Protection</dt><dd>Eligible<span class="record-sub">lists this reason</span></dd></div><div><dt>Stage</dt><dd>PayPal claim</dd></div><div><dt>Status</dt><dd>Under review<span class="record-sub">PayPal is reviewing your supporting information</span></dd></div><div><dt>Seller response due</dt><dd>No date from PayPal</dd></div></dl>
+              <h4>Claude recommends</h4>
+              <dl class="record-fields"><div><dt>Recommendation</dt><dd><span class="rec">FIGHT</span></dd></div><div><dt>Offer</dt><dd></dd></div></dl>
+              <h4>You approved</h4>
+              <dl class="record-fields"><div><dt>Action</dt><dd><code>Sent provide_supporting_info</code></dd></div></dl>
+            </article>
+            <article class="record">
+              <h3><span class="case-name">A2</span> <code class="case-id">GMF-10199635</code></h3>
+              <p class="record-item">Ceramic pour-over set. Item not received.</p>
+              <h4>PayPal reports</h4>
+              <dl class="record-fields"><div><dt>Amount</dt><dd><span class="money">USD 48.00</span></dd></div><div><dt>Held</dt><dd><span class="money">USD 45.83</span></dd></div><div><dt>Kept</dt><dd></dd></div><div><dt>Seller Protection</dt><dd>Eligible<span class="record-sub">lists this reason</span></dd></div><div><dt>Stage</dt><dd>PayPal claim</dd></div><div><dt>Status</dt><dd>Under review<span class="record-sub">PayPal opened a claim</span></dd></div><div><dt>Seller response due</dt><dd>No date from PayPal</dd></div></dl>
+              <h4>Claude recommends</h4>
+              <dl class="record-fields"><div><dt>Recommendation</dt><dd><span class="rec">FIGHT</span></dd></div><div><dt>Offer</dt><dd></dd></div></dl>
+              <h4>You approved</h4>
+              <dl class="record-fields"><div><dt>Action</dt><dd></dd></div></dl>
+            </article>
+          </div>
+          <figcaption>AG Grid Community: PayPal reports, Claude recommends, You approved. Hosted sandbox demo, 12 Nov 2026, 07:46; times in WAT (UTC+1).</figcaption>
+        </figure>
+      </section>
+
+      <section class="section" aria-labelledby="numbers-title">
         <div class="container">
-          <h2 id="receipts-title">Sandbox receipts</h2>
-          <ul class="receipt-list">
-            <li><time datetime="2026-11-04">4 Nov 2026</time><p>A 5.00 refund offer on a 20.00 inquiry; the sandbox buyer accepted; PayPal reported RESOLVED, refunded 5.00, kept 15.00.</p></li>
-            <li><time datetime="2026-11-11">11 Nov 2026</time><p>Live eval, 9 cases x 3 runs, every check passed; it checks specific behaviours, not real-world accuracy.</p></li>
-            <li><time datetime="2026-11-12">12 Nov 2026</time><p>Kept sent two capped offers (7.20 and 8.10); the buyer accepted both; PayPal reported both resolved; kept 16.80 of 24.00 and 18.90 of 27.00.</p></li>
-            <li><time datetime="2026-11-12">12 Nov 2026</time><p>Kept sent supporting information with a file; PayPal's record lists the document (packing-slip.pdf, a sandbox demo document).</p></li>
+          <div class="section-head">
+            <h2 id="numbers-title">Two numbers, from PayPal's fields.</h2>
+            <p class="source">Hosted sandbox demo, 12 Nov 2026, 07:46 WAT (UTC+1), 11 sandbox cases.</p>
+          </div>
+          <dl class="figures">
+            <div class="figure-row">
+              <dt>Held now</dt>
+              <dd class="figure-def">
+                <p>The sum of each open dispute's PayPal holds. Kept makes no claim about when PayPal ends a hold.</p>
+                <p class="field"><code>fund_movements</code>, reason <code>HOLD_PLACED</code></p>
+              </dd>
+              <dd class="figure-value held"><span class="money">USD 238.79</span></dd>
+            </div>
+            <div class="figure-row">
+              <dt>Kept</dt>
+              <dd class="figure-def">
+                <p>The disputed amount minus PayPal's refund, on resolved disputes.</p>
+                <p class="field">disputed amount minus <code>dispute_outcome.amount_refunded</code></p>
+                <p class="figure-note">Includes <span class="money">USD 15.00</span> on one case resolved without an action sent by Kept.</p>
+              </dd>
+              <dd class="figure-value kept"><span class="money">USD 75.90</span></dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="section" id="how-it-works" aria-labelledby="how-title">
+        <div class="container">
+          <div class="section-head">
+            <h2 id="how-title">A recommendation. Your approval.</h2>
+          </div>
+          <ol class="steps">
+            <li><h3>Read the case</h3><p>Kept reads the dispute, its order and its capture from PayPal, and checks whether the payment's Seller Protection lists the buyer's reason.</p></li>
+            <li><h3>Weigh the next move</h3><p>Claude recommends fight, settle or accept, with reasons and what would change the call.</p></li>
+            <li><h3>Edit and approve</h3><p>You edit the offer and note, then approve. The cap refuses an offer above it and never lowers your number.</p></li>
+            <li><h3>Read back the result</h3><p>Kept sends one call to PayPal and reads back what PayPal recorded.</p></li>
+          </ol>
+
+          <div class="endpoints">
+            <div class="endpoint-col">
+              <h3>Claude can call: two PayPal read tools</h3>
+              <p class="endpoint-lede">Through the PayPal Agent Toolkit.</p>
+              <ul class="endpoint-list">
+                <li><code class="endpoint">GET /v1/customer/disputes</code><span class="endpoint-what">List disputes, as <code>list_disputes</code></span><code class="endpoint-file">src/ai/tools.ts</code></li>
+                <li><code class="endpoint">GET /v1/customer/disputes/{id}</code><span class="endpoint-what">Read one dispute, as <code>get_dispute</code></span><code class="endpoint-file">src/ai/tools.ts</code></li>
+              </ul>
+              <p class="endpoint-note">Plus <code>submit_decision</code>, which records a decision and sends nothing.</p>
+            </div>
+            <div class="endpoint-col">
+              <h3>Sent after you approve</h3>
+              <p class="endpoint-lede">From app code, one call per action.</p>
+              <ul class="endpoint-list">
+                <li><code class="endpoint">POST /v1/customer/disputes/{id}/make-offer</code><span class="endpoint-what">Partial refund offer, under your cap</span><code class="endpoint-file">src/actions.ts, src/policy.ts</code></li>
+                <li><code class="endpoint">POST /v1/customer/disputes/{id}/provide-supporting-info</code><span class="endpoint-what">Supporting info, claim stage</span><code class="endpoint-file">src/actions.ts</code></li>
+                <li><code class="endpoint">POST /v1/customer/disputes/{id}/provide-evidence</code><span class="endpoint-what">Evidence</span><code class="endpoint-file">src/actions.ts</code></li>
+                <li><code class="endpoint">POST /v1/customer/disputes/{id}/accept-claim</code><span class="endpoint-what">Accept the claim</span><code class="endpoint-file">src/actions.ts</code></li>
+                <li><code class="endpoint">POST /v2/checkout/orders/{id}/track</code><span class="endpoint-what">Add tracking, from the Shipping check</span><code class="endpoint-file">src/shipping.ts</code></li>
+              </ul>
+              <p class="endpoint-note">Before a dispute action, the server re-reads the dispute from PayPal and refuses an action PayPal does not list for the case. Before adding tracking, it re-reads the order and refuses if a tracker is already present. Every PayPal call Kept makes from app code is recorded in the call log.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="proof" aria-labelledby="proof-title">
+        <div class="container">
+          <div class="section-head">
+            <h2 id="proof-title">Sandbox receipts</h2>
+            <p class="source">From PayPal sandbox API reads (<code>GET /v1/customer/disputes/{id}</code>, <code>GET /v2/checkout/orders/{id}</code>).</p>
+          </div>
+          <table class="ledger">
+            <thead>
+              <tr>
+                <th scope="col">Time (WAT)</th>
+                <th scope="col">Case</th>
+                <th scope="col">Sent with your approval</th>
+                <th scope="col">PayPal reports</th>
+                <th scope="col" class="num">Kept (USD)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td data-label="Time (WAT)"><time datetime="2026-11-04">4 Nov</time></td>
+                <td data-label="Case"><code class="case-id">PP-R-CWP-10196411</code></td>
+                <td data-label="Sent with your approval">4 Nov spike, resolved without an action sent by Kept</td>
+                <td data-label="PayPal reports">Resolved, refunded <span class="money">5.00</span></td>
+                <td data-label="Kept (USD)" class="num"><span class="money kept">15.00</span></td>
+              </tr>
+              <tr>
+                <td data-label="Time (WAT)"><time datetime="2026-11-11">11 Nov</time></td>
+                <td data-label="Case">Golden-case eval</td>
+                <td data-label="Result" colspan="2">9 cases × 3 runs, 27/27 on recommendation, action, policy, fabrication and mentions. It checks specific behaviours, not real-world accuracy.</td>
+                <td class="num empty"></td>
+              </tr>
+              <tr>
+                <td data-label="Time (WAT)"><time datetime="2026-11-12T01:04+01:00">12 Nov, 01:04</time><span class="time-src">snapshot 00:04Z</span></td>
+                <td data-label="Case"><span class="case-name">A3</span><code class="case-id">PP-R-ADY-10199633</code></td>
+                <td data-label="Sent with your approval">Supporting information with packing-slip.pdf</td>
+                <td data-label="PayPal reports">PayPal's record lists packing-slip.pdf</td>
+                <td class="num empty"></td>
+              </tr>
+              <tr>
+                <td data-label="Time (WAT)"><time datetime="2026-11-12T03:04+01:00">12 Nov, 03:04</time><span class="time-src">snapshot 02:04Z</span></td>
+                <td data-label="Case"><span class="case-name">B3</span><code class="case-id">PP-R-BDX-10199626</code></td>
+                <td data-label="Sent with your approval">Offer <span class="money">7.20</span> on <span class="money">24.00</span></td>
+                <td data-label="PayPal reports">Buyer accepted, resolved</td>
+                <td data-label="Kept (USD)" class="num"><span class="money kept">16.80</span></td>
+              </tr>
+              <tr>
+                <td data-label="Time (WAT)"><time datetime="2026-11-12T03:04+01:00">12 Nov, 03:04</time><span class="time-src">snapshot 02:04Z</span></td>
+                <td data-label="Case"><span class="case-name">B4</span><code class="case-id">PP-R-KRB-10199621</code></td>
+                <td data-label="Sent with your approval">Offer <span class="money">8.10</span> on <span class="money">27.00</span></td>
+                <td data-label="PayPal reports">Buyer accepted, resolved</td>
+                <td data-label="Kept (USD)" class="num"><span class="money kept">18.90</span></td>
+              </tr>
+              <tr>
+                <td data-label="Time (WAT)"><time datetime="2026-11-12T07:25+01:00">12 Nov, 07:25</time></td>
+                <td data-label="Case"><span class="case-name">A</span><code class="case-id">PP-R-RPI-10199636</code></td>
+                <td data-label="Sent with your approval">Supporting information with packing-slip.pdf</td>
+                <td data-label="PayPal reports">PayPal's record lists packing-slip.pdf; under review</td>
+                <td class="num empty"></td>
+              </tr>
+              <tr>
+                <td data-label="Time (WAT)"><time datetime="2026-11-12T07:27:13+01:00">12 Nov, 07:27:13</time></td>
+                <td data-label="Case"><span class="case-name">P1</span><span class="case-sub">order <code class="case-id">0KY4190824060933V</code></span></td>
+                <td data-label="Sent with your approval">Tracker <code class="long-code">1Z4F82V70395184027</code></td>
+                <td data-label="PayPal reports">In PayPal's data</td>
+                <td class="num empty"></td>
+              </tr>
+              <tr>
+                <td data-label="Time (WAT)"><time datetime="2026-11-12T07:36+01:00">12 Nov, 07:36</time></td>
+                <td data-label="Case"><span class="case-name">B</span><code class="case-id">PP-R-PGK-10199629</code></td>
+                <td data-label="Sent with your approval">Offer <span class="money">10.80</span> on <span class="money">36.00</span></td>
+                <td data-label="PayPal reports">Resolved <span class="mono">07:39:34</span>, refunded <span class="money">10.80</span></td>
+                <td data-label="Kept (USD)" class="num"><span class="money kept">25.20</span></td>
+              </tr>
+              <tr>
+                <td data-label="Time (WAT)"><time datetime="2026-11-12T07:43+01:00">12 Nov, 07:43</time></td>
+                <td data-label="Case"><span class="case-name">EV1</span><code class="case-id">PP-R-PXL-10199716</code></td>
+                <td data-label="Claude" colspan="2">SETTLE with an offer of <span class="money">9.90</span> at <span class="mono">07:43</span>, then FIGHT at <span class="mono">07:45</span>; nothing sent.</td>
+                <td class="num empty"></td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="ledger-note">The hosted demo restarted on 12 Nov at 08:08 WAT. Kept's own log of the 07:25 to 07:46 sends on A, P1 and B and EV1's two decisions is not on it; PayPal's record of each still shows.</p>
+        </div>
+      </section>
+
+      <section class="section" id="limits" aria-labelledby="limits-title">
+        <div class="container">
+          <div class="section-head">
+            <h2 id="limits-title">Limits</h2>
+          </div>
+          <ul class="limit-list">
+            <li>Runs on the PayPal sandbox. No production mode. No multi-seller login beyond the demo passcode.</li>
+            <li>Held now covers the holds PayPal reports inside each open dispute. It is not an account balance, reserve or limitation view.</li>
+            <li>One action per case. A sandbox case acted on once is spent.</li>
+            <li>Files are sent when you tick them, at the PayPal claim stage with supporting information, not with inquiry-stage evidence or offers. The public replay cannot send files to PayPal.</li>
+            <li>No escalation or appeal flow, no buyer messaging, no webhook listener.</li>
+            <li>Orders v2 has no list endpoint, so the Shipping check starts from an order id the seller types.</li>
+            <li>State resets on restart. Render's free tier sleeps when idle and keeps no disk; decisions, the action log, the PayPal call log and shipping checks come back from the committed snapshot.</li>
+            <li>The hosted demo restarted on 12 Nov at 08:08 WAT. Kept's own log of the 07:25 to 07:46 sends on A, P1 and B and EV1's two decisions is not on it; PayPal's record of each still shows.</li>
+            <li>PayPal's seller response window is 20 days from filing, so late in the judging window the hosted grid is expected to show resolved or expired cases.</li>
           </ul>
         </div>
       </section>
-
-      <section class="container section numbers" aria-labelledby="numbers-title">
-        <h2 id="numbers-title">Two numbers, from PayPal's fields.</h2>
-        <dl class="number-pair">
-          <div><dt>Held now</dt><dd>The sum of <code>fund_movements</code> entries with reason <code>HOLD_PLACED</code> on open disputes. What PayPal reports it is holding, with no prediction of when a hold ends.</dd></div>
-          <div><dt>Kept</dt><dd>The disputed amount minus PayPal's <code>dispute_outcome.amount_refunded</code> on resolved disputes. What PayPal reports you kept.</dd></div>
-        </dl>
-        <div class="protection">
-          <h3>Outside Seller Protection categories</h3>
-          <p>Open cases where the buyer's reason is outside the payment's reported categories, with their disputed total. Missing categories are shown as not reported. PayPal decides whether protection applies.</p>
-        </div>
-      </section>
-
-      <section class="process" id="how-it-works" aria-labelledby="process-title">
-        <div class="container section">
-          <h2 id="process-title">A recommendation. Your approval.</h2>
-          <ol class="steps">
-            <li><h3>Read the case</h3><p>Kept reads the dispute from PayPal.</p></li>
-            <li><h3>Weigh the next move</h3><p>Claude recommends fight, settle or accept, with reasons and what would change the call.</p></li>
-            <li><h3>Edit and approve</h3><p>You edit the offer and note, then approve. Offers are capped: the cap refuses and never lowers your number.</p></li>
-            <li><h3>Read back the result</h3><p>Kept sends one call to PayPal and reads back what PayPal recorded.</p></li>
-          </ol>
-        </div>
-      </section>
-
-      <section class="container section in-use" aria-labelledby="use-title">
-        <h2 id="use-title">The call, with its reasons.</h2>
-        <div class="case-study">
-          <div class="case-copy"><h3>Case B: settle at the cap</h3><p>The offer sits at the seller's policy cap. The break-even line comes from PayPal's published dispute fees.</p></div>
-          <figure>
-            <picture><source srcset="img/panel-crop.webp" type="image/webp"><img src="img/panel-crop.png" width="480" height="842" loading="lazy" decoding="async" alt="Case B panel showing Claude's settle recommendation, the capped offer and PayPal's published fee break-even line"></picture>
-            <figcaption>Public replay of recorded PayPal sandbox data</figcaption>
-          </figure>
-        </div>
-        <div class="case-study">
-          <div class="case-copy"><h3>Case A: accept, then fight</h3><p>The call before and after the seller's shipping notes. Kept shows both calls side by side, with Claude's reasons.</p></div>
-          <figure>
-            <picture><source srcset="img/claim-crop.webp" type="image/webp"><img src="img/claim-crop.png" width="480" height="842" loading="lazy" decoding="async" alt="Case A claim panel comparing the recorded accept recommendation before shipping notes with fight after the notes"></picture>
-            <figcaption>Public replay of recorded PayPal sandbox data</figcaption>
-          </figure>
-        </div>
-        <div class="features">
-          <article><h3>Shipping check</h3><p>Enter an order id to check PayPal's Seller Protection record when you ship, and see the tracking PayPal reports.</p></article>
-          <article><h3>Seller Protection checklist</h3><p>Read the payment's reported status and categories alongside the buyer's reason. PayPal decides whether protection applies.</p></article>
-          <article><h3>Your record</h3><p>What Kept sent and what PayPal reported, with case counts. Past outcomes describe those cases, without predicting the next one.</p></article>
-        </div>
-      </section>
-
-      <section class="safety" id="limits" aria-labelledby="safety-title">
-        <div class="container section safety-layout">
-          <div>
-            <h2 id="safety-title">Nothing sent until you approve.</h2>
-            <ul class="safety-list">
-              <li>Claude has read tools only and cannot send anything.</li>
-              <li>Every money action needs your approval.</li>
-              <li>The server re-checks before every send.</li>
-              <li>Every PayPal call is logged.</li>
-            </ul>
-          </div>
-          <div class="limits">
-            <h3>Limits</h3>
-            <ul>
-              <li>Sandbox only. No production mode or multi-seller login.</li>
-              <li>Files go with claim-stage supporting information only. The public replay cannot send files to PayPal.</li>
-              <li>One action per case. A sandbox case acted on once is spent.</li>
-              <li>No webhook listener, escalation or appeal flow, or buyer messaging.</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section class="container closing" aria-labelledby="closing-title">
-        <h2 id="closing-title">See what PayPal reports.</h2>
-        <div class="actions">
-          <a class="button primary" href="https://kept-replay.onrender.com">Open the public demo</a>
-          <a class="button secondary" href="https://github.com/Ridwannurudeen/kept">Read the code</a>
-        </div>
-      </section>
     </main>
-    <footer class="container footer">
-      <div class="footer-top"><a class="wordmark" href="#" aria-label="Kept home">Kept</a><nav aria-label="Footer navigation"><a href="https://github.com/Ridwannurudeen/kept">GitHub</a><a href="https://github.com/Ridwannurudeen/kept/blob/main/LICENSE">MIT license</a></nav></div>
-      <p>Built with the PayPal Disputes API, the PayPal Agent Toolkit, Claude, AG Grid Community and Render.</p>
-      <p>Not affiliated with PayPal.</p>
+
+    <footer class="footer">
+      <div class="container footer-row">
+        <div class="footer-brand">
+          <a class="wordmark" href="#" aria-label="Kept home">Kept</a>
+          <nav class="footer-nav" aria-label="Footer navigation">
+            <a href="https://kept-replay.onrender.com">Public replay</a>
+            <a href="https://github.com/Ridwannurudeen/kept">GitHub</a>
+          </nav>
+        </div>
+        <div class="footer-text">
+          <p>Built with the PayPal Disputes, Orders and Payments APIs, PayPal Agent Toolkit, Claude Opus 5.5, AG Grid Community and Render.</p>
+          <p><a href="https://github.com/Ridwannurudeen/kept/blob/main/LICENSE">MIT license</a>. PayPal sandbox. Not affiliated with PayPal.</p>
+        </div>
+      </div>
     </footer>
   </body>
 </html>
