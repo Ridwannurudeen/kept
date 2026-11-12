@@ -29,6 +29,35 @@ function expectInBothDocs(fragment: string) {
 }
 
 describe('Kept landing page', () => {
+  it('puts the sandbox try section between how it works and proof', () => {
+    const page = html();
+    expect(page).toContain('<section class="section" id="try" aria-labelledby="try-title">');
+    expect(page).toMatch(/id="how-it-works"[\s\S]*?<\/section>\s*<section class="section" id="try"[\s\S]*?<\/section>\s*<section class="section" id="proof"/);
+    const section = page.match(/<section class="section" id="try"[\s\S]*?<\/section>/)?.[0] ?? '';
+    expect(section).toContain('<h2 id="try-title">Try it on the PayPal sandbox.</h2>');
+    expect(section).toContain('<p class="source">Kept runs on the PayPal sandbox. There is no production mode and no seller sign-up yet.</p>');
+    const rows = [...section.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/g)].map((match) => match[1]);
+    const expected = [
+      ['01', 'Open the public replay', "No sign-in. Recorded 4 Nov 2026 sandbox data with Claude's recorded recommendations; approvals are simulated.", 'Open the public replay', 'https://kept-replay.onrender.com'],
+      ['02', 'Use the hosted sandbox demo', 'Live calls to the PayPal sandbox on our test seller account. The passcode is in the Devpost testing notes, and each approval spends a test case.', 'kept-yplg.onrender.com', 'https://kept-yplg.onrender.com'],
+      ['03', 'Run it on your own sandbox', 'Add your own PayPal sandbox app keys and an Anthropic key, then seed cases with your own sandbox buyer.', 'Read the steps', 'https://github.com/Ridwannurudeen/kept#running-it-as-a-judge'],
+    ];
+    expect(rows).toHaveLength(expected.length);
+    rows.forEach((row, index) => {
+      const [number, title, sentence, link, href] = expected[index];
+      expect(row).toContain(`<span class="mono" aria-hidden="true">${number}</span>`);
+      expect(row).toContain(`<h3>${title}</h3>`);
+      expect(row).toContain(`<p>${sentence}</p>`);
+      expect(row).toContain(`<a class="text-link" href="${href}">${link}</a>`);
+      expect(row).not.toMatch(/\btarget=/);
+    });
+  });
+
+  it('starts the main navigation with Try it', () => {
+    const nav = html().match(/<nav class="nav"[^>]*>([\s\S]*?)<\/nav>/)?.[1] ?? '';
+    expect(nav.match(/<a\b[^>]*>[\s\S]*?<\/a>/)?.[0]).toBe('<a href="#try">Try it</a>');
+  });
+
   it('has one h1 with the reviewed headline and sub', () => {
     expect(html().match(/<h1\b/gi)).toHaveLength(1);
     expect(html()).toContain('>What PayPal is holding, and what you kept.</h1>');

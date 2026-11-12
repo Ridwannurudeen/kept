@@ -155,6 +155,13 @@ figcaption { margin-top: 12px; color: var(--graphite); font-size: 13px; line-hei
 .steps li::before { content: counter(step, decimal-leading-zero); display: block; margin-bottom: 14px; color: var(--graphite); font-family: var(--mono); font-size: 13px; line-height: 1; }
 .steps p { margin-top: 6px; color: var(--graphite); font-size: 15px; line-height: 1.6; }
 
+.try-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); }
+.try-row { display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 280px); gap: 10px var(--gutter); align-items: baseline; padding-block: 28px; }
+.try-row + .try-row { border-top: 1px solid var(--rule); }
+.try-row > .mono { color: var(--graphite); font-size: 13px; }
+.try-row p { margin-top: 6px; max-width: 60ch; color: var(--graphite); font-size: 15px; line-height: 1.6; }
+.try-row > a { justify-self: end; overflow-wrap: anywhere; }
+
 .endpoints { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px var(--gutter); margin-top: 72px; }
 .endpoint-col h3 { font-family: var(--serif); font-size: 22px; line-height: 1.3; letter-spacing: -0.01em; }
 .endpoint-lede { margin-top: 4px; color: var(--graphite); font-size: 14px; }
@@ -229,6 +236,8 @@ figcaption { margin-top: 12px; color: var(--graphite); font-size: 13px; line-hei
   .figure-row dt { grid-column: 1 / span 6; }
   .figure-value { grid-column: 7 / span 6; }
   .figure-def { grid-column: 1 / -1; grid-row: 2; margin-top: 14px; }
+  .try-row { grid-template-columns: 32px minmax(0, 1fr); }
+  .try-row > a { grid-column: 2; justify-self: start; }
   .limit-list { grid-template-columns: 1fr; }
   .footer-brand, .footer-text { grid-column: 1 / -1; }
   .ledger thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
