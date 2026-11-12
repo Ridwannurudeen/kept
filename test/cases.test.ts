@@ -106,6 +106,36 @@ test('row marks the recommendation stale with a reason when the dispute moved si
   expect(row.staleReason).toBe('stage changed Inquiry \u2192 PayPal claim');
 });
 
+test.each([
+  { ...inquiry, links: [] },
+  { ...inquiry, status: 'RESOLVED' },
+])('row is not stale after a sent action when PayPal changes the dispute: $status, $links', (changed) => {
+  const decision: Decision = { recommendation: 'SETTLE', plain_ask: 'offer a partial refund', evidence_have: [], evidence_missing: [], reasons: ['fair'], offer_amount: '5.00', draft_note: 'Sorry.' };
+  const action = { id: 'a', at: now.toISOString(), disputeId: inquiry.dispute_id, caseKey: 'B', action: 'make_offer' as const, recommended: null, submitted: { note: 'ok', offerAmount: '5.00' }, sellerEdited: false, paypal: { ok: true, status: 200, requestId: null, debugId: null, durationMs: 1, message: null }, after: null };
+  const row = buildCaseRow(changed, null, state({ decisions: { [inquiry.dispute_id]: stored(decision) }, actions: [action] }), now, null);
+  expect(row).toMatchObject({ recommendationStale: false, staleReason: null });
+});
+
+test('row stays stale after a failed action, without actions, or after another case has a sent action', () => {
+  const decision: Decision = { recommendation: 'SETTLE', plain_ask: 'offer a partial refund', evidence_have: [], evidence_missing: [], reasons: ['fair'], offer_amount: '5.00', draft_note: 'Sorry.' };
+  const action = { id: 'a', at: now.toISOString(), disputeId: inquiry.dispute_id, caseKey: 'B', action: 'make_offer' as const, recommended: null, submitted: { note: 'ok', offerAmount: '5.00' }, sellerEdited: false, paypal: { ok: false, status: 422, requestId: null, debugId: null, durationMs: 1, message: null }, after: null };
+  const changed = { ...inquiry, links: [] };
+  const decisions = { [inquiry.dispute_id]: stored(decision) };
+  for (const actions of [[], [action], [{ ...action, disputeId: 'other', paypal: { ...action.paypal, ok: true, status: 200 } }]]) {
+    expect(buildCaseRow(changed, null, state({ decisions, actions }), now, null)).toMatchObject({ recommendationStale: true, staleReason: "PayPal's listed actions changed" });
+  }
+});
+
+test.each([
+  { ...inquiry, links: [] },
+  { ...inquiry, status: 'RESOLVED' },
+])('detail is not stale after a sent action when PayPal changes the dispute: $status, $links', (changed) => {
+  const decision: Decision = { recommendation: 'SETTLE', plain_ask: 'offer a partial refund', evidence_have: [], evidence_missing: [], reasons: ['fair'], offer_amount: '5.00', draft_note: 'Sorry.' };
+  const action = { id: 'a', at: now.toISOString(), disputeId: inquiry.dispute_id, caseKey: 'B', action: 'make_offer' as const, recommended: null, submitted: { note: 'ok', offerAmount: '5.00' }, sellerEdited: false, paypal: { ok: true, status: 200, requestId: null, debugId: null, durationMs: 1, message: null }, after: null };
+  const detail = buildCaseDetail(changed, null, null, null, state({ decisions: { [inquiry.dispute_id]: stored(decision) }, actions: [action] }), now);
+  expect(detail).toMatchObject({ recommendationStale: false, staleReason: null, sent: true });
+});
+
 test('resolved row reports refunded, kept and days to close from PayPal fields', () => {
   const outcome = buildCaseRow(resolved, null, state(), now, null).outcome;
   expect(outcome).toEqual({ code: 'RESOLVED_BUYER_FAVOUR', refunded: { currency_code: 'USD', value: '5.00' }, refundedReported: true, kept: { currency_code: 'USD', value: '15.00' }, daysToClose: 0 });

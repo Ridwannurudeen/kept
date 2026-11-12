@@ -226,7 +226,7 @@ function staleReason(stored: StoredDecision, d: Dispute, evidence: string): stri
 function buildRow(d: Dispute, record: CaseRecord | null, capture: Capture | null, state: State, now: Date, explanation: StateExplanation): CaseRow {
   const stored = state.decisions[d.dispute_id] ?? null;
   const evidence = evidenceOf(record, state.attachments[d.dispute_id] ?? []);
-  const stale = stored ? isDecisionStale(stored, d, evidence) : false;
+  const stale = stored && !hasSentAction(state.actions, d.dispute_id) ? isDecisionStale(stored, d, evidence) : false;
   const open = isOpen(d);
   const amount = disputedAmount(d);
   const action = state.actions.filter((entry) => entry.disputeId === d.dispute_id && entry.paypal.ok).at(-1)?.action ?? null;
