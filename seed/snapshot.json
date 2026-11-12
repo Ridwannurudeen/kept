@@ -1,0 +1,5259 @@
+{
+  "snapshotAt": "2026-11-12T02:46:58.853Z",
+  "decisions": {
+    "PP-R-ADY-10199633": {
+      "decision": {
+        "recommendation": "FIGHT",
+        "plain_ask": "I recommend sending PayPal supporting information rather than refunding. You shipped the pour-over set by UPS on 2026-11-11, the day of the order (tracking 1Z4F82V70394730525). PayPal has that tracking number on the order, marked SHIPPED. The buyer opened the case only hours after that, so the parcel is most likely still on its way. What's weak: neither PayPal nor UPS shows a 'Delivered' status yet. Your notes say the shipping address matches the order address, but I can't see either address to check. Please send the note soon. PayPal hasn't given a deadline, and your policy wants a 48-hour buffer. Once UPS marks it delivered, send PayPal the delivery date too. PayPal is holding USD 45.83, and when that's released is up to PayPal. For context: your one past item-not-received case ended in the buyer's favour with a USD 5.00 partial refund on USD 20.00. That doesn't change this advice.",
+        "evidence_have": [
+          "UPS tracking 1Z4F82V70394730525, linked to the order in PayPal's records with status SHIPPED",
+          "Seller notes: shipped 2026-11-11 via UPS, the same day as the order",
+          "Seller notes: shipping address matches the order address",
+          "Files from the seller: packing-slip.pdf, packing-slip.txt, ups-label.txt",
+          "Capture seller_protection ELIGIBLE, with ITEM_NOT_RECEIVED listed. The dispute shows EXPANDED_SELLER_PROTECTION"
+        ],
+        "evidence_missing": [
+          "A 'Delivered' status with a delivery date. The checklist marks this missing and the tracker only shows SHIPPED",
+          "Proof the parcel went to the address on PayPal's transaction details. The checklist marks this not visible, and the order only shows the city (San Jose)",
+          "Proof the recipient address matches the transaction details. The checklist marks this not visible"
+        ],
+        "reasons": [
+          "The buyer says nothing has arrived. Your records show a same-day UPS shipment with online tracking, and the case was opened only hours after shipping, so the parcel most likely hasn't had time to arrive.",
+          "PayPal lists this reason (ITEM_NOT_RECEIVED) for this payment, and the capture's seller_protection status is ELIGIBLE. Whether protection actually applies is PayPal's decision.",
+          "Seller Protection checklist: tracking is in PayPal's data, the 'Delivered' status is missing, and the shipping and recipient address checks aren't visible to Kept. So the case is incomplete for now, not lost.",
+          "PayPal lists only accept_claim and provide_supporting_info here. make_offer isn't available, so a partial refund isn't an option.",
+          "Accepting now would refund the full USD 48.00 on an order that is still in transit. Sending supporting information keeps your answer on record while the parcel moves.",
+          "Past record (one case): an earlier item-not-received inquiry ended in the buyer's favour with a USD 5.00 partial refund on USD 20.00. I've noted it for context only. It didn't affect this recommendation."
+        ],
+        "would_change": null,
+        "offer_amount": null,
+        "draft_note": "Hello, this is about the Ceramic pour-over set (order total USD 48.00, transaction 2WS2925138277954X). The buyer paid on 2026-11-11, and we shipped the order the same day, 2026-11-11, by UPS with tracking number 1Z4F82V70394730525. That tracking number is linked to this order in PayPal and shows the parcel as shipped. We sent it to the shipping address on the order, in San Jose. The buyer opened this case on 2026-11-11, only a few hours after the parcel was handed to UPS, so it hasn't had a normal amount of time to arrive. We believe it is still in transit. We'll keep watching the tracking and will update this case with the delivery date as soon as UPS shows the parcel delivered. We're happy to help the buyer if anything goes wrong with the delivery. Thank you, Test Store"
+      },
+      "validation": {
+        "ok": true,
+        "action": "provide_supporting_info",
+        "cap": null
+      },
+      "at": "2026-11-12T00:03:06.927Z",
+      "model": "claude-opus-5-5",
+      "steps": 2,
+      "toolCalls": [
+        "get_dispute",
+        "submit_decision"
+      ],
+      "durationMs": 27521,
+      "basis": {
+        "stage": "CHARGEBACK",
+        "status": "UNDER_REVIEW",
+        "disputeState": "UNDER_PAYPAL_REVIEW",
+        "links": [
+          "self",
+          "accept_claim",
+          "adjudicate",
+          "require_evidence",
+          "provide_supporting_info"
+        ],
+        "amount": "48.00",
+        "dueAt": null
+      }
+    },
+    "PP-R-BDX-10199626": {
+      "decision": {
+        "recommendation": "SETTLE",
+        "plain_ask": "The buyer says the wool throw blanket ($24.00) came in dark charcoal, not the oatmeal cream in your listing photos. You say you sent it as listed, but you have no photos from before shipping, and PayPal shows no tracking on the order. That leaves you with nothing to show the colour you sent. The buyer hasn't sent photos yet either.\n\nSeller Protection on this payment covers only item-not-received and unauthorized claims, so it doesn't cover a not-as-described claim like this one.\n\nI suggest offering a $7.20 partial refund. That's the most your policy allows (30% of $24.00). The buyer keeps the blanket. Please approve the amount and the note, or tell me if you'd prefer to refund in full. PayPal is holding $22.67 while the case is open. Please decide by Nov 29, 23:30 UTC (PayPal's deadline is Dec 1, 23:30 UTC).",
+        "evidence_have": [
+          "Seller's note: item sent as listed",
+          "PayPal record: order of $24.00 for 1 Wool throw blanket, shipping to San Jose",
+          "PayPal record: buyer has sent no photos so far, only a written description"
+        ],
+        "evidence_missing": [
+          "Photos of the actual blanket taken before it was shipped",
+          "Tracking or delivery record (the order shows no trackers)",
+          "Listing record or supplier record showing the exact colour of the item sent",
+          "Any earlier messages with the buyer (PayPal shows you haven't been contacted directly)"
+        ],
+        "reasons": [
+          "The complaint is about the colour. Neither your notes nor PayPal's records show what colour was actually sent: you took no photos before shipping, and there's no tracking.",
+          "PayPal does not list this reason for the payment. Seller Protection on this capture covers ITEM_NOT_RECEIVED and UNAUTHORIZED_TRANSACTION only, and the checklist marks it as not applying to not-as-described. Whether protection applies is PayPal's decision in any case.",
+          "The item is cheap ($24.00), the case is still at the inquiry stage, and PayPal lists make_offer. A partial refund is a reasonable way to try to close it.",
+          "$7.20 is the cap under your policy: 30% of $24.00, which is lower than $50.00. The buyer asked for $24.00, so they may say no."
+        ],
+        "would_change": "A dated photo of the blanket sent to this buyer, taken before shipping, showing the oatmeal cream colour from the listing.",
+        "offer_amount": "7.20",
+        "draft_note": "Hello, and thank you for letting us know. We're sorry the blanket wasn't what you expected. Our records show we shipped the wool throw blanket as listed, but we want to put this right. We'd like to offer a partial refund of USD 7.20 on your USD 24.00 order, and you keep the blanket. If you'd like to share a photo of the blanket you received, we'll gladly take a look. We hope this offer resolves things for you."
+      },
+      "validation": {
+        "ok": true,
+        "action": "make_offer",
+        "cap": "7.20"
+      },
+      "at": "2026-11-12T02:03:43.387Z",
+      "model": "claude-opus-5-5",
+      "steps": 2,
+      "toolCalls": [
+        "get_dispute",
+        "submit_decision"
+      ],
+      "durationMs": 19192,
+      "basis": {
+        "stage": "INQUIRY",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "disputeState": "REQUIRED_ACTION",
+        "links": [
+          "self",
+          "send_message",
+          "escalate",
+          "make_offer",
+          "accept_claim"
+        ],
+        "amount": "24.00",
+        "dueAt": "2026-12-01T23:30:02.709Z"
+      }
+    },
+    "PP-R-KRB-10199621": {
+      "decision": {
+        "recommendation": "SETTLE",
+        "plain_ask": "I suggest offering the buyer a partial refund of USD 8.10. That's the most your policy allows (30% of USD 27.00). Please check three things before you approve it:\n1) Your note says the buyer's problem is the size. PayPal's record says it's the colour: the buyer says the napkins came dark grey, not the natural linen in the listing photos. Is this the right order?\n2) PayPal shows the order was placed at 22:59 UTC on Nov 11, and the case opened 7 minutes later, at 23:06. The order has no tracking. Did this item actually ship and arrive? If not, tell me and I'll look at it again.\n3) You have no photos from before shipping and no files. I can't see anything that shows the set you sent was natural linen.\nPlease decide by 2026-11-29 23:06 UTC.",
+        "evidence_have": [
+          "Seller's note: item 'sent as listed'",
+          "PayPal record: Cotton napkin set (item B4), qty 1, USD 27.00, shipping to San Jose",
+          "Buyer's message says they have no photos yet",
+          "PayPal times: order created 2026-11-11 22:59:21 UTC, case opened 23:06:26 UTC"
+        ],
+        "evidence_missing": [
+          "Photos of the napkin set taken before shipping (the seller's note says there are none)",
+          "Any record showing the colour of the set that shipped on this order",
+          "Tracking or delivery record: the order has no trackers",
+          "A saved copy of the listing as the buyer saw it",
+          "Explanation of why the seller's note says 'size' but the buyer complains about colour"
+        ],
+        "reasons": [
+          "The buyer says the item is not as described (colour: dark grey instead of natural linen). The seller has no photos or records that show which colour shipped, so there's nothing to answer the complaint with.",
+          "The capture is ELIGIBLE for Seller Protection, but PayPal lists only ITEM_NOT_RECEIVED and UNAUTHORIZED_TRANSACTION for this payment. The checklist also says it doesn't apply to this reason. Not-as-described is not one of the reasons PayPal lists for this payment.",
+          "The item is cheap (USD 27.00), and PayPal lists make_offer for this case. A partial refund of USD 8.10, the policy cap, is a reasonable way to try to close it.",
+          "The seller's note mentions size, but PayPal's record mentions colour. The seller should confirm the case is about the right order before anything is sent.",
+          "PayPal shows the case opened about 7 minutes after the order was placed, and there's no tracking. The seller should check whether this item was really delivered."
+        ],
+        "would_change": "A photo or record of the actual napkin set shipped on this order, showing it was the natural linen colour shown in the listing.",
+        "offer_amount": "8.10",
+        "draft_note": "Hello, thank you for contacting us about your Cotton napkin set (item B4). We're sorry the colour isn't what you expected. Our records show the set was sent as listed, but we'd like to make this right. We are offering a partial refund of USD 8.10, and you can keep the napkins. If you can, please send us a photo of the napkins in daylight so we can check our stock and listing photos. Thank you for your patience."
+      },
+      "validation": {
+        "ok": true,
+        "action": "make_offer",
+        "cap": "8.10"
+      },
+      "at": "2026-11-12T02:04:08.226Z",
+      "model": "claude-opus-5-5",
+      "steps": 2,
+      "toolCalls": [
+        "get_dispute",
+        "submit_decision"
+      ],
+      "durationMs": 20848,
+      "basis": {
+        "stage": "INQUIRY",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "disputeState": "REQUIRED_ACTION",
+        "links": [
+          "self",
+          "accept_claim",
+          "send_message",
+          "escalate",
+          "make_offer"
+        ],
+        "amount": "27.00",
+        "dueAt": "2026-12-01T23:06:26.628Z"
+      }
+    }
+  },
+  "actions": [
+    {
+      "id": "75622bc4-8a55-4863-bb50-58d9518f9895",
+      "at": "2026-11-12T00:04:18.690Z",
+      "disputeId": "PP-R-ADY-10199633",
+      "caseKey": "A3",
+      "action": "provide_supporting_info",
+      "submitted": {
+        "note": "Hello, this is about the Ceramic pour-over set (order total USD 48.00, transaction 2WS2925138277954X). The buyer paid on 2026-11-11, and we shipped the order the same day, 2026-11-11, by UPS with tracking number 1Z4F82V70394730525. That tracking number is linked to this order in PayPal and shows the parcel as shipped. We sent it to the shipping address on the order, in San Jose. The buyer opened this case on 2026-11-11, only a few hours after the parcel was handed to UPS, so it hasn't had a normal amount of time to arrive. We believe it is still in transit. We'll keep watching the tracking and will update this case with the delivery date as soon as UPS shows the parcel delivered. We're happy to help the buyer if anything goes wrong with the delivery. Thank you, Test Store\n\nAttached: packing-slip.pdf",
+        "offerAmount": null
+      },
+      "sellerEdited": false,
+      "paypal": {
+        "ok": true,
+        "status": 200,
+        "requestId": "kept-PP-R-ADY-10199633-provide_supporting_info-f39fd09b2893",
+        "debugId": "f4508592c0591",
+        "durationMs": 2348,
+        "message": null
+      },
+      "after": {
+        "status": "UNDER_REVIEW",
+        "stage": "CHARGEBACK",
+        "outcome": null
+      },
+      "files": [
+        "packing-slip.pdf"
+      ],
+      "filesListed": [
+        "packing-slip.pdf"
+      ],
+      "readBack": "PayPal's record lists packing-slip.pdf"
+    },
+    {
+      "id": "a1f0e601-0513-488d-a300-afc7a4c3aadc",
+      "at": "2026-11-12T02:04:41.215Z",
+      "disputeId": "PP-R-BDX-10199626",
+      "caseKey": "B3",
+      "action": "make_offer",
+      "submitted": {
+        "note": "Hello, and thank you for letting us know. We're sorry the blanket wasn't what you expected. Our records show we shipped the wool throw blanket as listed, but we want to put this right. We'd like to offer a partial refund of USD 7.20 on your USD 24.00 order, and you keep the blanket. If you'd like to share a photo of the blanket you received, we'll gladly take a look. We hope this offer resolves things for you.",
+        "offerAmount": "7.20"
+      },
+      "sellerEdited": false,
+      "paypal": {
+        "ok": true,
+        "status": 200,
+        "requestId": "kept-PP-R-BDX-10199626-make_offer-7e9b016b3c4a",
+        "debugId": "ca591f78f5fb0",
+        "durationMs": 1945,
+        "message": null
+      },
+      "after": {
+        "status": "UNDER_REVIEW",
+        "stage": "INQUIRY",
+        "outcome": null
+      }
+    },
+    {
+      "id": "c368bc43-a6dc-494f-afeb-f14f46bedfdc",
+      "at": "2026-11-12T02:04:47.725Z",
+      "disputeId": "PP-R-KRB-10199621",
+      "caseKey": "B4",
+      "action": "make_offer",
+      "submitted": {
+        "note": "Hello, thank you for contacting us about your Cotton napkin set (item B4). We're sorry the colour isn't what you expected. Our records show the set was sent as listed, but we'd like to make this right. We are offering a partial refund of USD 8.10, and you can keep the napkins. If you can, please send us a photo of the napkins in daylight so we can check our stock and listing photos. Thank you for your patience.",
+        "offerAmount": "8.10"
+      },
+      "sellerEdited": false,
+      "paypal": {
+        "ok": true,
+        "status": 200,
+        "requestId": "kept-PP-R-KRB-10199621-make_offer-d4ed7a504631",
+        "debugId": "ca591f7b9afa0",
+        "durationMs": 1659,
+        "message": null
+      },
+      "after": {
+        "status": "UNDER_REVIEW",
+        "stage": "INQUIRY",
+        "outcome": null
+      }
+    }
+  ],
+  "calls": [
+    {
+      "id": "95df19d1-18b0-446e-8a37-ea6abb997ed9",
+      "at": "2026-11-12T01:11:17.763Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1820,
+      "requestId": null,
+      "debugId": "f943000f63514"
+    },
+    {
+      "id": "9bfb4de0-762e-43c1-a9b7-24a679126e27",
+      "at": "2026-11-12T01:11:17.763Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1821,
+      "requestId": null,
+      "debugId": "f943000fc2b88"
+    },
+    {
+      "id": "650284a4-346c-461a-a5a7-1a127248eb12",
+      "at": "2026-11-12T01:11:17.765Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2896,
+      "requestId": null,
+      "debugId": "f955005e38188"
+    },
+    {
+      "id": "becc4058-fbc9-4130-a392-e824189cd150",
+      "at": "2026-11-12T01:11:17.765Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 2897,
+      "requestId": null,
+      "debugId": "f9550057cdabe"
+    },
+    {
+      "id": "af694457-a795-41d1-9347-7ee77af9f438",
+      "at": "2026-11-12T01:11:17.765Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 3216,
+      "requestId": null,
+      "debugId": "f955005dd8113"
+    },
+    {
+      "id": "a6e5622d-2248-4519-8dad-76137b9a3f04",
+      "at": "2026-11-12T01:11:17.764Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 3457,
+      "requestId": null,
+      "debugId": "f95500598589c"
+    },
+    {
+      "id": "f560a975-6801-462f-af3a-bab58d10e2e7",
+      "at": "2026-11-12T01:11:21.222Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 640,
+      "requestId": null,
+      "debugId": "f681973aea38b"
+    },
+    {
+      "id": "ed1d7b86-7816-4379-8000-1e424c8f745c",
+      "at": "2026-11-12T01:11:21.222Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 659,
+      "requestId": null,
+      "debugId": "f68197340c8fa"
+    },
+    {
+      "id": "6f422d3a-e385-4e78-929b-1b9542d7f6c6",
+      "at": "2026-11-12T01:11:21.222Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 849,
+      "requestId": null,
+      "debugId": "f681973252d0e"
+    },
+    {
+      "id": "3caaa864-4598-4da4-bdc9-d609ebbe5f1a",
+      "at": "2026-11-12T01:11:21.222Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 949,
+      "requestId": null,
+      "debugId": "f681973aeb25e"
+    },
+    {
+      "id": "024bd55f-168d-477c-990f-82d10a963b3c",
+      "at": "2026-11-12T01:11:21.882Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 519,
+      "requestId": null,
+      "debugId": "f638909b90a27"
+    },
+    {
+      "id": "1e6f3ca4-a684-4d27-8451-e9cb95e2ee1b",
+      "at": "2026-11-12T01:11:21.862Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 579,
+      "requestId": null,
+      "debugId": "f638909987674"
+    },
+    {
+      "id": "e8cbeb31-d6d4-4a8e-a83a-37ea3b03022c",
+      "at": "2026-11-12T01:11:22.171Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 770,
+      "requestId": null,
+      "debugId": "f638909ec1ff8"
+    },
+    {
+      "id": "f5166269-ed67-4789-8c6b-3856c19a5a7e",
+      "at": "2026-11-12T01:11:22.402Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 699,
+      "requestId": null,
+      "debugId": "f638909ac14b8"
+    },
+    {
+      "id": "39df87aa-6b02-4967-a114-3d18fbb93659",
+      "at": "2026-11-12T01:11:22.072Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 1439,
+      "requestId": null,
+      "debugId": "f638909bcdb3d"
+    },
+    {
+      "id": "ef6a1ed9-364a-45c5-b1e4-fba2cad6f243",
+      "at": "2026-11-12T01:11:22.441Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 1190,
+      "requestId": null,
+      "debugId": "f638909298e90"
+    },
+    {
+      "id": "e906ea30-5052-4704-bcb1-1326727990f9",
+      "at": "2026-11-12T01:11:38.640Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 1622,
+      "requestId": null,
+      "debugId": "f283706b28387"
+    },
+    {
+      "id": "53d1fad6-6cc5-403b-93c6-216a952f0ff9",
+      "at": "2026-11-12T01:11:40.263Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 959,
+      "requestId": null,
+      "debugId": "f3885805ff7bd"
+    },
+    {
+      "id": "67314474-7866-4c3a-a601-0a8bda571490",
+      "at": "2026-11-12T01:11:40.263Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1269,
+      "requestId": null,
+      "debugId": "f700120ed8e13"
+    },
+    {
+      "id": "bfed36e8-b598-41a6-8e5b-7680cbe47dbe",
+      "at": "2026-11-12T01:11:40.265Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1347,
+      "requestId": null,
+      "debugId": "f700120a313dd"
+    },
+    {
+      "id": "bfeac58b-b334-4a6e-9e6c-55636b93de37",
+      "at": "2026-11-12T01:11:40.264Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1348,
+      "requestId": null,
+      "debugId": "f7001201dc1db"
+    },
+    {
+      "id": "8b7b7831-f637-44b9-9390-ef08c3250463",
+      "at": "2026-11-12T01:11:40.264Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1478,
+      "requestId": null,
+      "debugId": "f7001202da937"
+    },
+    {
+      "id": "3fb552e0-c026-42ca-aa6e-e9ec053216b6",
+      "at": "2026-11-12T01:11:40.263Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1480,
+      "requestId": null,
+      "debugId": "f7001203b223f"
+    },
+    {
+      "id": "68636254-6277-4176-ad55-99d628eb47da",
+      "at": "2026-11-12T01:11:40.265Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2197,
+      "requestId": null,
+      "debugId": "f282030b181dc"
+    },
+    {
+      "id": "20864f25-6eef-4b54-bb8b-47f311c86ab3",
+      "at": "2026-11-12T01:11:40.266Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2406,
+      "requestId": null,
+      "debugId": "f2820306a7753"
+    },
+    {
+      "id": "5bf81e6c-1916-4ff8-b1ac-eab94c358395",
+      "at": "2026-11-12T01:11:40.265Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 2727,
+      "requestId": null,
+      "debugId": "f282030d7a25f"
+    },
+    {
+      "id": "4a4457a2-2f80-4081-bd0f-45056a3368b8",
+      "at": "2026-11-12T01:11:40.266Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 2806,
+      "requestId": null,
+      "debugId": "f28203008ed90"
+    },
+    {
+      "id": "ecca32e2-c339-439e-bd03-d3b2ec1324bb",
+      "at": "2026-11-12T01:11:43.073Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 648,
+      "requestId": null,
+      "debugId": "f4918663c8a8f"
+    },
+    {
+      "id": "5a3b58e8-3531-4216-9025-bbe19c7657a2",
+      "at": "2026-11-12T01:11:43.073Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 813,
+      "requestId": null,
+      "debugId": "f4918663feee1"
+    },
+    {
+      "id": "95db4a10-43b8-46f0-8557-bc5d2463dc0a",
+      "at": "2026-11-12T01:11:43.073Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 815,
+      "requestId": null,
+      "debugId": "f491866ffee84"
+    },
+    {
+      "id": "fefeefb0-e490-4c15-a1d4-bd60d578d2a2",
+      "at": "2026-11-12T01:11:43.072Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 817,
+      "requestId": null,
+      "debugId": "f49186667b222"
+    },
+    {
+      "id": "197ec914-e463-40c3-bfd2-4193e5dc0a52",
+      "at": "2026-11-12T01:11:43.887Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 535,
+      "requestId": null,
+      "debugId": "f219871c2139d"
+    },
+    {
+      "id": "c55ca01d-084f-4a22-b6b6-9ce5ebc1e745",
+      "at": "2026-11-12T01:11:43.889Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 734,
+      "requestId": null,
+      "debugId": "f21987155624f"
+    },
+    {
+      "id": "7b741c72-bcf2-44d4-9304-c0cee93ac396",
+      "at": "2026-11-12T01:11:43.721Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 911,
+      "requestId": null,
+      "debugId": "f2198711331be"
+    },
+    {
+      "id": "20a7f3be-eaa5-477a-a959-951c3b1d4668",
+      "at": "2026-11-12T01:11:43.888Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 764,
+      "requestId": null,
+      "debugId": "f2198718ecc7a"
+    },
+    {
+      "id": "a4ffc976-de4a-46d6-b29a-97a958f45ebc",
+      "at": "2026-11-12T01:11:44.624Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 558,
+      "requestId": null,
+      "debugId": "f73636454c7ad"
+    },
+    {
+      "id": "7a8f6cf4-bbc6-4e0a-bc40-c04fe0eda017",
+      "at": "2026-11-12T01:11:44.423Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 919,
+      "requestId": null,
+      "debugId": "f219871c69ea3"
+    },
+    {
+      "id": "223a0d9a-33ee-4fd3-8d59-12066d1dfd8b",
+      "at": "2026-11-12T01:12:00.359Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 1185,
+      "requestId": null,
+      "debugId": "f283849d49c9f"
+    },
+    {
+      "id": "f0103ed8-c54a-4f5f-9cb7-ef46dceed8f4",
+      "at": "2026-11-12T01:12:01.546Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 997,
+      "requestId": null,
+      "debugId": "f167973e93126"
+    },
+    {
+      "id": "724659c1-00c3-4099-a7ca-0882ca6b3448",
+      "at": "2026-11-12T01:12:01.545Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 1028,
+      "requestId": null,
+      "debugId": "f283849d84e54"
+    },
+    {
+      "id": "b92e2192-ba55-4ebc-8a87-e73d5d2fe47e",
+      "at": "2026-11-12T01:12:01.546Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1519,
+      "requestId": null,
+      "debugId": "f1679734809b2"
+    },
+    {
+      "id": "fcd81f5d-ebaa-4c5f-bf84-278abdc62063",
+      "at": "2026-11-12T01:12:01.545Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1608,
+      "requestId": null,
+      "debugId": "f167973201519"
+    },
+    {
+      "id": "93d360af-5326-4f5e-b1c7-c469e5703fc3",
+      "at": "2026-11-12T01:12:01.547Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1616,
+      "requestId": null,
+      "debugId": "f167973134b8d"
+    },
+    {
+      "id": "0c4df485-00c4-482a-b475-56120266f2b7",
+      "at": "2026-11-12T01:12:01.545Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1808,
+      "requestId": null,
+      "debugId": "f1679735c644b"
+    },
+    {
+      "id": "e6ef6784-2e17-4b02-afa6-cdfb7fc987d7",
+      "at": "2026-11-12T01:12:01.547Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 1966,
+      "requestId": null,
+      "debugId": "f299276c4a623"
+    },
+    {
+      "id": "4840d6b0-8703-4bb3-9d73-db84196f9034",
+      "at": "2026-11-12T01:12:01.548Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 2455,
+      "requestId": null,
+      "debugId": "f299276f0040e"
+    },
+    {
+      "id": "266e31bd-41c7-4011-a107-1f06122fc9f8",
+      "at": "2026-11-12T01:12:01.548Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2925,
+      "requestId": null,
+      "debugId": "f299276056f38"
+    },
+    {
+      "id": "5a9d348e-79a8-4445-9ead-8c36ef28d275",
+      "at": "2026-11-12T01:12:01.547Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 3436,
+      "requestId": null,
+      "debugId": "f2992762ff3c7"
+    },
+    {
+      "id": "902763a0-f6c0-4f01-ba73-85860f3af798",
+      "at": "2026-11-12T01:12:04.984Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 510,
+      "requestId": null,
+      "debugId": "f10820456e0cb"
+    },
+    {
+      "id": "193eb1f7-7887-4b18-aa1f-422bd4feeb21",
+      "at": "2026-11-12T01:12:04.984Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 539,
+      "requestId": null,
+      "debugId": "f108204594eb1"
+    },
+    {
+      "id": "5b29d86c-4f33-4e41-b3a9-e5acae9c58ee",
+      "at": "2026-11-12T01:12:04.984Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 589,
+      "requestId": null,
+      "debugId": "f108204df337d"
+    },
+    {
+      "id": "28f06f61-3639-486f-bca5-3d511734f281",
+      "at": "2026-11-12T01:12:04.984Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 899,
+      "requestId": null,
+      "debugId": "f108204b30c52"
+    },
+    {
+      "id": "d47c3ef6-be63-4045-983d-4ab17d9b5d58",
+      "at": "2026-11-12T01:12:05.524Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 530,
+      "requestId": null,
+      "debugId": "f108204e8eac9"
+    },
+    {
+      "id": "492eaedc-8b1f-4279-9046-0b41b7923af6",
+      "at": "2026-11-12T01:12:05.494Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 849,
+      "requestId": null,
+      "debugId": "f108204461060"
+    },
+    {
+      "id": "5161e156-0e39-41d0-960d-b541c6b7b8b8",
+      "at": "2026-11-12T01:12:05.884Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 660,
+      "requestId": null,
+      "debugId": "f167211355722"
+    },
+    {
+      "id": "b79dcf0f-420c-4c4e-940c-82569f479460",
+      "at": "2026-11-12T01:12:06.055Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 808,
+      "requestId": null,
+      "debugId": "f167211267b2b"
+    },
+    {
+      "id": "67cc62e9-f7b8-4212-89c4-ac6512efbb30",
+      "at": "2026-11-12T01:12:05.574Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 1309,
+      "requestId": null,
+      "debugId": "f1082041a4d89"
+    },
+    {
+      "id": "c9620232-19e8-4999-ae93-f08241b57275",
+      "at": "2026-11-12T01:12:06.344Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 859,
+      "requestId": null,
+      "debugId": "f1672111bd414"
+    },
+    {
+      "id": "aa75f443-c347-401f-aa23-08bfaea1bcc7",
+      "at": "2026-11-12T01:12:22.216Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 1108,
+      "requestId": null,
+      "debugId": "f1816689f2478"
+    },
+    {
+      "id": "2f9dec8f-62e8-4ea1-96a9-08324c96d05f",
+      "at": "2026-11-12T01:12:23.324Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 700,
+      "requestId": null,
+      "debugId": "f181668fe3329"
+    },
+    {
+      "id": "f2194d97-c7c2-494f-91d1-a58667104120",
+      "at": "2026-11-12T01:12:23.326Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1618,
+      "requestId": null,
+      "debugId": "f2199553a07a0"
+    },
+    {
+      "id": "b78e2743-f214-4951-ba31-11990af21cc3",
+      "at": "2026-11-12T01:12:23.325Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1679,
+      "requestId": null,
+      "debugId": "f2199554fc8ff"
+    },
+    {
+      "id": "a5487059-592d-42cc-ae0d-ca1071cdbe04",
+      "at": "2026-11-12T01:12:23.325Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1680,
+      "requestId": null,
+      "debugId": "f219955759b71"
+    },
+    {
+      "id": "de9ae60e-a94b-40eb-934b-4ae48dc16575",
+      "at": "2026-11-12T01:12:23.326Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1989,
+      "requestId": null,
+      "debugId": "f2199556b0c7b"
+    },
+    {
+      "id": "84d2a500-36a6-4559-96a0-95804a3a8a48",
+      "at": "2026-11-12T01:12:23.327Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2097,
+      "requestId": null,
+      "debugId": "f342136594674"
+    },
+    {
+      "id": "03ec299a-2629-445f-817a-ba3408c3de0a",
+      "at": "2026-11-12T01:12:23.328Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 2276,
+      "requestId": null,
+      "debugId": "f342136c712c3"
+    },
+    {
+      "id": "384e8296-139b-4d8c-b7c2-308afdf8d5b6",
+      "at": "2026-11-12T01:12:23.327Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2287,
+      "requestId": null,
+      "debugId": "f342136c72ee4"
+    },
+    {
+      "id": "2e400874-e985-446f-bd6b-a31161078688",
+      "at": "2026-11-12T01:12:23.325Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 2379,
+      "requestId": null,
+      "debugId": "f219955c2e7f7"
+    },
+    {
+      "id": "8dd5c9d8-2633-4428-b55a-8ef3a0ecdff7",
+      "at": "2026-11-12T01:12:23.327Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 2937,
+      "requestId": null,
+      "debugId": "f342136e6c37d"
+    },
+    {
+      "id": "58aaaad3-8d76-43d2-92c2-3b4b6ff87dd4",
+      "at": "2026-11-12T01:12:26.265Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 669,
+      "requestId": null,
+      "debugId": "f241435df6028"
+    },
+    {
+      "id": "96680a81-8211-4f45-8d19-df4397cb13ab",
+      "at": "2026-11-12T01:12:26.266Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 938,
+      "requestId": null,
+      "debugId": "f241435d87071"
+    },
+    {
+      "id": "dedb2bff-62e4-4697-965e-706ec0208ab4",
+      "at": "2026-11-12T01:12:26.265Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 1129,
+      "requestId": null,
+      "debugId": "f241435dc69fe"
+    },
+    {
+      "id": "c003ca36-4566-420a-a655-5f81d54b214c",
+      "at": "2026-11-12T01:12:26.266Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 1438,
+      "requestId": null,
+      "debugId": "f241435403cee"
+    },
+    {
+      "id": "a11cd2a5-4215-4757-ad03-94d589efae12",
+      "at": "2026-11-12T01:12:26.935Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 909,
+      "requestId": null,
+      "debugId": "f88450412489e"
+    },
+    {
+      "id": "d9187513-49d1-4eb8-902c-1aa8e98c30e5",
+      "at": "2026-11-12T01:12:27.705Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 520,
+      "requestId": null,
+      "debugId": "f682769151c1c"
+    },
+    {
+      "id": "963f44a8-20f7-4d66-ad45-feaa5c8a895b",
+      "at": "2026-11-12T01:12:27.394Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 850,
+      "requestId": null,
+      "debugId": "f884504281e92"
+    },
+    {
+      "id": "f97e66ab-d554-40ae-8cac-c07fb173b01b",
+      "at": "2026-11-12T01:12:27.205Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 1239,
+      "requestId": null,
+      "debugId": "f884504a15f78"
+    },
+    {
+      "id": "130d72ef-5255-4173-909e-12ddfe1d53d0",
+      "at": "2026-11-12T01:12:27.845Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 829,
+      "requestId": null,
+      "debugId": "f682769184492"
+    },
+    {
+      "id": "eed505f2-58c2-4c7e-9323-832823330220",
+      "at": "2026-11-12T01:12:28.226Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 958,
+      "requestId": null,
+      "debugId": "f682769460cd0"
+    },
+    {
+      "id": "2984a804-846d-482c-9913-894c08c1c335",
+      "at": "2026-11-12T01:12:44.200Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 3015,
+      "requestId": null,
+      "debugId": "f1692232b5eaa"
+    },
+    {
+      "id": "3f88c69a-3d28-487f-826b-1ad6eb22a70f",
+      "at": "2026-11-12T01:12:47.215Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 800,
+      "requestId": null,
+      "debugId": "f255696b3f6c7"
+    },
+    {
+      "id": "1ca041d5-e6fe-4d94-9515-6bdf8db9c02f",
+      "at": "2026-11-12T01:12:47.216Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 503,
+      "durationMs": 1329,
+      "requestId": null,
+      "debugId": null
+    },
+    {
+      "id": "3eefa974-4e35-492b-9564-08c93f85d863",
+      "at": "2026-11-12T01:12:47.216Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1790,
+      "requestId": null,
+      "debugId": "f82605508d9e1"
+    },
+    {
+      "id": "036f51a7-1e8b-4b70-8114-5ccfc97138ed",
+      "at": "2026-11-12T01:12:47.217Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1898,
+      "requestId": null,
+      "debugId": "f826055a9bf4b"
+    },
+    {
+      "id": "30e10afe-e479-4fc8-bc77-504c36766881",
+      "at": "2026-11-12T01:12:47.217Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1998,
+      "requestId": null,
+      "debugId": "f8260552bd3cc"
+    },
+    {
+      "id": "b9ad7c0b-fdb1-4af5-977f-78ae646aa0b2",
+      "at": "2026-11-12T01:12:47.215Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 2410,
+      "requestId": null,
+      "debugId": "f826055ee3ea6"
+    },
+    {
+      "id": "8951e231-7c2a-44ee-8c71-ada6e073be55",
+      "at": "2026-11-12T01:12:47.217Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 2418,
+      "requestId": null,
+      "debugId": "f983826e8ae28"
+    },
+    {
+      "id": "14dbc5cb-166e-4e0d-bd79-a3adb597abdd",
+      "at": "2026-11-12T01:12:47.218Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2667,
+      "requestId": null,
+      "debugId": "f9838267fdd70"
+    },
+    {
+      "id": "addb4103-ec2b-4cbd-9916-0d168ec691f3",
+      "at": "2026-11-12T01:12:47.219Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 2756,
+      "requestId": null,
+      "debugId": "f983826bf2ec4"
+    },
+    {
+      "id": "243e2e84-6865-4d39-b1a7-6429b5058c29",
+      "at": "2026-11-12T01:12:47.218Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 3367,
+      "requestId": null,
+      "debugId": "f9838261fe406"
+    },
+    {
+      "id": "7cd26cf4-cb1a-4951-84d2-bc9e536e8f80",
+      "at": "2026-11-12T01:12:50.056Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 728,
+      "requestId": null,
+      "debugId": "f5631571526ed",
+      "retried": true
+    },
+    {
+      "id": "57236ead-5199-4079-b1c0-fa5cf566b992",
+      "at": "2026-11-12T01:12:50.785Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 920,
+      "requestId": null,
+      "debugId": "f295434ee8265"
+    },
+    {
+      "id": "211f4913-c76f-44de-909e-764764d4a26e",
+      "at": "2026-11-12T01:12:50.785Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 921,
+      "requestId": null,
+      "debugId": "f295434a72bf1"
+    },
+    {
+      "id": "9fe07b23-b749-4054-900e-33bf8f94a768",
+      "at": "2026-11-12T01:12:50.785Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 1122,
+      "requestId": null,
+      "debugId": "f295434c71415"
+    },
+    {
+      "id": "4fc95fce-ba7e-4429-b071-a523ba92fb6c",
+      "at": "2026-11-12T01:12:50.785Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 1130,
+      "requestId": null,
+      "debugId": "f295434d9a36c"
+    },
+    {
+      "id": "b8d8b5d0-09f7-47cc-92f5-eba726a1e506",
+      "at": "2026-11-12T01:12:51.706Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 769,
+      "requestId": null,
+      "debugId": "f7673962bfe2d"
+    },
+    {
+      "id": "3a74dd66-c5ee-4817-860f-da3420199a4e",
+      "at": "2026-11-12T01:12:51.706Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 819,
+      "requestId": null,
+      "debugId": "f767396e8c588"
+    },
+    {
+      "id": "e75ed533-c5c0-4f9e-80c0-6ded855222d6",
+      "at": "2026-11-12T01:12:51.908Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 957,
+      "requestId": null,
+      "debugId": "f7673963f029e"
+    },
+    {
+      "id": "4163e175-5d2a-4e70-93a4-0d9badd1ff36",
+      "at": "2026-11-12T01:12:51.916Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 1249,
+      "requestId": null,
+      "debugId": "f767396b73d50"
+    },
+    {
+      "id": "3b6e6e76-03eb-477a-b53f-d4372212bcce",
+      "at": "2026-11-12T01:12:52.476Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 1239,
+      "requestId": null,
+      "debugId": "f767396d9bcc8"
+    },
+    {
+      "id": "666304d7-f50b-417a-9102-ae2aa944de2c",
+      "at": "2026-11-12T01:12:52.526Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 1229,
+      "requestId": null,
+      "debugId": "f7673967f9f02"
+    },
+    {
+      "id": "bc328423-e2ee-46fc-9ebc-6878b72df768",
+      "at": "2026-11-12T01:13:08.761Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 1502,
+      "requestId": null,
+      "debugId": "f493575c31f6e"
+    },
+    {
+      "id": "f5f7cf35-b3a9-436d-a8df-d0f00b89b550",
+      "at": "2026-11-12T01:13:10.265Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1346,
+      "requestId": null,
+      "debugId": "f5854201628d6"
+    },
+    {
+      "id": "b9bbb942-85ae-4ae1-9a07-07bd5f824693",
+      "at": "2026-11-12T01:13:10.266Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1537,
+      "requestId": null,
+      "debugId": "f585420f572f7"
+    },
+    {
+      "id": "b9498584-77f1-4394-abad-724d67f79945",
+      "at": "2026-11-12T01:13:10.264Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 1548,
+      "requestId": null,
+      "debugId": "f8305526b75d4"
+    },
+    {
+      "id": "f3bd620d-fd86-4ff1-94d8-9212faf320c8",
+      "at": "2026-11-12T01:13:10.264Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1689,
+      "requestId": null,
+      "debugId": "f585420284879"
+    },
+    {
+      "id": "ed1b4f0f-57a1-4737-b861-04b4a3422487",
+      "at": "2026-11-12T01:13:10.265Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1748,
+      "requestId": null,
+      "debugId": "f585420468d82"
+    },
+    {
+      "id": "5f3a9101-0617-43da-b4c8-57e27ea072f2",
+      "at": "2026-11-12T01:13:10.267Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 1916,
+      "requestId": null,
+      "debugId": "f8247479a52ca"
+    },
+    {
+      "id": "6f522633-3330-4cdc-b20b-4ab0ff0ba9a9",
+      "at": "2026-11-12T01:13:10.266Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 2067,
+      "requestId": null,
+      "debugId": "f585420d39c95"
+    },
+    {
+      "id": "aeb179cf-aae6-4fd5-9ecf-c057163a6b0d",
+      "at": "2026-11-12T01:13:10.268Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 2125,
+      "requestId": null,
+      "debugId": "f824747819eae"
+    },
+    {
+      "id": "303c3bca-3972-4979-828b-d68601e019ff",
+      "at": "2026-11-12T01:13:10.266Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 2487,
+      "requestId": null,
+      "debugId": "f824747144ee8"
+    },
+    {
+      "id": "14d77575-3be6-4326-a85b-23ce033218ee",
+      "at": "2026-11-12T01:13:10.267Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2756,
+      "requestId": null,
+      "debugId": "f82474799dc83"
+    },
+    {
+      "id": "221f96fd-2e49-4a0b-a8f4-02d4cc86b92d",
+      "at": "2026-11-12T01:13:13.023Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 650,
+      "requestId": null,
+      "debugId": "f980369ca31ee"
+    },
+    {
+      "id": "d62d3f50-e114-47d4-9681-ab409fbc8026",
+      "at": "2026-11-12T01:13:13.023Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 920,
+      "requestId": null,
+      "debugId": "f9803695e75fb"
+    },
+    {
+      "id": "25d47406-0e1f-4144-a926-2709283d7f53",
+      "at": "2026-11-12T01:13:13.024Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 920,
+      "requestId": null,
+      "debugId": "f980369cab6ea"
+    },
+    {
+      "id": "15914726-ea91-4007-8848-a906ceedee3d",
+      "at": "2026-11-12T01:13:13.023Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 1400,
+      "requestId": null,
+      "debugId": "f980369bbdb9e"
+    },
+    {
+      "id": "f599be3d-1e22-4cfc-b498-3c45232f09a0",
+      "at": "2026-11-12T01:13:13.943Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 920,
+      "requestId": null,
+      "debugId": "f6422211d0411"
+    },
+    {
+      "id": "8208d507-82d8-4649-bd48-a7cd148e27aa",
+      "at": "2026-11-12T01:13:13.944Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 1119,
+      "requestId": null,
+      "debugId": "f64222161cfa2"
+    },
+    {
+      "id": "b44dcd8d-c26b-4d64-bcf9-29289973e252",
+      "at": "2026-11-12T01:13:13.674Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 1419,
+      "requestId": null,
+      "debugId": "f6422210ecea8"
+    },
+    {
+      "id": "4eb81a80-0c95-4e9b-ac3e-a02ede6116c7",
+      "at": "2026-11-12T01:13:14.423Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 701,
+      "requestId": null,
+      "debugId": "f64222102c9bf"
+    },
+    {
+      "id": "743bfc1f-9554-4720-a7f1-0f4d0e4049d1",
+      "at": "2026-11-12T01:13:14.864Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 829,
+      "requestId": null,
+      "debugId": "f21150648751c"
+    },
+    {
+      "id": "8e121411-c926-4d20-b221-8eece4a4dde4",
+      "at": "2026-11-12T01:13:15.063Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 880,
+      "requestId": null,
+      "debugId": "f211506df8557"
+    },
+    {
+      "id": "ba0db435-9fb3-494e-8a6d-31860e43c6aa",
+      "at": "2026-11-12T01:13:30.959Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 1105,
+      "requestId": null,
+      "debugId": "f291713b7dce1"
+    },
+    {
+      "id": "35b7faf6-4b35-4095-8096-df5ac6c49d54",
+      "at": "2026-11-12T01:13:32.065Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 929,
+      "requestId": null,
+      "debugId": "f7600581ed149"
+    },
+    {
+      "id": "4581334b-d4e3-491f-a8d2-f4555f4e2d90",
+      "at": "2026-11-12T01:13:32.066Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1157,
+      "requestId": null,
+      "debugId": "f76005870f876"
+    },
+    {
+      "id": "06267e31-1805-44d2-b9b9-615943211468",
+      "at": "2026-11-12T01:13:32.064Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 1360,
+      "requestId": null,
+      "debugId": "f76005830fa11"
+    },
+    {
+      "id": "1104fc4c-6b92-4ebb-ac98-8596b7827741",
+      "at": "2026-11-12T01:13:32.066Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1657,
+      "requestId": null,
+      "debugId": "f76005888b4e9"
+    },
+    {
+      "id": "d665e715-0546-4900-b6bb-f8e85c38b173",
+      "at": "2026-11-12T01:13:32.064Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1670,
+      "requestId": null,
+      "debugId": "f7600580dea44"
+    },
+    {
+      "id": "10c48475-a650-44bb-aaf8-cb042d97d72c",
+      "at": "2026-11-12T01:13:32.065Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1843,
+      "requestId": null,
+      "debugId": "f7600586ae572"
+    },
+    {
+      "id": "d719a8d9-bbc9-467c-af72-88abb2ba1263",
+      "at": "2026-11-12T01:13:32.067Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 2046,
+      "requestId": null,
+      "debugId": "f661682dede6b"
+    },
+    {
+      "id": "ad68f98c-3460-41e8-8963-ff11bf6f66b9",
+      "at": "2026-11-12T01:13:32.068Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 2086,
+      "requestId": null,
+      "debugId": "f6616826c17c2"
+    },
+    {
+      "id": "0ce36aa5-13ab-4e6f-8d2f-49385f0900e2",
+      "at": "2026-11-12T01:13:32.067Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2356,
+      "requestId": null,
+      "debugId": "f661682a93a89"
+    },
+    {
+      "id": "b6cf7a1a-236c-4028-ac03-d584fa793f75",
+      "at": "2026-11-12T01:13:32.067Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2517,
+      "requestId": null,
+      "debugId": "f661682882d0d"
+    },
+    {
+      "id": "4fa9e9ba-8815-4716-a793-f3a2d6b15f99",
+      "at": "2026-11-12T01:13:34.585Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 958,
+      "requestId": null,
+      "debugId": "f350205fae54c"
+    },
+    {
+      "id": "29d941f0-645c-4160-9564-8f3d59e5f212",
+      "at": "2026-11-12T01:13:34.585Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 960,
+      "requestId": null,
+      "debugId": "f3502052218ab"
+    },
+    {
+      "id": "42968907-b68d-4f1e-b6c2-3b2cc5941600",
+      "at": "2026-11-12T01:13:34.585Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 1189,
+      "requestId": null,
+      "debugId": "f3502050c53c7"
+    },
+    {
+      "id": "26dd9f7f-7536-41c2-a796-40be0b75921b",
+      "at": "2026-11-12T01:13:34.584Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 1489,
+      "requestId": null,
+      "debugId": "f35020587fb6e"
+    },
+    {
+      "id": "7260b8c4-5cb0-43c2-80c1-c2073a391b74",
+      "at": "2026-11-12T01:13:35.544Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 779,
+      "requestId": null,
+      "debugId": "f350205cc35f5"
+    },
+    {
+      "id": "7312f1e3-a2c5-42f4-b87b-637a4ad10682",
+      "at": "2026-11-12T01:13:35.774Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 930,
+      "requestId": null,
+      "debugId": "f309676297cf3"
+    },
+    {
+      "id": "f0350406-0836-48e5-a78c-11b115c2687b",
+      "at": "2026-11-12T01:13:35.545Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 1358,
+      "requestId": null,
+      "debugId": "f3502051c93fc"
+    },
+    {
+      "id": "b8a184b1-003a-456c-bbd3-5fcbe330c006",
+      "at": "2026-11-12T01:13:36.324Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 630,
+      "requestId": null,
+      "debugId": "f309676b3f1ba"
+    },
+    {
+      "id": "2ca2e654-e580-47d4-b797-a03fcd14f706",
+      "at": "2026-11-12T01:13:36.074Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 910,
+      "requestId": null,
+      "debugId": "f3096768f1c8c"
+    },
+    {
+      "id": "c51fbd7c-29d5-4cae-abef-56d20ea0ca1f",
+      "at": "2026-11-12T01:13:36.704Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 879,
+      "requestId": null,
+      "debugId": "f420903eccb4e"
+    },
+    {
+      "id": "3b0ebb78-2bc7-4e67-b119-0e4270f3d6b1",
+      "at": "2026-11-12T01:13:52.605Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 2269,
+      "requestId": null,
+      "debugId": "f65654420718e"
+    },
+    {
+      "id": "10142fdd-8c65-4dd5-a12d-b1b72ceca839",
+      "at": "2026-11-12T01:13:54.875Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 789,
+      "requestId": null,
+      "debugId": "f3440520e88e9"
+    },
+    {
+      "id": "e7abe7da-f57e-470e-a574-ae6ffe25823d",
+      "at": "2026-11-12T01:13:54.876Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1118,
+      "requestId": null,
+      "debugId": "f344052cbc170"
+    },
+    {
+      "id": "3e5bcb91-2a38-4968-bcce-530b8ddfc8ca",
+      "at": "2026-11-12T01:13:54.876Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1128,
+      "requestId": null,
+      "debugId": "f344052b5f2ec"
+    },
+    {
+      "id": "8ac64c68-ca89-46f9-a5b6-dc4052165c7e",
+      "at": "2026-11-12T01:13:54.877Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1437,
+      "requestId": null,
+      "debugId": "f344052698f95"
+    },
+    {
+      "id": "4df6f8f3-742e-43c5-aa95-eb5ca8e27ba6",
+      "at": "2026-11-12T01:13:54.876Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1534,
+      "requestId": null,
+      "debugId": "f344052108a38"
+    },
+    {
+      "id": "c6457da6-f01c-4f73-8b0a-79cbbee23b4f",
+      "at": "2026-11-12T01:13:54.875Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1542,
+      "requestId": null,
+      "debugId": "f34405281907a"
+    },
+    {
+      "id": "eb3dcd42-e06d-4a56-8db8-e6419959352f",
+      "at": "2026-11-12T01:13:54.878Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 1946,
+      "requestId": null,
+      "debugId": "f545531dd7476"
+    },
+    {
+      "id": "f666beeb-2429-491b-84e6-108d0a54780a",
+      "at": "2026-11-12T01:13:54.877Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2267,
+      "requestId": null,
+      "debugId": "f5455319b550d"
+    },
+    {
+      "id": "779dff62-5d79-408c-b9a9-c8d19efc5b19",
+      "at": "2026-11-12T01:13:54.877Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 2467,
+      "requestId": null,
+      "debugId": "f54553168df43"
+    },
+    {
+      "id": "4a18b836-19b8-41f5-97c7-5a46a8030e1b",
+      "at": "2026-11-12T01:13:54.877Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2707,
+      "requestId": null,
+      "debugId": "f54553137aa9e"
+    },
+    {
+      "id": "fc28f15e-4ad5-4090-b48b-041742f40b7b",
+      "at": "2026-11-12T01:13:57.585Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 759,
+      "requestId": null,
+      "debugId": "f8807030eab89"
+    },
+    {
+      "id": "7a9aef4c-4b51-4928-9630-7da06894acd3",
+      "at": "2026-11-12T01:13:57.585Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 760,
+      "requestId": null,
+      "debugId": "f88070360dba3"
+    },
+    {
+      "id": "c9082c98-57c2-4a20-8946-6581266c59a0",
+      "at": "2026-11-12T01:13:57.585Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 920,
+      "requestId": null,
+      "debugId": "f8807032211ef"
+    },
+    {
+      "id": "75ef47e3-8cfe-4695-a6a8-ad7bfa9311e0",
+      "at": "2026-11-12T01:13:57.585Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 1359,
+      "requestId": null,
+      "debugId": "f880703dd0843"
+    },
+    {
+      "id": "049bbfbe-861f-4e3f-872d-1eaa9d71515f",
+      "at": "2026-11-12T01:13:58.505Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 599,
+      "requestId": null,
+      "debugId": "f458923fc82b9"
+    },
+    {
+      "id": "294491d0-73fc-47a3-908e-3401d3443fb3",
+      "at": "2026-11-12T01:13:58.345Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 1029,
+      "requestId": null,
+      "debugId": "f4589239242ce"
+    },
+    {
+      "id": "f4c81935-9342-4d69-8285-9c92545ea74d",
+      "at": "2026-11-12T01:13:58.345Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 1229,
+      "requestId": null,
+      "debugId": "f45892357c814"
+    },
+    {
+      "id": "bfaac547-8b84-401c-9bf9-1b0d18b37760",
+      "at": "2026-11-12T01:13:58.945Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 670,
+      "requestId": null,
+      "debugId": "f584473d739dd"
+    },
+    {
+      "id": "3f85c21a-f1b7-4dc7-b0bf-b88901c10b3b",
+      "at": "2026-11-12T01:13:59.375Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 799,
+      "requestId": null,
+      "debugId": "f584473290c70"
+    },
+    {
+      "id": "59cdfebe-fd61-4336-87be-cd464d2fd065",
+      "at": "2026-11-12T01:13:59.105Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 1239,
+      "requestId": null,
+      "debugId": "f584473cf1f82"
+    },
+    {
+      "id": "04027e6b-6c26-4396-82a5-53fb2a87e03f",
+      "at": "2026-11-12T01:14:15.366Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 1621,
+      "requestId": null,
+      "debugId": "f6392830393ad"
+    },
+    {
+      "id": "11296db6-6f94-4aa2-87f3-1c2a6fc1ab9e",
+      "at": "2026-11-12T01:14:16.988Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 879,
+      "requestId": null,
+      "debugId": "f4930846d59c7"
+    },
+    {
+      "id": "1ba17bc1-3665-48c8-a862-aaa62d240256",
+      "at": "2026-11-12T01:14:16.989Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 879,
+      "requestId": null,
+      "debugId": "f493084e72e76"
+    },
+    {
+      "id": "91aa4e72-ae6b-455f-bcd4-65376b77c3e9",
+      "at": "2026-11-12T01:14:16.990Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1198,
+      "requestId": null,
+      "debugId": "f493084df9834"
+    },
+    {
+      "id": "08945d73-db3e-4db3-90ab-3f371bafaa60",
+      "at": "2026-11-12T01:14:16.989Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1378,
+      "requestId": null,
+      "debugId": "f493084e87c22"
+    },
+    {
+      "id": "71c30399-bc00-406e-b220-2084411505e5",
+      "at": "2026-11-12T01:14:16.988Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1470,
+      "requestId": null,
+      "debugId": "f493084e3b73d"
+    },
+    {
+      "id": "5b76b71c-ec62-4574-8bca-e8cc97488465",
+      "at": "2026-11-12T01:14:16.989Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1578,
+      "requestId": null,
+      "debugId": "f49308452a56f"
+    },
+    {
+      "id": "641f2792-7cdf-4663-8f4e-44a3671b405b",
+      "at": "2026-11-12T01:14:16.990Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2397,
+      "requestId": null,
+      "debugId": "f112966774ff9"
+    },
+    {
+      "id": "9f5834ae-db88-4016-9433-1a45f4e20bb7",
+      "at": "2026-11-12T01:14:16.991Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2636,
+      "requestId": null,
+      "debugId": "f569324660ddf"
+    },
+    {
+      "id": "7c8d7939-057c-49ad-b2fc-5185d0f98607",
+      "at": "2026-11-12T01:14:16.990Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 2638,
+      "requestId": null,
+      "debugId": "f569324ea2375"
+    },
+    {
+      "id": "d0c27be5-f0fc-43af-b94e-33d1a62058c9",
+      "at": "2026-11-12T01:14:16.991Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 3676,
+      "requestId": null,
+      "debugId": "f5693246dc9af"
+    },
+    {
+      "id": "bad98428-4eae-4e32-ac5a-c4e87a50ba26",
+      "at": "2026-11-12T01:14:20.669Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 648,
+      "requestId": null,
+      "debugId": "f80300179e4e0"
+    },
+    {
+      "id": "b4c9e075-97f0-4754-b71b-57e7b90b5739",
+      "at": "2026-11-12T01:14:20.668Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 919,
+      "requestId": null,
+      "debugId": "f8030012ba23b"
+    },
+    {
+      "id": "077a7947-d27b-4eda-a5ea-fc64d682e2b8",
+      "at": "2026-11-12T01:14:20.669Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 1240,
+      "requestId": null,
+      "debugId": "f803001257f6a"
+    },
+    {
+      "id": "a289e780-a4ed-47e0-bafa-9bdc9cfb0476",
+      "at": "2026-11-12T01:14:20.669Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 1241,
+      "requestId": null,
+      "debugId": "f803001831929"
+    },
+    {
+      "id": "470e72b3-898d-4d00-b810-578e37d1df1d",
+      "at": "2026-11-12T01:14:21.318Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 1229,
+      "requestId": null,
+      "debugId": "f803001c318cb"
+    },
+    {
+      "id": "7ac0167a-a305-4e97-8a94-b608584bb807",
+      "at": "2026-11-12T01:14:21.910Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 738,
+      "requestId": null,
+      "debugId": "f833310e8bf73"
+    },
+    {
+      "id": "deb302c6-684e-4e81-8833-92b7842bd546",
+      "at": "2026-11-12T01:14:21.588Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 1149,
+      "requestId": null,
+      "debugId": "f8333109c51e6"
+    },
+    {
+      "id": "08806850-0dd5-4d12-b556-a8ce27826083",
+      "at": "2026-11-12T01:14:21.910Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 1157,
+      "requestId": null,
+      "debugId": "f83331073c1fc"
+    },
+    {
+      "id": "9ddc6c12-74da-4d1a-a672-ced0577f0f87",
+      "at": "2026-11-12T01:14:22.547Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 560,
+      "requestId": null,
+      "debugId": "f83331057af0f"
+    },
+    {
+      "id": "1f57c597-e9b1-4041-8eec-44e053d1ca1e",
+      "at": "2026-11-12T01:14:22.648Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 1019,
+      "requestId": null,
+      "debugId": "f3011040ad27c"
+    },
+    {
+      "id": "4d0e8e1f-4c3a-4f1b-9bd2-f55ed83960be",
+      "at": "2026-11-12T01:14:38.686Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 1862,
+      "requestId": null,
+      "debugId": "f766851fd79ce"
+    },
+    {
+      "id": "46219593-4569-486c-9e19-c951038c2659",
+      "at": "2026-11-12T01:14:40.549Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 769,
+      "requestId": null,
+      "debugId": "f840854e81ae9"
+    },
+    {
+      "id": "16cb29e0-96ef-431e-9f1f-359ba9f5a7ba",
+      "at": "2026-11-12T01:14:40.550Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1428,
+      "requestId": null,
+      "debugId": "f840854a0d43c"
+    },
+    {
+      "id": "d1c699de-2cd9-46bf-823d-6ba777174315",
+      "at": "2026-11-12T01:14:40.549Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1629,
+      "requestId": null,
+      "debugId": "f840854e5150b"
+    },
+    {
+      "id": "3362fcfb-24b6-4fa3-9d30-845eb10fcadf",
+      "at": "2026-11-12T01:14:40.551Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1657,
+      "requestId": null,
+      "debugId": "f8408546cc1fb"
+    },
+    {
+      "id": "bfc83b90-c3bc-4ed9-a6a2-abef7e5bc2d4",
+      "at": "2026-11-12T01:14:40.551Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1687,
+      "requestId": null,
+      "debugId": "f840854444405"
+    },
+    {
+      "id": "6310a95b-2bdd-450f-827a-1f40d6526e59",
+      "at": "2026-11-12T01:14:40.550Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1878,
+      "requestId": null,
+      "debugId": "f84085433ae99"
+    },
+    {
+      "id": "3e94551c-6d88-410a-aebf-187f53682c51",
+      "at": "2026-11-12T01:14:40.552Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 1916,
+      "requestId": null,
+      "debugId": "f357212362727"
+    },
+    {
+      "id": "7eebb024-b044-4c60-a099-96b79b01525b",
+      "at": "2026-11-12T01:14:40.552Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 1936,
+      "requestId": null,
+      "debugId": "f3572121675d3"
+    },
+    {
+      "id": "87742a6a-5810-48b6-a43f-f2c5481802c7",
+      "at": "2026-11-12T01:14:40.552Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 2356,
+      "requestId": null,
+      "debugId": "f357212f0370d"
+    },
+    {
+      "id": "18a14ecc-06c8-41c9-94af-2a7964ff3655",
+      "at": "2026-11-12T01:14:40.553Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 2995,
+      "requestId": null,
+      "debugId": "f3572125cc06d"
+    },
+    {
+      "id": "379ceb13-909d-4e22-a11a-a55e996a20c8",
+      "at": "2026-11-12T01:14:43.549Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 699,
+      "requestId": null,
+      "debugId": "f4010873e288a"
+    },
+    {
+      "id": "9591d573-5409-422f-9dba-c2bbc13a5092",
+      "at": "2026-11-12T01:14:43.549Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 999,
+      "requestId": null,
+      "debugId": "f4010878c991f"
+    },
+    {
+      "id": "a82014d8-c2c7-4076-80da-a0528e6c0855",
+      "at": "2026-11-12T01:14:43.549Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 1000,
+      "requestId": null,
+      "debugId": "f401087816161"
+    },
+    {
+      "id": "8d0e7eea-5252-4781-aa83-49a55e6cb159",
+      "at": "2026-11-12T01:14:44.248Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 860,
+      "requestId": null,
+      "debugId": "f4010875199bc"
+    },
+    {
+      "id": "4b29fc11-9ba5-4306-8407-dddc1230bb52",
+      "at": "2026-11-12T01:14:44.549Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 639,
+      "requestId": null,
+      "debugId": "f275274cc20ab"
+    },
+    {
+      "id": "ca90951f-eea3-418f-9f83-012d0cb34d56",
+      "at": "2026-11-12T01:14:43.549Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 1769,
+      "requestId": null,
+      "debugId": "f40108749f37f"
+    },
+    {
+      "id": "367394c9-f914-4490-8f67-328991a92989",
+      "at": "2026-11-12T01:14:44.549Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 1159,
+      "requestId": null,
+      "debugId": "f27527498f5a8"
+    },
+    {
+      "id": "9d8faf61-1ee6-4279-a9bc-173a25328f49",
+      "at": "2026-11-12T01:14:45.189Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 609,
+      "requestId": null,
+      "debugId": "f27527452523b"
+    },
+    {
+      "id": "1745d419-fa52-453b-ac54-0558522c352d",
+      "at": "2026-11-12T01:14:45.108Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 840,
+      "requestId": null,
+      "debugId": "f2752747fad98"
+    },
+    {
+      "id": "5983fedd-8f45-4c03-aa5a-07b3b173e019",
+      "at": "2026-11-12T01:14:45.319Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 759,
+      "requestId": null,
+      "debugId": "f275274f6e745"
+    },
+    {
+      "id": "39af7ce1-5be6-477e-a300-20ec27c3d3ce",
+      "at": "2026-11-12T01:15:01.090Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 939,
+      "requestId": null,
+      "debugId": "f246255067709"
+    },
+    {
+      "id": "1756bf53-31a4-4e5d-96b9-3f2b1d6ba715",
+      "at": "2026-11-12T01:15:02.029Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 620,
+      "requestId": null,
+      "debugId": "f94839149d4c7"
+    },
+    {
+      "id": "57d95fcc-e162-46b7-9c8f-7af5f37ee747",
+      "at": "2026-11-12T01:15:02.029Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1640,
+      "requestId": null,
+      "debugId": "f789950c34b54"
+    },
+    {
+      "id": "a664ef07-481d-4ef0-903d-9ffc04866779",
+      "at": "2026-11-12T01:15:02.031Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1838,
+      "requestId": null,
+      "debugId": "f78995080da09"
+    },
+    {
+      "id": "d93920c2-8df1-4cfd-aaa3-8728963ab50b",
+      "at": "2026-11-12T01:15:02.032Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 2437,
+      "requestId": null,
+      "debugId": "f78995093070b"
+    },
+    {
+      "id": "cc33944e-11aa-4157-b006-5287bcb3c2a9",
+      "at": "2026-11-12T01:15:02.030Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 2440,
+      "requestId": null,
+      "debugId": "f789950a1a2e3"
+    },
+    {
+      "id": "c79beae2-43ea-490b-ba2e-250e16824117",
+      "at": "2026-11-12T01:15:02.031Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 2447,
+      "requestId": null,
+      "debugId": "f789950816ea3"
+    },
+    {
+      "id": "fe4f533f-38f4-47f3-8b0f-c180cb46408c",
+      "at": "2026-11-12T01:15:02.032Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 3037,
+      "requestId": null,
+      "debugId": "f464337ce32ec"
+    },
+    {
+      "id": "893ee2e3-39c2-4c8c-bebc-524b36972b53",
+      "at": "2026-11-12T01:15:02.032Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 4357,
+      "requestId": null,
+      "debugId": "f46433773f47f"
+    },
+    {
+      "id": "47660c08-4938-4a60-a24e-232f5786ab01",
+      "at": "2026-11-12T01:15:02.033Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 4916,
+      "requestId": null,
+      "debugId": "f4643374c01fd"
+    },
+    {
+      "id": "1514e531-f367-4622-946d-7ac093bf3989",
+      "at": "2026-11-12T01:15:02.034Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 17465,
+      "requestId": null,
+      "debugId": "f4643379e166b"
+    },
+    {
+      "id": "66649cc9-f7c5-4d49-b7df-abcd7e072f58",
+      "at": "2026-11-12T01:15:19.500Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 1909,
+      "requestId": null,
+      "debugId": "f26737308af00"
+    },
+    {
+      "id": "d4d15acd-77b1-48a2-8bd5-03ca3df333cb",
+      "at": "2026-11-12T01:15:19.501Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 2068,
+      "requestId": null,
+      "debugId": "f267373911e06"
+    },
+    {
+      "id": "57d978a3-b82c-4762-bc53-b9702ed66cae",
+      "at": "2026-11-12T01:15:19.500Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 2279,
+      "requestId": null,
+      "debugId": "f267373523dd2"
+    },
+    {
+      "id": "b7a517c1-80b7-43d8-8c92-04b4baca6d83",
+      "at": "2026-11-12T01:15:21.570Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 689,
+      "requestId": null,
+      "debugId": "f26737323960c"
+    },
+    {
+      "id": "25c5a472-e3b3-4d11-9a78-ebc8d2da6e6c",
+      "at": "2026-11-12T01:15:19.501Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 2788,
+      "requestId": null,
+      "debugId": "f267373a0edb5"
+    },
+    {
+      "id": "1f3b5b72-92c3-44ff-8d2d-e098b19a0208",
+      "at": "2026-11-12T01:15:21.779Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 740,
+      "requestId": null,
+      "debugId": "f9726202c5d0b"
+    },
+    {
+      "id": "ff68cee1-4f0b-446f-88ac-efd89fdcfc0b",
+      "at": "2026-11-12T01:15:21.410Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 1119,
+      "requestId": null,
+      "debugId": "f267373487c61"
+    },
+    {
+      "id": "7747825d-895d-44cb-abd3-cd3280123cee",
+      "at": "2026-11-12T01:15:22.519Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 840,
+      "requestId": null,
+      "debugId": "f9726208d981d"
+    },
+    {
+      "id": "262d8aec-5215-42dd-b44d-192f91b8eccc",
+      "at": "2026-11-12T01:15:22.290Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 1079,
+      "requestId": null,
+      "debugId": "f972620b5f163"
+    },
+    {
+      "id": "511c40bb-11cc-49b5-a492-8791814b6366",
+      "at": "2026-11-12T01:15:22.260Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 1229,
+      "requestId": null,
+      "debugId": "f9726207515b6"
+    },
+    {
+      "id": "e4c5454a-e88a-45aa-ab73-1c54359cd87e",
+      "at": "2026-11-12T01:15:38.502Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 1678,
+      "requestId": null,
+      "debugId": "f3752152f3b51"
+    },
+    {
+      "id": "66f82f98-39d0-4d82-a19a-e2be3a055822",
+      "at": "2026-11-12T01:15:40.183Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1246,
+      "requestId": null,
+      "debugId": "f997611b6e6ff"
+    },
+    {
+      "id": "dcc20c4d-be95-4f71-bb03-a3fed24c2804",
+      "at": "2026-11-12T01:15:40.181Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 1269,
+      "requestId": null,
+      "debugId": "f990382eefc6c"
+    },
+    {
+      "id": "c6b540d1-225f-4afc-8afa-fcce9240509c",
+      "at": "2026-11-12T01:15:40.182Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1497,
+      "requestId": null,
+      "debugId": "f997611fb4ee0"
+    },
+    {
+      "id": "a321065e-83c7-424a-a1c4-87f4adafc968",
+      "at": "2026-11-12T01:15:40.181Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1629,
+      "requestId": null,
+      "debugId": "f997611e24b51"
+    },
+    {
+      "id": "0d555afc-fd0c-4e9d-8370-e459afd4ffdb",
+      "at": "2026-11-12T01:15:40.183Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1957,
+      "requestId": null,
+      "debugId": "f99761194c2bf"
+    },
+    {
+      "id": "90d66c53-dda2-4eda-a8ee-85d99db14dc0",
+      "at": "2026-11-12T01:15:40.183Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 2157,
+      "requestId": null,
+      "debugId": "f9976110f53dd"
+    },
+    {
+      "id": "04844d20-4b9d-439f-b9e5-9bbbc3443f8c",
+      "at": "2026-11-12T01:15:40.184Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2156,
+      "requestId": null,
+      "debugId": "f705910c305bc"
+    },
+    {
+      "id": "71dafcbf-750e-407e-a644-a0d0cd4fc160",
+      "at": "2026-11-12T01:15:40.185Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 2195,
+      "requestId": null,
+      "debugId": "f7059108fbe9a"
+    },
+    {
+      "id": "fe17c5cf-b1e0-4971-9e8e-644ab10978be",
+      "at": "2026-11-12T01:15:40.182Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 2388,
+      "requestId": null,
+      "debugId": "f997611b5e712"
+    },
+    {
+      "id": "aeae2211-2e8d-4dc5-ac1b-b183b5ea504a",
+      "at": "2026-11-12T01:15:40.184Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 3036,
+      "requestId": null,
+      "debugId": "f705910e15fd6"
+    },
+    {
+      "id": "51fdf288-ab5b-4772-b3c0-f355a2c7a3e8",
+      "at": "2026-11-12T01:15:43.221Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 959,
+      "requestId": null,
+      "debugId": "f128925a8c65b"
+    },
+    {
+      "id": "2ed92cac-132d-4621-aac3-d3b7681d3e82",
+      "at": "2026-11-12T01:15:43.221Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 1109,
+      "requestId": null,
+      "debugId": "f128925200f57"
+    },
+    {
+      "id": "ca989a4c-12ff-4901-af87-e5c8b177bbc3",
+      "at": "2026-11-12T01:15:43.220Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 1111,
+      "requestId": null,
+      "debugId": "f128925a08cdb"
+    },
+    {
+      "id": "55f4ddc1-ff15-4625-8251-fa99412c358e",
+      "at": "2026-11-12T01:15:43.220Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 1510,
+      "requestId": null,
+      "debugId": "f128925750c29"
+    },
+    {
+      "id": "66030f61-05b8-40a8-8a93-799fdb24a560",
+      "at": "2026-11-12T01:15:44.331Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 699,
+      "requestId": null,
+      "debugId": "f86756651cfca"
+    },
+    {
+      "id": "128a22c1-d160-4e34-9423-151038a169f3",
+      "at": "2026-11-12T01:15:44.331Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 838,
+      "requestId": null,
+      "debugId": "f867566c47a10"
+    },
+    {
+      "id": "d3c55c4b-fe54-4bd1-8856-51807a89a693",
+      "at": "2026-11-12T01:15:44.180Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 1301,
+      "requestId": null,
+      "debugId": "f8675662d82a6"
+    },
+    {
+      "id": "3dde385a-90c2-40b2-9015-c41fe718ab09",
+      "at": "2026-11-12T01:15:44.730Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 830,
+      "requestId": null,
+      "debugId": "f20516058dcf4"
+    },
+    {
+      "id": "2c9090f6-2ee0-42cd-a22b-b368f91efd0d",
+      "at": "2026-11-12T01:15:45.031Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 759,
+      "requestId": null,
+      "debugId": "f20516083baf2"
+    },
+    {
+      "id": "2aad117e-647d-4060-b6fd-7e4ad0e61b52",
+      "at": "2026-11-12T01:15:45.170Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 930,
+      "requestId": null,
+      "debugId": "f205160b1212f"
+    },
+    {
+      "id": "27dffa3e-de62-4beb-a800-66f07e2e2bef",
+      "at": "2026-11-12T01:16:01.112Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 2098,
+      "requestId": null,
+      "debugId": "f85873835d72a"
+    },
+    {
+      "id": "bb73c7bf-3396-4de5-9c05-a001cb6a5855",
+      "at": "2026-11-12T01:16:03.211Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 789,
+      "requestId": null,
+      "debugId": "f979919b6a14c"
+    },
+    {
+      "id": "eaeb5086-211b-42a8-9365-89953751c566",
+      "at": "2026-11-12T01:16:03.211Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1201,
+      "requestId": null,
+      "debugId": "f97991981a04d"
+    },
+    {
+      "id": "256bfae6-a6ef-4919-8012-bdab332dda3b",
+      "at": "2026-11-12T01:16:03.213Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1358,
+      "requestId": null,
+      "debugId": "f163156adea6e"
+    },
+    {
+      "id": "292403d3-391e-430e-bf43-c2fdfe701a7c",
+      "at": "2026-11-12T01:16:03.213Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1688,
+      "requestId": null,
+      "debugId": "f979919ff7ed2"
+    },
+    {
+      "id": "55433fea-de15-47f5-877c-65d998a5ac03",
+      "at": "2026-11-12T01:16:03.212Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1690,
+      "requestId": null,
+      "debugId": "f1631564a2719"
+    },
+    {
+      "id": "ae76e8e8-723e-4142-9983-fbae7bc640bb",
+      "at": "2026-11-12T01:16:03.212Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1690,
+      "requestId": null,
+      "debugId": "f163156b114a7"
+    },
+    {
+      "id": "e4714869-d005-4f3e-a40d-ae60b653ca5a",
+      "at": "2026-11-12T01:16:03.215Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 2396,
+      "requestId": null,
+      "debugId": "f444434559775"
+    },
+    {
+      "id": "0a09d35f-b634-4e3c-ae75-6b574ceae0fe",
+      "at": "2026-11-12T01:16:03.213Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 2399,
+      "requestId": null,
+      "debugId": "f4444340a53b1"
+    },
+    {
+      "id": "685975b5-7a82-42c1-bb76-5eaea6df94c5",
+      "at": "2026-11-12T01:16:03.214Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2497,
+      "requestId": null,
+      "debugId": "f444434beedd6"
+    },
+    {
+      "id": "337024b4-b9c1-4c29-83d2-85e3e27a4722",
+      "at": "2026-11-12T01:16:03.215Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2856,
+      "requestId": null,
+      "debugId": "f4444346e95da"
+    },
+    {
+      "id": "712d7d10-8a01-401b-b89b-ab487cfff9b8",
+      "at": "2026-11-12T01:16:06.072Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 669,
+      "requestId": null,
+      "debugId": "f6517149e8057"
+    },
+    {
+      "id": "a3c38843-f231-4092-9d69-fc5670537737",
+      "at": "2026-11-12T01:16:06.071Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 1162,
+      "requestId": null,
+      "debugId": "f6517144081e5"
+    },
+    {
+      "id": "765c07d0-20df-4f9f-8a93-464933a5e3b3",
+      "at": "2026-11-12T01:16:06.072Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 1239,
+      "requestId": null,
+      "debugId": "f651714726212"
+    },
+    {
+      "id": "9f018849-bdda-407a-a481-9b8529ef2b23",
+      "at": "2026-11-12T01:16:06.071Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 1349,
+      "requestId": null,
+      "debugId": "f651714418e8b"
+    },
+    {
+      "id": "318eeb75-1a57-43f8-bab2-de57dad239db",
+      "at": "2026-11-12T01:16:06.742Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 872,
+      "requestId": null,
+      "debugId": "f399769a6d2c8"
+    },
+    {
+      "id": "9491ef80-d936-4c7c-994f-bfc46d6490f7",
+      "at": "2026-11-12T01:16:07.311Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 780,
+      "requestId": null,
+      "debugId": "f399769bd83a8"
+    },
+    {
+      "id": "8821a288-f260-451f-b7ef-0e8b9739ec8c",
+      "at": "2026-11-12T01:16:07.421Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 840,
+      "requestId": null,
+      "debugId": "f399769dc9c18"
+    },
+    {
+      "id": "6bb254ab-4440-4797-97ee-81d3f2414ca5",
+      "at": "2026-11-12T01:16:07.234Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 1028,
+      "requestId": null,
+      "debugId": "f399769f23109"
+    },
+    {
+      "id": "f2a96ed2-fedf-4ff7-acac-b61d1e7b63b6",
+      "at": "2026-11-12T01:16:07.614Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 1227,
+      "requestId": null,
+      "debugId": "f514949e919df"
+    },
+    {
+      "id": "17913d59-a8a2-43d5-8402-41a31e7035bf",
+      "at": "2026-11-12T01:16:08.091Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 790,
+      "requestId": null,
+      "debugId": "f514949be3695"
+    },
+    {
+      "id": "9cf0f463-ef4e-488b-bf9f-4cc636d112c0",
+      "at": "2026-11-12T01:16:23.901Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 1091,
+      "requestId": null,
+      "debugId": "f6133306404d5"
+    },
+    {
+      "id": "4a05c2dc-24b0-4c16-907f-131acfde8abe",
+      "at": "2026-11-12T01:16:24.992Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 710,
+      "requestId": null,
+      "debugId": "f581143bcc12b"
+    },
+    {
+      "id": "357271aa-e2e3-4ec0-9710-2ab07d91df2d",
+      "at": "2026-11-12T01:16:24.994Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1558,
+      "requestId": null,
+      "debugId": "f724129be5fc7"
+    },
+    {
+      "id": "f811ffeb-312a-454d-a874-f5b884352916",
+      "at": "2026-11-12T01:16:24.994Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 2088,
+      "requestId": null,
+      "debugId": "f581143055917"
+    },
+    {
+      "id": "aff0a811-787a-42b3-93f9-9cc3970d0573",
+      "at": "2026-11-12T01:16:24.994Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 2097,
+      "requestId": null,
+      "debugId": "f7241292e180f"
+    },
+    {
+      "id": "d691ca9c-50db-48c6-a4a4-e7d560cce514",
+      "at": "2026-11-12T01:16:24.993Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 2149,
+      "requestId": null,
+      "debugId": "f724129cdae50"
+    },
+    {
+      "id": "a27edf85-22d6-4a80-9a4b-ea1b08096719",
+      "at": "2026-11-12T01:16:24.993Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 2149,
+      "requestId": null,
+      "debugId": "f7241295e9d52"
+    },
+    {
+      "id": "9764c0f1-05ff-4d20-a628-a16a9f74f00a",
+      "at": "2026-11-12T01:16:24.995Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2257,
+      "requestId": null,
+      "debugId": "f724129d470df"
+    },
+    {
+      "id": "a46b32d2-1c9c-43e7-80bd-226d59e6700e",
+      "at": "2026-11-12T01:16:24.996Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 2435,
+      "requestId": null,
+      "debugId": "f724129563986"
+    },
+    {
+      "id": "ca96c0ac-bccf-4259-86f6-2cb64d1fad11",
+      "at": "2026-11-12T01:16:24.995Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2686,
+      "requestId": null,
+      "debugId": "f724129aff7b6"
+    },
+    {
+      "id": "b7aa013b-9f6b-4e25-bd5c-ff6fca9bf7d8",
+      "at": "2026-11-12T01:16:24.995Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 2996,
+      "requestId": null,
+      "debugId": "f724129144335"
+    },
+    {
+      "id": "c5b7a57d-6053-46b3-a7d2-d79b73d7d3ac",
+      "at": "2026-11-12T01:16:27.992Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 799,
+      "requestId": null,
+      "debugId": "f532122f12b2c"
+    },
+    {
+      "id": "d6d07579-c5ce-47f0-a032-ee65cd2b4d33",
+      "at": "2026-11-12T01:16:27.992Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 1010,
+      "requestId": null,
+      "debugId": "f53212202eafd"
+    },
+    {
+      "id": "493e9685-11b6-439b-a581-11c293eb4220",
+      "at": "2026-11-12T01:16:27.992Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 1020,
+      "requestId": null,
+      "debugId": "f53212240bccd"
+    },
+    {
+      "id": "ba8c461e-581a-4a7b-b344-ff2867014c13",
+      "at": "2026-11-12T01:16:27.992Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 1279,
+      "requestId": null,
+      "debugId": "f532122c9d208"
+    },
+    {
+      "id": "70e29bfa-3ac7-481e-bbee-b9ef77f5cf36",
+      "at": "2026-11-12T01:16:29.003Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 619,
+      "requestId": null,
+      "debugId": "f4070520cd0dc"
+    },
+    {
+      "id": "e3b1348e-9497-4abd-ba0f-ae624157ed74",
+      "at": "2026-11-12T01:16:28.792Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 1190,
+      "requestId": null,
+      "debugId": "f4070526e0cf1"
+    },
+    {
+      "id": "bd48696c-9783-4df0-9a1e-7c06d4d338ba",
+      "at": "2026-11-12T01:16:29.272Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 919,
+      "requestId": null,
+      "debugId": "f407052a69463"
+    },
+    {
+      "id": "6929afba-c0e3-4045-b09b-a13f7188a0c8",
+      "at": "2026-11-12T01:16:29.012Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 1189,
+      "requestId": null,
+      "debugId": "f4070520c4116"
+    },
+    {
+      "id": "9460ac19-c8e7-4d9f-9e87-f2b6001cd5b8",
+      "at": "2026-11-12T01:16:29.622Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 600,
+      "requestId": null,
+      "debugId": "f489785d36770"
+    },
+    {
+      "id": "24761ae2-46cc-498a-93c5-76088373f7bd",
+      "at": "2026-11-12T01:16:29.982Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 930,
+      "requestId": null,
+      "debugId": "f48978525a59a"
+    },
+    {
+      "id": "9b9a0170-d733-4724-8a5c-99fd7c3c30be",
+      "at": "2026-11-12T01:16:45.929Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 1523,
+      "requestId": null,
+      "debugId": "f576458889a7a"
+    },
+    {
+      "id": "25c0a259-92c8-4adc-b340-17a6a780a913",
+      "at": "2026-11-12T01:16:47.453Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 579,
+      "requestId": null,
+      "debugId": "f7297136f8e64"
+    },
+    {
+      "id": "aba7e808-456b-49cd-8a11-7b55083d951d",
+      "at": "2026-11-12T01:16:47.453Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 929,
+      "requestId": null,
+      "debugId": "f345544c1410e"
+    },
+    {
+      "id": "3c949efe-b4f5-4ed7-8949-ed6b9f404d18",
+      "at": "2026-11-12T01:16:47.453Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1139,
+      "requestId": null,
+      "debugId": "f3455441eeca3"
+    },
+    {
+      "id": "0a5cc954-9c0f-41bd-8c02-f7139094e0b7",
+      "at": "2026-11-12T01:16:47.454Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1198,
+      "requestId": null,
+      "debugId": "f345544ac76c0"
+    },
+    {
+      "id": "bd864b24-2932-4d0d-b688-76f672970ff5",
+      "at": "2026-11-12T01:16:47.454Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1208,
+      "requestId": null,
+      "debugId": "f345544f88462"
+    },
+    {
+      "id": "8d63731b-ca87-467e-804b-121e1089b099",
+      "at": "2026-11-12T01:16:47.454Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1458,
+      "requestId": null,
+      "debugId": "f345544159f40"
+    },
+    {
+      "id": "ca1c5e3c-d5dd-4414-8e0f-1eff6ae56875",
+      "at": "2026-11-12T01:16:47.455Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2847,
+      "requestId": null,
+      "debugId": "f58379252efea"
+    },
+    {
+      "id": "d5e55652-8dfc-4bf2-9131-512c3f879e49",
+      "at": "2026-11-12T01:16:47.455Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2957,
+      "requestId": null,
+      "debugId": "f583792422cc4"
+    },
+    {
+      "id": "9a76173c-2b18-4a4f-89b6-599ce5a8e4eb",
+      "at": "2026-11-12T01:16:47.456Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 3326,
+      "requestId": null,
+      "debugId": "f583792571034"
+    },
+    {
+      "id": "bac157a7-a2c6-4367-bc10-a0d67d650ecd",
+      "at": "2026-11-12T01:16:47.455Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 3527,
+      "requestId": null,
+      "debugId": "f5837921878a9"
+    },
+    {
+      "id": "1f9614da-3de6-4374-9c0e-8e10d3d6c120",
+      "at": "2026-11-12T01:16:50.983Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 519,
+      "requestId": null,
+      "debugId": "f42671508ef46"
+    },
+    {
+      "id": "30085612-ba74-4ccc-a12f-22371f01cdb2",
+      "at": "2026-11-12T01:16:50.983Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 759,
+      "requestId": null,
+      "debugId": "f426715b86aa0"
+    },
+    {
+      "id": "3fdaad94-f829-443b-a227-b47e8eaf1e3a",
+      "at": "2026-11-12T01:16:50.983Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 931,
+      "requestId": null,
+      "debugId": "f4267152b9b39"
+    },
+    {
+      "id": "20b5618d-4e0a-496f-b490-5bdcddd32211",
+      "at": "2026-11-12T01:16:50.983Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 1139,
+      "requestId": null,
+      "debugId": "f426715ccd586"
+    },
+    {
+      "id": "ed4bbf5e-36ac-406f-b434-0168c1016aea",
+      "at": "2026-11-12T01:16:51.504Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 758,
+      "requestId": null,
+      "debugId": "f426715345d00"
+    },
+    {
+      "id": "f430cb83-1ef0-4499-b72b-13541cd6cd12",
+      "at": "2026-11-12T01:16:51.743Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 700,
+      "requestId": null,
+      "debugId": "f687740cf6eeb"
+    },
+    {
+      "id": "1988826c-944e-4c1d-be03-c59fb5db5e98",
+      "at": "2026-11-12T01:16:51.914Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 909,
+      "requestId": null,
+      "debugId": "f6877405d7ec1"
+    },
+    {
+      "id": "abe8e7e9-f0aa-4df6-ba2c-2662c9bb96ec",
+      "at": "2026-11-12T01:16:52.443Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 600,
+      "requestId": null,
+      "debugId": "f68774052ebed"
+    },
+    {
+      "id": "5803f3cb-3d9e-419f-826d-d0f6fc9a7174",
+      "at": "2026-11-12T01:16:52.123Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 1029,
+      "requestId": null,
+      "debugId": "f687740ccc45b"
+    },
+    {
+      "id": "47e22de8-432c-40c0-9651-a063116d25c4",
+      "at": "2026-11-12T01:16:52.263Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 1320,
+      "requestId": null,
+      "debugId": "f687740908dc0"
+    },
+    {
+      "id": "bb79620e-cb8d-438f-af62-36a98c72ed54",
+      "at": "2026-11-12T01:17:08.592Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 1591,
+      "requestId": null,
+      "debugId": "f354754be1a97"
+    },
+    {
+      "id": "fa8e8ae4-60c8-4a25-99cb-afe834ecafbb",
+      "at": "2026-11-12T01:17:10.184Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 1089,
+      "requestId": null,
+      "debugId": "f165755d92136"
+    },
+    {
+      "id": "e329d333-adac-4c18-bbd3-2ac2a0dd8fea",
+      "at": "2026-11-12T01:17:10.184Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1099,
+      "requestId": null,
+      "debugId": "f6036056fdde5"
+    },
+    {
+      "id": "3c788bf7-ed3c-470e-8464-3b5793f920ba",
+      "at": "2026-11-12T01:17:10.185Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1168,
+      "requestId": null,
+      "debugId": "f6036055f7abf"
+    },
+    {
+      "id": "d559eca8-a1fc-473c-ad2c-7d0b346a4641",
+      "at": "2026-11-12T01:17:10.185Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1588,
+      "requestId": null,
+      "debugId": "f603605c47854"
+    },
+    {
+      "id": "318e11b4-b4c8-42e5-a1f5-1a016ef52e22",
+      "at": "2026-11-12T01:17:10.186Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1603,
+      "requestId": null,
+      "debugId": "f6036058334c0"
+    },
+    {
+      "id": "ad8385da-09d5-4771-9ed0-de87c17c0e77",
+      "at": "2026-11-12T01:17:10.186Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1837,
+      "requestId": null,
+      "debugId": "f6036054456ab"
+    },
+    {
+      "id": "3c2428d8-6056-4900-b95e-b010f61fb45f",
+      "at": "2026-11-12T01:17:10.188Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2042,
+      "requestId": null,
+      "debugId": "f2588048fd90b"
+    },
+    {
+      "id": "d2342e43-11d0-4663-8927-049b070b1add",
+      "at": "2026-11-12T01:17:10.187Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2346,
+      "requestId": null,
+      "debugId": "f2588048d253f"
+    },
+    {
+      "id": "f84c094d-ecb8-4f44-b893-95717588a97c",
+      "at": "2026-11-12T01:17:10.187Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 2876,
+      "requestId": null,
+      "debugId": "f258804c5f1f2"
+    },
+    {
+      "id": "90d66bdd-4f2e-4134-9b23-ca08211887ae",
+      "at": "2026-11-12T01:17:10.188Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 3715,
+      "requestId": null,
+      "debugId": "f258804f9115e"
+    },
+    {
+      "id": "c88bec25-caba-4302-abf0-782866ebe633",
+      "at": "2026-11-12T01:17:13.904Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 729,
+      "requestId": null,
+      "debugId": "f567012dfd7b1"
+    },
+    {
+      "id": "fc6f6b67-80cf-45ea-a705-2ed1f42bbb68",
+      "at": "2026-11-12T01:17:13.904Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 889,
+      "requestId": null,
+      "debugId": "f567012c695f6"
+    },
+    {
+      "id": "60785ca7-3e37-4db9-be34-aa391166531e",
+      "at": "2026-11-12T01:17:13.904Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 1069,
+      "requestId": null,
+      "debugId": "f567012e4da9f"
+    },
+    {
+      "id": "b909ffda-a682-43ac-9599-baa4b5917d82",
+      "at": "2026-11-12T01:17:13.904Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 1159,
+      "requestId": null,
+      "debugId": "f56701223cbd8"
+    },
+    {
+      "id": "382cc87a-65e8-4cf8-9bcd-af0d58041aa1",
+      "at": "2026-11-12T01:17:14.634Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 799,
+      "requestId": null,
+      "debugId": "f196718e284ab"
+    },
+    {
+      "id": "efbdbc42-2f7c-4663-9aaf-0b84411b3e78",
+      "at": "2026-11-12T01:17:15.064Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 519,
+      "requestId": null,
+      "debugId": "f1967183bdc27"
+    },
+    {
+      "id": "14b17e5f-a478-413f-a921-1de7ae72445f",
+      "at": "2026-11-12T01:17:14.974Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 769,
+      "requestId": null,
+      "debugId": "f1967182b20cd"
+    },
+    {
+      "id": "09bf70d9-b056-43ba-80c3-3ccdd65d3426",
+      "at": "2026-11-12T01:17:14.794Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 1299,
+      "requestId": null,
+      "debugId": "f1967180a1a14"
+    },
+    {
+      "id": "3c382221-8910-4abc-ab46-b1f8968f9a08",
+      "at": "2026-11-12T01:17:15.434Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 949,
+      "requestId": null,
+      "debugId": "f196718b5bfbb"
+    },
+    {
+      "id": "4c7204b0-7e7a-4749-9fc6-4ff11d7ad3ff",
+      "at": "2026-11-12T01:17:15.584Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 800,
+      "requestId": null,
+      "debugId": "f1967186d564e"
+    },
+    {
+      "id": "979484d5-a2bb-46bb-b212-c0a15a50616a",
+      "at": "2026-11-12T01:17:31.394Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 1818,
+      "requestId": null,
+      "debugId": "f100320851f61"
+    },
+    {
+      "id": "c7457f18-a181-414f-bc82-ac9f822c918e",
+      "at": "2026-11-12T01:17:33.213Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 701,
+      "requestId": null,
+      "debugId": "f48214397bc15"
+    },
+    {
+      "id": "fe354145-f12d-49d4-b4bd-fbcd0c653579",
+      "at": "2026-11-12T01:17:33.214Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1078,
+      "requestId": null,
+      "debugId": "f635944cd72b5"
+    },
+    {
+      "id": "b45e627f-f3d7-4337-8948-98008918779b",
+      "at": "2026-11-12T01:17:33.213Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1499,
+      "requestId": null,
+      "debugId": "f635944a09f28"
+    },
+    {
+      "id": "8750ec9f-cf13-496d-aaa2-4e6e79c29476",
+      "at": "2026-11-12T01:17:33.215Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1927,
+      "requestId": null,
+      "debugId": "f635944bdd034"
+    },
+    {
+      "id": "ed4db417-843a-4443-b7c8-45763180296f",
+      "at": "2026-11-12T01:17:33.215Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 2018,
+      "requestId": null,
+      "debugId": "f6359442e7896"
+    },
+    {
+      "id": "0044e0a9-e69e-493d-a974-08354cdef350",
+      "at": "2026-11-12T01:17:33.216Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2286,
+      "requestId": null,
+      "debugId": "f5170706f69b7"
+    },
+    {
+      "id": "bbc96486-93ad-4142-93d6-77d0b7c395ec",
+      "at": "2026-11-12T01:17:33.216Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 2446,
+      "requestId": null,
+      "debugId": "f51707069d462"
+    },
+    {
+      "id": "52d6f7ce-fd1c-4354-aa38-2b62fd7d2564",
+      "at": "2026-11-12T01:17:33.214Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 2648,
+      "requestId": null,
+      "debugId": "f6359445b4004"
+    },
+    {
+      "id": "f2f70eee-08e4-4d24-951f-2e6b224b199f",
+      "at": "2026-11-12T01:17:33.216Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2656,
+      "requestId": null,
+      "debugId": "f5170704dd209"
+    },
+    {
+      "id": "c4bf3488-25d1-48e6-a32e-0549c3d6faa1",
+      "at": "2026-11-12T01:17:33.215Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 3127,
+      "requestId": null,
+      "debugId": "f5170704a56d3"
+    },
+    {
+      "id": "69c8ae84-a711-417b-b9c6-8b46c203936a",
+      "at": "2026-11-12T01:17:36.343Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 880,
+      "requestId": null,
+      "debugId": "f993697bd417c"
+    },
+    {
+      "id": "0e68fe55-3d7f-4eb1-b1c0-f379370518cf",
+      "at": "2026-11-12T01:17:36.344Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 879,
+      "requestId": null,
+      "debugId": "f993697d5f6e4"
+    },
+    {
+      "id": "4716796d-95de-45fa-aea3-a932f09f846a",
+      "at": "2026-11-12T01:17:36.343Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 880,
+      "requestId": null,
+      "debugId": "f99369748d31a"
+    },
+    {
+      "id": "6a36a9c2-1871-4962-8bd2-f29fb2cda68f",
+      "at": "2026-11-12T01:17:36.344Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 1178,
+      "requestId": null,
+      "debugId": "f99369723e0e6"
+    },
+    {
+      "id": "fea2a3e4-b600-4a37-8a54-c0d0b62987ad",
+      "at": "2026-11-12T01:17:37.223Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 869,
+      "requestId": null,
+      "debugId": "f5146227246c6"
+    },
+    {
+      "id": "7a8a0c10-090c-4f79-9d0e-9f1061335414",
+      "at": "2026-11-12T01:17:37.223Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 879,
+      "requestId": null,
+      "debugId": "f5146229bebd1"
+    },
+    {
+      "id": "b67ec582-47ad-4947-b919-159e1ea746e7",
+      "at": "2026-11-12T01:17:37.523Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 740,
+      "requestId": null,
+      "debugId": "f514622a5a49d"
+    },
+    {
+      "id": "89bc270e-0386-41f8-a8a8-93ee41b7d65a",
+      "at": "2026-11-12T01:17:37.223Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 1059,
+      "requestId": null,
+      "debugId": "f5146225cfed3"
+    },
+    {
+      "id": "b88e0a74-df54-4576-980b-cf9541d8f98e",
+      "at": "2026-11-12T01:17:38.093Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 749,
+      "requestId": null,
+      "debugId": "f400557211996"
+    },
+    {
+      "id": "3d874738-c231-40b9-ab69-4fa46bda4659",
+      "at": "2026-11-12T01:17:38.102Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 1260,
+      "requestId": null,
+      "debugId": "f400557c7930c"
+    },
+    {
+      "id": "50a06929-ee8c-417e-a21a-3e61763c9752",
+      "at": "2026-11-12T01:17:54.378Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 1095,
+      "requestId": null,
+      "debugId": "f127256fc7b99"
+    },
+    {
+      "id": "f11730cf-ccb1-4e9c-acad-86d9e442b5e7",
+      "at": "2026-11-12T01:17:55.475Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1468,
+      "requestId": null,
+      "debugId": "f495623fd5e77"
+    },
+    {
+      "id": "a4054072-5bf5-47f1-93ad-52731921e372",
+      "at": "2026-11-12T01:17:55.474Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1489,
+      "requestId": null,
+      "debugId": "f495623846d1a"
+    },
+    {
+      "id": "21d85980-dc62-429b-8475-3fd469c117cc",
+      "at": "2026-11-12T01:17:55.474Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 1729,
+      "requestId": null,
+      "debugId": "f12725611fb66"
+    },
+    {
+      "id": "e9f56b40-86bf-4c21-b828-34d85149ebed",
+      "at": "2026-11-12T01:17:55.476Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1867,
+      "requestId": null,
+      "debugId": "f495623a8e250"
+    },
+    {
+      "id": "36a44c03-94ef-437b-be74-e586e39d536f",
+      "at": "2026-11-12T01:17:55.475Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1988,
+      "requestId": null,
+      "debugId": "f49562329d8a5"
+    },
+    {
+      "id": "2dfd3f72-3aa2-45fc-8b70-f263f3d95f03",
+      "at": "2026-11-12T01:17:55.474Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 2049,
+      "requestId": null,
+      "debugId": "f495623a5659b"
+    },
+    {
+      "id": "67b85acc-0c7d-4860-ae43-c3580cde7d67",
+      "at": "2026-11-12T01:17:55.477Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2306,
+      "requestId": null,
+      "debugId": "f295761b4d6b2"
+    },
+    {
+      "id": "6a67c886-9344-44cc-bd29-eb1f5619eb8a",
+      "at": "2026-11-12T01:17:55.476Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 2397,
+      "requestId": null,
+      "debugId": "f295761773f29"
+    },
+    {
+      "id": "f08d4298-582e-463b-a139-b8efad65e579",
+      "at": "2026-11-12T01:17:55.477Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 2626,
+      "requestId": null,
+      "debugId": "f295761b8637f"
+    },
+    {
+      "id": "9fd58523-1afd-4c69-8536-6f7802d19668",
+      "at": "2026-11-12T01:17:55.476Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2647,
+      "requestId": null,
+      "debugId": "f2957613c422b"
+    },
+    {
+      "id": "8e9bb501-c8d7-4e1a-bf60-5fe48dc79952",
+      "at": "2026-11-12T01:17:58.123Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 580,
+      "requestId": null,
+      "debugId": "f591289173541"
+    },
+    {
+      "id": "e7a5d021-ada6-4c6c-8e8b-bc4fc1b007b5",
+      "at": "2026-11-12T01:17:58.124Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 580,
+      "requestId": null,
+      "debugId": "f59128977a2f0"
+    },
+    {
+      "id": "a8da8968-0c66-4ea2-8606-d7b2934baadc",
+      "at": "2026-11-12T01:17:58.124Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 739,
+      "requestId": null,
+      "debugId": "f59128910accd"
+    },
+    {
+      "id": "52424eea-22be-4fef-b059-85a56c263561",
+      "at": "2026-11-12T01:17:58.123Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 790,
+      "requestId": null,
+      "debugId": "f591289f3447f"
+    },
+    {
+      "id": "afe8bb1c-64ac-4af3-ae22-1d79e36390c3",
+      "at": "2026-11-12T01:17:58.704Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 709,
+      "requestId": null,
+      "debugId": "f55583188452b"
+    },
+    {
+      "id": "ddceaa74-c3ee-45c3-99f2-784949868f9d",
+      "at": "2026-11-12T01:17:58.914Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 519,
+      "requestId": null,
+      "debugId": "f555831180ca6"
+    },
+    {
+      "id": "15b61fec-4bc8-401d-a103-c8720c833070",
+      "at": "2026-11-12T01:17:58.704Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 739,
+      "requestId": null,
+      "debugId": "f555831d1105f"
+    },
+    {
+      "id": "2adf905b-c388-4890-9d7c-d6634fc73728",
+      "at": "2026-11-12T01:17:58.864Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 719,
+      "requestId": null,
+      "debugId": "f5558315189e7"
+    },
+    {
+      "id": "d89b8710-b40d-46e3-a810-3a0ba9ab771b",
+      "at": "2026-11-12T01:17:59.434Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 1159,
+      "requestId": null,
+      "debugId": "f55583176aaf2"
+    },
+    {
+      "id": "aad78dd5-0db1-4516-9664-d8fc10a301b9",
+      "at": "2026-11-12T01:17:59.414Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 1231,
+      "requestId": null,
+      "debugId": "f5558312e29f0"
+    },
+    {
+      "id": "92504c12-980a-451a-a5ae-5e024b44669e",
+      "at": "2026-11-12T02:03:20.059Z",
+      "method": "POST",
+      "path": "/v1/oauth2/token",
+      "status": 200,
+      "durationMs": 1258,
+      "requestId": null,
+      "debugId": "ca591f5abc934"
+    },
+    {
+      "id": "7058815e-723d-4570-8f2a-5758584f78e2",
+      "at": "2026-11-12T02:03:21.320Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 1181,
+      "requestId": null,
+      "debugId": "ca591f5af794c"
+    },
+    {
+      "id": "858cda58-101d-4468-9388-3c1815bedc72",
+      "at": "2026-11-12T02:03:22.502Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 608,
+      "requestId": null,
+      "debugId": "ca591f5b6d8f0"
+    },
+    {
+      "id": "ad193b3b-43f8-4d18-b296-43147516adbe",
+      "at": "2026-11-12T02:03:22.503Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/6VH987942H278564E",
+      "status": 200,
+      "durationMs": 1108,
+      "requestId": null,
+      "debugId": "ca591f5b8b975"
+    },
+    {
+      "id": "6dc7cf02-cf8f-4734-bc19-413b44340279",
+      "at": "2026-11-12T02:03:23.613Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 578,
+      "requestId": null,
+      "debugId": "ca591f5bdcf3a"
+    },
+    {
+      "id": "6f2a247a-e047-436c-885e-f394be952cf1",
+      "at": "2026-11-12T02:03:44.700Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 1162,
+      "requestId": null,
+      "debugId": "ca591f644b85c"
+    },
+    {
+      "id": "dc46da00-6040-4496-8894-a59678226867",
+      "at": "2026-11-12T02:03:45.865Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 596,
+      "requestId": null,
+      "debugId": "ca591f648df11"
+    },
+    {
+      "id": "7fbd0f68-1c99-4b3c-b3cd-297949e3c6c9",
+      "at": "2026-11-12T02:03:45.866Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/08676730LD715130R",
+      "status": 200,
+      "durationMs": 1036,
+      "requestId": null,
+      "debugId": "ca591f64acd10"
+    },
+    {
+      "id": "194da7a0-d86a-48dd-a8d6-1e0052ac7fda",
+      "at": "2026-11-12T02:03:46.903Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 470,
+      "requestId": null,
+      "debugId": "ca591f64f59ff"
+    },
+    {
+      "id": "d753bd9c-c796-4e82-9307-926160ce166a",
+      "at": "2026-11-12T02:04:17.674Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 1088,
+      "requestId": null,
+      "debugId": "ca591f7124b2b"
+    },
+    {
+      "id": "16207fa6-a480-499f-8f74-2b970265df50",
+      "at": "2026-11-12T02:04:18.764Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 1058,
+      "requestId": null,
+      "debugId": "ca591f71678ad"
+    },
+    {
+      "id": "5a8477b5-0484-43af-985b-f2b075e63e63",
+      "at": "2026-11-12T02:04:18.765Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/6VH987942H278564E",
+      "status": 200,
+      "durationMs": 1488,
+      "requestId": null,
+      "debugId": "ca591f7188d22"
+    },
+    {
+      "id": "af0fbef5-02f3-4724-ad86-5f5e2f450576",
+      "at": "2026-11-12T02:04:20.920Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 632,
+      "requestId": null,
+      "debugId": "ca591f723fd42"
+    },
+    {
+      "id": "147f6ea0-9f5f-43c1-bb43-eba5e3a2d5f2",
+      "at": "2026-11-12T02:04:21.554Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 599,
+      "requestId": null,
+      "debugId": "ca591f727ef06"
+    },
+    {
+      "id": "ec428cdc-d046-46f0-b053-b138026a16dd",
+      "at": "2026-11-12T02:04:21.554Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/08676730LD715130R",
+      "status": 200,
+      "durationMs": 689,
+      "requestId": null,
+      "debugId": "ca591f727ec98"
+    },
+    {
+      "id": "1eae5d27-701b-4dd3-af83-40d6d6e77278",
+      "at": "2026-11-12T02:04:32.176Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 1128,
+      "requestId": null,
+      "debugId": "ca591f76d5d10"
+    },
+    {
+      "id": "fc7b516b-81f4-42f5-af29-ee26278c9651",
+      "at": "2026-11-12T02:04:33.306Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 637,
+      "requestId": null,
+      "debugId": "ca591f7715d9e"
+    },
+    {
+      "id": "b211655b-60f8-4da6-a4e2-c0a15e07f7bf",
+      "at": "2026-11-12T02:04:33.307Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/6VH987942H278564E",
+      "status": 200,
+      "durationMs": 1396,
+      "requestId": null,
+      "debugId": "ca591f7735e5e"
+    },
+    {
+      "id": "2745f4d3-ff74-4621-aff9-1424a377707b",
+      "at": "2026-11-12T02:04:34.998Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 1064,
+      "requestId": null,
+      "debugId": "ca591f77bfcd1"
+    },
+    {
+      "id": "805e81ec-a56e-473e-b503-178fb25b948e",
+      "at": "2026-11-12T02:04:36.065Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 657,
+      "requestId": null,
+      "debugId": "ca591f782abbd"
+    },
+    {
+      "id": "2f6e0773-ee87-4961-8a92-45086494d4cb",
+      "at": "2026-11-12T02:04:36.065Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/6VH987942H278564E",
+      "status": 200,
+      "durationMs": 1077,
+      "requestId": null,
+      "debugId": "ca591f782ac9f"
+    },
+    {
+      "id": "973839e6-7e91-4e62-8864-c7cd108b1cfa",
+      "at": "2026-11-12T02:04:37.459Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 624,
+      "requestId": null,
+      "debugId": "ca591f78b5f6b"
+    },
+    {
+      "id": "25be16b2-6f43-4bb6-a9a1-4b7af9475c96",
+      "at": "2026-11-12T02:04:38.087Z",
+      "method": "POST",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626/make-offer",
+      "status": 200,
+      "durationMs": 1945,
+      "requestId": "kept-PP-R-BDX-10199626-make_offer-7e9b016b3c4a",
+      "debugId": "ca591f78f5fb0"
+    },
+    {
+      "id": "79911ea9-d826-4fef-aa99-a5f51c0c375e",
+      "at": "2026-11-12T02:04:40.034Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 1179,
+      "requestId": null,
+      "debugId": "ca591f79b6fe1"
+    },
+    {
+      "id": "03aa2bca-4ed0-4b5d-b76d-52e2bb23ca30",
+      "at": "2026-11-12T02:04:41.225Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 587,
+      "requestId": null,
+      "debugId": "ca591f7a2dfd8"
+    },
+    {
+      "id": "c62bfa88-304c-4038-bae3-fc78e02d168b",
+      "at": "2026-11-12T02:04:41.225Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/6VH987942H278564E",
+      "status": 200,
+      "durationMs": 1007,
+      "requestId": null,
+      "debugId": "ca591f7a4c95f"
+    },
+    {
+      "id": "e67be315-4fda-4e3a-b2ea-d4d8742be116",
+      "at": "2026-11-12T02:04:42.570Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 624,
+      "requestId": null,
+      "debugId": "ca591f7ab49c5"
+    },
+    {
+      "id": "a97c9642-efc8-476d-b5db-e58d31a00879",
+      "at": "2026-11-12T02:04:43.196Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 600,
+      "requestId": null,
+      "debugId": "ca591f7af2a11"
+    },
+    {
+      "id": "2986cb40-80f7-4e49-86f7-fd8e3b4fc1bc",
+      "at": "2026-11-12T02:04:43.196Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/08676730LD715130R",
+      "status": 200,
+      "durationMs": 697,
+      "requestId": null,
+      "debugId": "ca591f7af3885"
+    },
+    {
+      "id": "88207326-e84a-4a8e-98b0-ecec683af71a",
+      "at": "2026-11-12T02:04:44.174Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 688,
+      "requestId": null,
+      "debugId": "ca591f7b55e63"
+    },
+    {
+      "id": "95fb83b2-71ea-4698-bf9e-0e1013945fc4",
+      "at": "2026-11-12T02:04:44.864Z",
+      "method": "POST",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621/make-offer",
+      "status": 200,
+      "durationMs": 1659,
+      "requestId": "kept-PP-R-KRB-10199621-make_offer-d4ed7a504631",
+      "debugId": "ca591f7b9afa0"
+    },
+    {
+      "id": "93b272a4-8c5e-4493-b0bd-416438fe10f5",
+      "at": "2026-11-12T02:04:46.525Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 1198,
+      "requestId": null,
+      "debugId": "ca591f7c3fd26"
+    },
+    {
+      "id": "d50024fb-e7c7-467a-b9d4-e08219e84170",
+      "at": "2026-11-12T02:04:47.735Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 598,
+      "requestId": null,
+      "debugId": "ca591f7cb8f53"
+    },
+    {
+      "id": "680422b4-044d-4124-9763-f7b05cb88367",
+      "at": "2026-11-12T02:04:47.735Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/08676730LD715130R",
+      "status": 200,
+      "durationMs": 718,
+      "requestId": null,
+      "debugId": "ca591f7cb994b"
+    },
+    {
+      "id": "9111d8c0-3a86-4c4c-b9a2-a95e3a0c3ee3",
+      "at": "2026-11-12T02:07:31.009Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 2021,
+      "requestId": null,
+      "debugId": "ca591fbc9e99b"
+    },
+    {
+      "id": "8dcccbe4-771b-4793-8741-3798a940088d",
+      "at": "2026-11-12T02:07:33.032Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 718,
+      "requestId": null,
+      "debugId": "ca591fbd49c75"
+    },
+    {
+      "id": "f202c3b8-93e3-4126-93a8-18bae18567ab",
+      "at": "2026-11-12T02:07:33.032Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/6VH987942H278564E",
+      "status": 200,
+      "durationMs": 1519,
+      "requestId": null,
+      "debugId": "ca591fbd75efe"
+    },
+    {
+      "id": "7d67e550-9de9-4872-ae55-57a9a1138a07",
+      "at": "2026-11-12T02:07:35.849Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 1273,
+      "requestId": null,
+      "debugId": "ca591fbe63e77"
+    },
+    {
+      "id": "772f7ba5-d0d0-48e9-a5d4-d8f1ea91a357",
+      "at": "2026-11-12T02:07:37.124Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 605,
+      "requestId": null,
+      "debugId": "ca591fbee3df7"
+    },
+    {
+      "id": "fb6138f8-8ce7-442d-a37b-80f111ffd765",
+      "at": "2026-11-12T02:07:37.124Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/08676730LD715130R",
+      "status": 200,
+      "durationMs": 1225,
+      "requestId": null,
+      "debugId": "ca591fbee4966"
+    },
+    {
+      "id": "9b7c7963-9dd3-4b9f-928e-8ef9a02c25ee",
+      "at": "2026-11-12T02:07:38.643Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 1017,
+      "requestId": null,
+      "debugId": "ca591fbf7a87c"
+    },
+    {
+      "id": "3d5592bb-0772-4495-8951-09a046f7a699",
+      "at": "2026-11-12T02:07:39.662Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 579,
+      "requestId": null,
+      "debugId": "ca591fbfe198c"
+    },
+    {
+      "id": "936634b9-ffe3-49d9-b6dd-94d1e76db1da",
+      "at": "2026-11-12T02:07:39.661Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 629,
+      "requestId": null,
+      "debugId": "ca591fbfe0ecd"
+    },
+    {
+      "id": "d64dcf05-25a0-41f0-b18d-03be4521857d",
+      "at": "2026-11-12T02:07:39.664Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1026,
+      "requestId": null,
+      "debugId": "ca591fc002aea"
+    },
+    {
+      "id": "c30d2bf5-41e4-42be-83b7-9538d5556285",
+      "at": "2026-11-12T02:07:39.662Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1319,
+      "requestId": null,
+      "debugId": "ca591fc002da0"
+    },
+    {
+      "id": "2401e0a5-d601-4071-b31d-b20b877039bb",
+      "at": "2026-11-12T02:07:39.665Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1346,
+      "requestId": null,
+      "debugId": "ca591fc002d28"
+    },
+    {
+      "id": "110adb32-e75d-4148-9ff9-e06bf58007c8",
+      "at": "2026-11-12T02:07:39.666Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1374,
+      "requestId": null,
+      "debugId": "ca591fc002d5c"
+    },
+    {
+      "id": "6c5ee746-0a41-401b-8e14-9e361f2116b1",
+      "at": "2026-11-12T02:07:39.669Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 1532,
+      "requestId": null,
+      "debugId": "ca591fc021f74"
+    },
+    {
+      "id": "df22a393-4352-428d-ae72-c2d43292c53d",
+      "at": "2026-11-12T02:07:39.666Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 1623,
+      "requestId": null,
+      "debugId": "ca591fc002c71"
+    },
+    {
+      "id": "25e9de4c-d1ff-4ae7-8039-188bf2d9d480",
+      "at": "2026-11-12T02:07:39.668Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 1692,
+      "requestId": null,
+      "debugId": "ca591fc0218f4"
+    },
+    {
+      "id": "19364e24-0f58-4be1-8e9d-cf992905dcfc",
+      "at": "2026-11-12T02:07:39.667Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2253,
+      "requestId": null,
+      "debugId": "ca591fc020bdb"
+    },
+    {
+      "id": "ab9448a6-01d9-4a69-8796-0e619223cf38",
+      "at": "2026-11-12T02:07:41.922Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 750,
+      "requestId": null,
+      "debugId": "ca591fc0cfc58"
+    },
+    {
+      "id": "6ed6f7c4-50e2-44a9-9e4a-58ed64e346c8",
+      "at": "2026-11-12T02:07:41.923Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 751,
+      "requestId": null,
+      "debugId": "ca591fc0cffc3"
+    },
+    {
+      "id": "ff3f56fd-bb35-4fac-991a-0a2fc4aeab6b",
+      "at": "2026-11-12T02:07:41.923Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 1097,
+      "requestId": null,
+      "debugId": "ca591fc0cf935"
+    },
+    {
+      "id": "ff61785f-de78-402a-92ad-65003ec3b2ee",
+      "at": "2026-11-12T02:07:41.923Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 1127,
+      "requestId": null,
+      "debugId": "ca591fc0cfa5d"
+    },
+    {
+      "id": "e5705688-b838-4505-b64f-8e88ae0c9fb0",
+      "at": "2026-11-12T02:07:42.673Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 537,
+      "requestId": null,
+      "debugId": "ca591fc116ca5"
+    },
+    {
+      "id": "28203b86-719d-405a-a041-7347beeccc59",
+      "at": "2026-11-12T02:07:42.674Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 727,
+      "requestId": null,
+      "debugId": "ca591fc117991"
+    },
+    {
+      "id": "7fe22eee-e50a-4346-8677-d4d18826fbfd",
+      "at": "2026-11-12T02:07:43.052Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 619,
+      "requestId": null,
+      "debugId": "ca591fc133dd7"
+    },
+    {
+      "id": "6fb9d73c-f199-4fc0-8830-ed1dd96f4ede",
+      "at": "2026-11-12T02:07:43.022Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 651,
+      "requestId": null,
+      "debugId": "ca591fc130868"
+    },
+    {
+      "id": "48bff12e-f553-4550-a0dd-3cfba57400ed",
+      "at": "2026-11-12T02:07:43.212Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 658,
+      "requestId": null,
+      "debugId": "ca591fc14497d"
+    },
+    {
+      "id": "d18ffb4f-dc7c-4941-8051-a9ef5377c21d",
+      "at": "2026-11-12T02:07:43.403Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 507,
+      "requestId": null,
+      "debugId": "ca591fc156b27"
+    },
+    {
+      "id": "f1953bfa-0b6a-40ee-9356-737da938bb80",
+      "at": "2026-11-12T02:07:52.251Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 1735,
+      "requestId": null,
+      "debugId": "ca591fc4fac26"
+    },
+    {
+      "id": "241ceec2-4049-4b28-82c2-4c64ac2f98f1",
+      "at": "2026-11-12T02:07:53.988Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 643,
+      "requestId": null,
+      "debugId": "ca591fc578ce1"
+    },
+    {
+      "id": "a3ae001a-cce1-4874-8694-2898def19669",
+      "at": "2026-11-12T02:07:53.988Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/08676730LD715130R",
+      "status": 200,
+      "durationMs": 1013,
+      "requestId": null,
+      "debugId": "ca591fc596f80"
+    },
+    {
+      "id": "3cf1b012-fe14-4bad-b16e-5510874ff701",
+      "at": "2026-11-12T02:08:10.382Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 1770,
+      "requestId": null,
+      "debugId": "ca591fcc0cc7a"
+    },
+    {
+      "id": "aa92dd2f-34a6-4d65-a304-47be2088e410",
+      "at": "2026-11-12T02:08:12.153Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 578,
+      "requestId": null,
+      "debugId": "ca591fcc91f99"
+    },
+    {
+      "id": "b4a4481b-abe3-4f0c-b58b-2e0043239947",
+      "at": "2026-11-12T02:08:12.155Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/08676730LD715130R",
+      "status": 200,
+      "durationMs": 1092,
+      "requestId": null,
+      "debugId": "ca591fccb2b4e"
+    },
+    {
+      "id": "2d0eb5d7-b1f1-42fd-8717-42ac94ebfad9",
+      "at": "2026-11-12T02:08:28.605Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2590,
+      "requestId": null,
+      "debugId": "f373791d536cc"
+    },
+    {
+      "id": "25646c28-3a77-4c64-9429-4ea0cc0c5d9a",
+      "at": "2026-11-12T02:08:31.197Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 706,
+      "requestId": null,
+      "debugId": "f522617f950f4"
+    },
+    {
+      "id": "a6ad6b38-2913-4c01-98db-14f9e627eb44",
+      "at": "2026-11-12T02:08:31.197Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/08676730LD715130R",
+      "status": 200,
+      "durationMs": 1599,
+      "requestId": null,
+      "debugId": "f52261772b9e2"
+    },
+    {
+      "id": "80f2358e-742b-4780-b00f-e927d8306a73",
+      "at": "2026-11-12T02:08:48.168Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2187,
+      "requestId": null,
+      "debugId": "f116372982bc3"
+    },
+    {
+      "id": "8c333c60-e153-403e-8705-fc2795cb03a6",
+      "at": "2026-11-12T02:08:50.356Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 1179,
+      "requestId": null,
+      "debugId": "f424976da03d1"
+    },
+    {
+      "id": "9a74c76c-6066-4403-87f1-5ad5723cbfec",
+      "at": "2026-11-12T02:08:50.356Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/08676730LD715130R",
+      "status": 200,
+      "durationMs": 1279,
+      "requestId": null,
+      "debugId": "f4249766b064b"
+    },
+    {
+      "id": "f5b9f084-1761-476d-8bb7-62c46e9e713b",
+      "at": "2026-11-12T02:08:51.912Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 1323,
+      "requestId": null,
+      "debugId": "f772686a34e3f"
+    },
+    {
+      "id": "45075886-cbf9-4069-8f7b-244aca331a89",
+      "at": "2026-11-12T02:08:53.236Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 1120,
+      "requestId": null,
+      "debugId": "f3099271535d2"
+    },
+    {
+      "id": "724c8ab2-8fa9-44e9-916f-9a4fe5e36b46",
+      "at": "2026-11-12T02:08:53.237Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/6VH987942H278564E",
+      "status": 200,
+      "durationMs": 1358,
+      "requestId": null,
+      "debugId": "f3099278e8568"
+    },
+    {
+      "id": "91b418de-d60d-4a5a-97cb-38ca40d90012",
+      "at": "2026-11-12T02:08:54.885Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 1392,
+      "requestId": null,
+      "debugId": "f279177ad0a48"
+    },
+    {
+      "id": "e56a676f-2671-4e68-8fa4-173176bcf089",
+      "at": "2026-11-12T02:08:56.279Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 717,
+      "requestId": null,
+      "debugId": "f956264346dd7"
+    },
+    {
+      "id": "8c9e0ba8-7e52-4d8d-8fd4-a885c92340db",
+      "at": "2026-11-12T02:08:56.279Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/08676730LD715130R",
+      "status": 200,
+      "durationMs": 876,
+      "requestId": null,
+      "debugId": "f956264f00568"
+    },
+    {
+      "id": "da808dfe-cba2-4687-b64b-b84c4cede52c",
+      "at": "2026-11-12T02:08:57.444Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 752,
+      "requestId": null,
+      "debugId": "f3613570971db"
+    },
+    {
+      "id": "c5382368-acfb-4212-912f-38d41c17e6b1",
+      "at": "2026-11-12T02:08:58.203Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 833,
+      "requestId": null,
+      "debugId": "f641216e7940f"
+    },
+    {
+      "id": "592721d3-7a00-4a7a-ade0-22fcfd4b511c",
+      "at": "2026-11-12T02:08:58.198Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 877,
+      "requestId": null,
+      "debugId": "f64121652d165"
+    },
+    {
+      "id": "58c22911-0cab-4812-8e72-07f1cbd85744",
+      "at": "2026-11-12T02:08:58.199Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1037,
+      "requestId": null,
+      "debugId": "f6412160973ac"
+    },
+    {
+      "id": "cc671863-e971-450f-bc60-fa58ce13a2d9",
+      "at": "2026-11-12T02:08:58.202Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1054,
+      "requestId": null,
+      "debugId": "f641216475fb4"
+    },
+    {
+      "id": "e5037ee3-f068-4378-8c68-ba550c6e362c",
+      "at": "2026-11-12T02:08:58.199Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1316,
+      "requestId": null,
+      "debugId": "f641216e6a634"
+    },
+    {
+      "id": "b1d43996-0d34-40cb-8885-632d5d9beddb",
+      "at": "2026-11-12T02:08:58.201Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1504,
+      "requestId": null,
+      "debugId": "f6412166dfbdd"
+    },
+    {
+      "id": "c1fcc14c-0a4b-4546-80d4-849b56f8c463",
+      "at": "2026-11-12T02:08:58.204Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 1882,
+      "requestId": null,
+      "debugId": "f64121641bcfd"
+    },
+    {
+      "id": "7bd29f97-2c06-464f-8eab-aa9654c8d85b",
+      "at": "2026-11-12T02:08:58.206Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 2070,
+      "requestId": null,
+      "debugId": "f375561738980"
+    },
+    {
+      "id": "16e7d0de-8d7c-416e-ab78-4e4d3b2449e4",
+      "at": "2026-11-12T02:08:58.205Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2650,
+      "requestId": null,
+      "debugId": "f375561c20677"
+    },
+    {
+      "id": "a6ab71b8-65d3-44f2-b684-8da752f6c523",
+      "at": "2026-11-12T02:08:58.205Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2840,
+      "requestId": null,
+      "debugId": "f375561058ecb"
+    },
+    {
+      "id": "18ee02b8-d496-4597-bef2-df7d6762b615",
+      "at": "2026-11-12T02:09:01.048Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 777,
+      "requestId": null,
+      "debugId": "f83950533789b"
+    },
+    {
+      "id": "01637625-c7e5-4429-a831-4a84be922719",
+      "at": "2026-11-12T02:09:01.048Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 779,
+      "requestId": null,
+      "debugId": "f839505ecff05"
+    },
+    {
+      "id": "0a01361e-86e4-42a8-9f32-7603a0c87af2",
+      "at": "2026-11-12T02:09:01.047Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 958,
+      "requestId": null,
+      "debugId": "f8395050290da"
+    },
+    {
+      "id": "7d095acf-5b34-4e6a-8529-1117017b49cc",
+      "at": "2026-11-12T02:09:01.047Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 1338,
+      "requestId": null,
+      "debugId": "f839505247abb"
+    },
+    {
+      "id": "3ec49a7a-616a-468c-b673-7ccfce6bef67",
+      "at": "2026-11-12T02:09:01.827Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 729,
+      "requestId": null,
+      "debugId": "f839505ae1fbc"
+    },
+    {
+      "id": "5aeec3be-9ebf-4c96-bf06-93a820c44824",
+      "at": "2026-11-12T02:09:02.007Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 1018,
+      "requestId": null,
+      "debugId": "f24075759bb61"
+    },
+    {
+      "id": "fa4d75e8-5c37-4f0d-80e8-33b44e19c026",
+      "at": "2026-11-12T02:09:01.827Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 1200,
+      "requestId": null,
+      "debugId": "f839505416415"
+    },
+    {
+      "id": "7b82a7c8-8d53-42a4-8d21-bebb42b4ea96",
+      "at": "2026-11-12T02:09:02.387Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 688,
+      "requestId": null,
+      "debugId": "f2407578013a3"
+    },
+    {
+      "id": "ef96559a-5f57-4532-9d0f-73d9a365e49b",
+      "at": "2026-11-12T02:09:02.557Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 570,
+      "requestId": null,
+      "debugId": "f2407570edccd"
+    },
+    {
+      "id": "e8a89ac6-9ce3-4704-ae3b-823bba92c556",
+      "at": "2026-11-12T02:09:03.027Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 1219,
+      "requestId": null,
+      "debugId": "f94196065c165"
+    },
+    {
+      "id": "3870ffff-4193-4ecd-aa4b-920a6f636677",
+      "at": "2026-11-12T02:09:15.012Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 2224,
+      "requestId": null,
+      "debugId": "f2311180a4181"
+    },
+    {
+      "id": "7b15f54e-895d-4cf7-b058-cf9062f8bb83",
+      "at": "2026-11-12T02:09:17.238Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 530,
+      "requestId": null,
+      "debugId": "f380551f07c90"
+    },
+    {
+      "id": "2bbff8ab-e6e2-488f-9a5a-406de06f9fef",
+      "at": "2026-11-12T02:09:17.238Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/6VH987942H278564E",
+      "status": 200,
+      "durationMs": 1349,
+      "requestId": null,
+      "debugId": "f380551f63f7e"
+    },
+    {
+      "id": "55936958-c9f8-41c4-be3d-3ba71bcec689",
+      "at": "2026-11-12T02:09:18.880Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 1336,
+      "requestId": null,
+      "debugId": "f596121ec780e"
+    },
+    {
+      "id": "bbb8d2cb-71ae-4bae-8f6c-a9d51b8be135",
+      "at": "2026-11-12T02:09:20.219Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 548,
+      "requestId": null,
+      "debugId": "f109415be7a24"
+    },
+    {
+      "id": "7eeddac9-f53b-4392-8259-291891cefee1",
+      "at": "2026-11-12T02:09:20.219Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/6VH987942H278564E",
+      "status": 200,
+      "durationMs": 1378,
+      "requestId": null,
+      "debugId": "f109415d6ec7f"
+    },
+    {
+      "id": "e3fcabd0-5081-4755-9897-f752a67ad34e",
+      "at": "2026-11-12T02:09:31.950Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 1327,
+      "requestId": null,
+      "debugId": "f468662560cdc"
+    },
+    {
+      "id": "d7a41c38-3230-48b1-a38f-94b5944af841",
+      "at": "2026-11-12T02:09:33.279Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 1038,
+      "requestId": null,
+      "debugId": "f4997986037ea"
+    },
+    {
+      "id": "1daf674e-5012-4d63-8753-dd064b15c795",
+      "at": "2026-11-12T02:09:33.282Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1036,
+      "requestId": null,
+      "debugId": "f4997981fc280"
+    },
+    {
+      "id": "23436e3d-9aba-40e8-98b2-45c67c4e21bb",
+      "at": "2026-11-12T02:09:33.280Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1057,
+      "requestId": null,
+      "debugId": "f499798434424"
+    },
+    {
+      "id": "dcea3200-7134-451d-ac18-f0dc08ce8c67",
+      "at": "2026-11-12T02:09:33.285Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1054,
+      "requestId": null,
+      "debugId": "f4997984999f0"
+    },
+    {
+      "id": "230a230d-82e3-4d4c-a44c-2decf9983bde",
+      "at": "2026-11-12T02:09:33.283Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1074,
+      "requestId": null,
+      "debugId": "f499798594c95"
+    },
+    {
+      "id": "d9c992f3-2092-4e6f-9e72-8088f01165a0",
+      "at": "2026-11-12T02:09:33.284Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1515,
+      "requestId": null,
+      "debugId": "f499798f5ae04"
+    },
+    {
+      "id": "cc90b910-abdb-43d5-965e-b71327fdda2e",
+      "at": "2026-11-12T02:09:33.292Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 2065,
+      "requestId": null,
+      "debugId": "f70308874081c"
+    },
+    {
+      "id": "3594228c-e2d0-4b97-916e-b0e2776cd064",
+      "at": "2026-11-12T02:09:33.292Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 2067,
+      "requestId": null,
+      "debugId": "f703088c76641"
+    },
+    {
+      "id": "24dd8c60-250d-49a0-8fd6-b4d5ea572958",
+      "at": "2026-11-12T02:09:33.293Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 2315,
+      "requestId": null,
+      "debugId": "f70308818f0e5"
+    },
+    {
+      "id": "2ad5d957-e860-4c5c-8877-4eea33e03509",
+      "at": "2026-11-12T02:09:33.285Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 2711,
+      "requestId": null,
+      "debugId": "f7030882695ac"
+    },
+    {
+      "id": "e992bf4b-a79d-43eb-ba7f-91ee6e6215ba",
+      "at": "2026-11-12T02:09:35.998Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 729,
+      "requestId": null,
+      "debugId": "f659155c3b0af"
+    },
+    {
+      "id": "641a7364-2b2b-44fe-a6eb-16b59bf23c70",
+      "at": "2026-11-12T02:09:35.997Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 982,
+      "requestId": null,
+      "debugId": "f659155430f65"
+    },
+    {
+      "id": "aeb40bc4-0fb5-439c-962c-f55cb58b4baf",
+      "at": "2026-11-12T02:09:35.998Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 983,
+      "requestId": null,
+      "debugId": "f659155c26228"
+    },
+    {
+      "id": "6e815905-8701-4dae-bc6a-56ca660c1cc5",
+      "at": "2026-11-12T02:09:36.728Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 586,
+      "requestId": null,
+      "debugId": "f659155620b47"
+    },
+    {
+      "id": "1d944b77-5fbe-4906-9652-e7760ab73125",
+      "at": "2026-11-12T02:09:36.981Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 775,
+      "requestId": null,
+      "debugId": "f13100630677d"
+    },
+    {
+      "id": "36d652d4-2f92-48cb-b61c-947d41ec2840",
+      "at": "2026-11-12T02:09:37.315Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 603,
+      "requestId": null,
+      "debugId": "f1310067e1841"
+    },
+    {
+      "id": "c759805a-d911-4702-a24b-be683d6ce14f",
+      "at": "2026-11-12T02:09:36.980Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 1001,
+      "requestId": null,
+      "debugId": "f131006b73304"
+    },
+    {
+      "id": "23aeed31-0d6a-40f5-89ba-2e8ed34a014d",
+      "at": "2026-11-12T02:09:36.981Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 1215,
+      "requestId": null,
+      "debugId": "f131006a610b1"
+    },
+    {
+      "id": "6e2b5284-3eb8-4a18-8962-ff57e47da17b",
+      "at": "2026-11-12T02:09:37.758Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 1199,
+      "requestId": null,
+      "debugId": "f1310060e2687"
+    }
+  ],
+  "unknownOutcomes": {},
+  "shippingChecks": {}
+}
