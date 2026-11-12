@@ -6,7 +6,8 @@
 
 - Hosted demo (passcode): https://kept-yplg.onrender.com
 - Public replay (no passcode): https://kept-replay.onrender.com
-- Video: [VIDEO URL]
+- Video: https://youtu.be/gOCNXuLRZVc
+- Site: https://kept.gudman.xyz
 
 Kept shows a small PayPal seller two numbers taken from PayPal's own API: what PayPal is holding from them across their open disputes, and what PayPal says they kept on the resolved ones. **Held now** is the sum of each open dispute's `fund_movements` entries with reason `HOLD_PLACED`. **Kept** is the disputed amount minus PayPal's `dispute_outcome.amount_refunded` on each resolved dispute.
 

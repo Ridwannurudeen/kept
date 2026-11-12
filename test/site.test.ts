@@ -39,7 +39,7 @@ describe('Kept landing page', () => {
     const rows = [...section.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/g)].map((match) => match[1]);
     const expected = [
       ['01', 'Open the public replay', "No sign-in. Recorded 4 Nov 2026 sandbox data with Claude's recorded recommendations; approvals are simulated.", 'Open the public replay', 'https://kept-replay.onrender.com'],
-      ['02', 'Use the hosted sandbox demo', 'Live calls to the PayPal sandbox on our test seller account. The passcode is in the Devpost testing notes, and each approval spends a test case.', 'kept-yplg.onrender.com', 'https://kept-yplg.onrender.com'],
+      ['02', 'Use the hosted sandbox demo', 'Live calls to the PayPal sandbox on our test seller account. Judges: the passcode is in the Devpost testing notes, and each approval spends a test case.', 'kept-yplg.onrender.com', 'https://kept-yplg.onrender.com'],
       ['03', 'Run it on your own sandbox', 'Add your own PayPal sandbox app keys and an Anthropic key, then seed cases with your own sandbox buyer.', 'Read the steps', 'https://github.com/Ridwannurudeen/kept#running-it-as-a-judge'],
     ];
     expect(rows).toHaveLength(expected.length);
@@ -216,11 +216,12 @@ describe('Kept landing page', () => {
     expect(html()).toContain("The hosted demo restarted on 12 Nov at 08:08 WAT. Kept's own log of the 07:25 to 07:46 sends on A, P1 and B and EV1's two decisions is not on it; PayPal's record of each still shows.");
   });
 
-  it('labels the calls to action "Open the public replay" and has no film button yet', () => {
+  it('labels the replay calls to action and links to the film and code', () => {
     expect(html()).toContain('<a class="button button-ink nav-cta" href="https://kept-replay.onrender.com"><span class="label-long">Open the public replay</span><span class="label-short">Public replay</span></a>');
     expect(html()).toContain('<a class="button button-ink" href="https://kept-replay.onrender.com">Open the public replay</a>');
     expect(html()).toContain('<a class="text-link" href="https://github.com/Ridwannurudeen/kept">Read the code</a>');
-    expect(html()).not.toMatch(/Open the (public )?demo|Watch the/);
+    expect(html()).toContain('<a class="text-link" href="https://youtu.be/gOCNXuLRZVc">Watch the film (2:55)</a>');
+    expect(html()).not.toMatch(/Open the (public )?demo/);
   });
 
   it('carries the endpoint table, its re-check note, limits and footer lines', () => {
