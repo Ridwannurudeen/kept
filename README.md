@@ -50,6 +50,8 @@ Other parts: AG Grid Community 36 (`ag-grid-community` 36.3.0) renders two grids
 
 ### Live resolution and grid features
 
+At the PayPal claim stage, the seller can tick files to send with supporting information; Kept appends "Attached: <names>" to the note and reports whether PayPal's record lists each file, and no file is sent unless ticked. This was checked once in the sandbox on 2026-11-12 with packing-slip.pdf, a sandbox demo document: PayPal's record lists the document.
+
 A visible tab polls waiting cases every 15 seconds; no webhook listener is implemented. When PayPal reports a change, the case row flashes and the summary updates in place. The case panel's **What PayPal reports** timeline is built only from PayPal's offer history, dispute outcome and fund movements (`src/cases.ts`, `public/app.js`). Replay has a separate **Simulate the buyer accepting (replay)** control (`public/app.js`); its API route returns 404 in live mode (`src/http/routes.ts`). Replay actions remain simulated and are identified by the replay banner.
 
 The grid groups columns under **PayPal reports**, **Claude recommends** and **You approved**. Its inline offer editor refuses amounts over the policy cap, with undo and redo for edits. CSV export supports selected cases and guards against spreadsheet formula injection. The seller's grid view, including sort, filters and column layout, persists locally and **Reset view** restores the default (`public/app.js`). These are AG Grid Community features, with no Enterprise module loaded.
@@ -208,7 +210,7 @@ Two of the cases are an evidence pair: the same untracked item-not-received inqu
 - One action per case. A sandbox case acted on once is spent.
 - State resets on restart. Render's free tier sleeps when idle and keeps no disk, so notes, policy and the log go back to the seed; decisions, the action log, the PayPal call log and shipping checks come back from `seed/snapshot.json` when that file is present. Without it, a restart forgets which cases were already acted on; Kept still re-checks PayPal before any action.
 - The recommendation needs a model key. Without `ANTHROPIC_API_KEY` (replay mode) a case shows no new recommendation.
-- No file upload to PayPal. Seller attachments stay inside Kept; the defence is sent as a notes text.
+- Files are sent only at the PayPal claim stage with supporting information, not with inquiry-stage evidence or offers. Only PDF, PNG, JPEG and GIF files are supported, validated by content, under 10 MB each and up to 50 MB per send. The public replay cannot send files to PayPal.
 - No escalation or appeal flow, no buyer messaging, no webhook listener.
 - Shipping check starts from an order id the seller types, reads only the order's first capture, and can read only orders that this app's PayPal credentials can read.
 - PayPal's seller response window is 20 days from filing, so late in the judging window the hosted grid is expected to show resolved or expired cases. Every case still shows its recommendation, reasons and log.

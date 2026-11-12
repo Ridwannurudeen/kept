@@ -40,7 +40,11 @@ Every figure comes from PayPal's own fields. Kept never claims a result that did
 
 A visible tab polls waiting cases every 15 seconds; no webhook listener is implemented. A reported change updates the row and totals in place, and the case panel shows a **What PayPal reports** timeline built only from PayPal's offer history, outcome and fund movements. In replay, the labelled **Simulate the buyer accepting (replay)** control simulates that event; it is not presented as live, and its API route returns 404 in live mode.
 
-Claude can describe what the seller's own attached JPEG or PNG photo shows against the buyer's claim. The images stay in Kept, and photo notes are not kept in the committed snapshot.
+Claude can describe what the seller's own attached JPEG or PNG photo shows against the buyer's claim. Photo notes are not kept in the committed snapshot.
+
+At the PayPal claim stage, the seller can tick files to send with supporting information; Kept appends "Attached: <names>" to the note and reports whether PayPal's record lists each file, and no file is sent unless ticked. This was checked once in the sandbox on 2026-11-12 with packing-slip.pdf, a sandbox demo document: PayPal's record lists the document.
+
+Only PDF, PNG, JPEG and GIF files are supported, validated by content, under 10 MB each and up to 50 MB per send; files cannot be sent with inquiry-stage evidence or offers. The public replay cannot send files to PayPal.
 
 Safety is built in. The AI model holds only read tools and cannot move money or write to PayPal. An offer above the seller's cap is refused, never quietly lowered. The server re-checks every approval against PayPal's current state before sending anything, and every action is logged with what the model recommended, what the seller changed, and PayPal's response.
 
@@ -106,7 +110,6 @@ And from building: let PayPal's listed actions decide which buttons exist, rathe
 
 ## What's next for Kept
 
-- Uploading the seller's files to PayPal with the defence, not only a notes text.
 - Handling escalation and later stages.
 - A webhook listener for dispute events, next to the polling.
 - Accounts for more than one seller.
