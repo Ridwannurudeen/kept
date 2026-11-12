@@ -120,7 +120,7 @@ paypal, paypal-disputes-api, paypal-agent-toolkit, claude, vercel-ai-sdk, typesc
 
 ## Links
 
-- Hosted demo (passcode in the testing instructions): [HOSTED URL]
-- Public replay (no passcode): [PUBLIC REPLAY URL]
-- Code: [REPO URL] (MIT license)
+- Hosted demo (passcode in the testing instructions): https://kept-yplg.onrender.com
+- Public replay (no passcode): https://kept-replay.onrender.com
+- Code: https://github.com/Ridwannurudeen/kept (MIT license)
 - Video: [VIDEO URL]
