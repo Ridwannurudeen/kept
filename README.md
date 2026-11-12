@@ -50,6 +50,8 @@ Other parts: AG Grid Community 36 (`ag-grid-community` 36.3.0) renders two grids
 
 ### Live resolution and grid features
 
+On 12 November 2026 Kept sent two capped partial refund offers in the sandbox (7.20 on 24.00 and 8.10 on 27.00); the sandbox buyer accepted both, PayPal resolved both, and the seller kept 16.80 and 18.90.
+
 At the PayPal claim stage, the seller can tick files to send with supporting information; Kept appends "Attached: <names>" to the note and reports whether PayPal's record lists each file, and no file is sent unless ticked. This was checked once in the sandbox on 2026-11-12 with packing-slip.pdf, a sandbox demo document: PayPal's record lists the document.
 
 A visible tab polls waiting cases every 15 seconds; no webhook listener is implemented. When PayPal reports a change, the case row flashes and the summary updates in place. The case panel's **What PayPal reports** timeline is built only from PayPal's offer history, dispute outcome and fund movements (`src/cases.ts`, `public/app.js`). Replay has a separate **Simulate the buyer accepting (replay)** control (`public/app.js`); its API route returns 404 in live mode (`src/http/routes.ts`). Replay actions remain simulated and are identified by the replay banner.
