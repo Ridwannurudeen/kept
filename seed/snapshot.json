@@ -1,6 +1,282 @@
 {
-  "snapshotAt": "2026-11-12T02:46:58.853Z",
+  "snapshotAt": "2026-11-12T04:30:13.338Z",
   "decisions": {
+    "PP-R-LGS-10199627": {
+      "decision": {
+        "recommendation": "SETTLE",
+        "plain_ask": "The buyer says the $36.00 linen table runner arrived grey, not the natural linen shown in your listing. Your records don't show what colour you actually sent: you have no photos from before shipping, and the order has no tracking. I suggest offering a $10.80 partial refund (30%, the most your policy allows). Your last two \"not as described\" inquiries ended after a partial-refund offer of the same size.\n\nPlease check two things first:\n1) Timing. PayPal shows the order placed at 22:59 UTC on Nov 11 and the complaint opened at 23:32, 33 minutes later. With no tracking, I can't tell how the item could have \"arrived\" by then. Was this a local handover, or a different order?\n2) Your note says \"Spare of B.\" Please confirm which item was sent. I also can't read what is in listing-photo-note.txt.\n\nDecide by Nov 29, 23:32 UTC. $34.25 is currently on hold. I can't say when or whether it will be released.",
+        "evidence_have": [
+          "Seller note: item sent as listed; buyer says the colour differs; item described as 'Spare of B'",
+          "listing-photo-note.txt (text/plain), contents not visible to Kept",
+          "PayPal record: order 2026-11-11T22:59:10Z, dispute opened 2026-11-11T23:32:24Z (33 minutes later)",
+          "Buyer message: no photos attached yet, says the runner is grey rather than natural linen"
+        ],
+        "evidence_missing": [
+          "Photos of the actual runner taken before shipping (seller notes say none exist)",
+          "Tracking or carrier record: the order has no trackers",
+          "Any delivery or handover record showing when the buyer received the item",
+          "Clarity on what 'Spare of B' means and whether it matches listing item B2"
+        ],
+        "reasons": [
+          "Buyer reason is Not as Described. The capture's seller_protection is ELIGIBLE, but its dispute_categories list only ITEM_NOT_RECEIVED and UNAUTHORIZED_TRANSACTION. PayPal does not list this reason for this payment, and the checklist marks applies_to_this_reason false. Whether any protection applies is PayPal's decision.",
+          "Nothing on file shows the colour of the runner that was sent. There are no photos from before shipping, and the contents of the listing note file are not visible.",
+          "The dispute opened 33 minutes after the order, and the order has no tracking. It is unclear how the item could have arrived by then, so the seller should check this before acting.",
+          "The item costs $36.00, and PayPal lists make_offer at this inquiry stage. A $10.80 partial refund is at the policy cap (30% of $36.00).",
+          "Seller's record: two past Not as Described inquiries closed after Kept sent partial-refund offers of $7.20 and $8.10. This is cited for context only and did not set the offer amount."
+        ],
+        "would_change": "A carrier or handover record showing when the buyer received the runner, to compare with the complaint opened 33 minutes after the order.",
+        "offer_amount": "10.80",
+        "draft_note": "Hello, thank you for letting us know. I'm sorry the table runner's colour isn't what you expected from the listing photos. Colours of natural linen can look different depending on lighting and screen settings, but we want you to be happy with your purchase. As a goodwill gesture, we'd like to offer a partial refund of USD 10.80, and you can keep the runner. If you'd prefer to discuss another option, please reply here and we'll do our best to help. Kind regards, Test Store"
+      },
+      "validation": {
+        "ok": true,
+        "action": "make_offer",
+        "cap": "10.80"
+      },
+      "at": "2026-11-12T04:04:39.749Z",
+      "model": "claude-opus-5-5",
+      "steps": 2,
+      "toolCalls": [
+        "get_dispute",
+        "submit_decision"
+      ],
+      "durationMs": 22322,
+      "basis": {
+        "stage": "INQUIRY",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "disputeState": "REQUIRED_ACTION",
+        "links": [
+          "self",
+          "accept_claim",
+          "send_message",
+          "escalate",
+          "make_offer"
+        ],
+        "amount": "36.00",
+        "dueAt": "2026-12-01T23:32:24.842Z"
+      }
+    },
+    "PP-R-PGK-10199629": {
+      "decision": {
+        "recommendation": "SETTLE",
+        "plain_ask": "The buyer says the linen table runner arrived dark slate grey, not the natural linen shown in the listing. Your notes say you sent it as listed, but you took no photos before shipping. You also have no tracking: the order has no trackers. Your colour photo shows a dark blue-grey woven pattern. Nothing ties it to the published listing or to the parcel you sent. PayPal only offers two actions here: accept the claim or make an offer. There is no option to send evidence. I recommend offering a partial refund of USD 10.80, which is your policy cap (30% of USD 36.00). In your two past 'not as described' inquiries, PayPal closed both cases on partial refunds of USD 7.20 and USD 8.10. One more thing to check: PayPal shows the dispute opened about 35 minutes after the order was placed, and there is no shipping record. Please confirm how and when the item reached the buyer. USD 34.25 is on hold right now. What happens to it is up to PayPal. Please review and decide by 2026-11-29 23:34 UTC.",
+        "evidence_have": [
+          "Seller note: item sent as listed; buyer says the colour differs",
+          "listing-colour.jpg: shows a dark blue-grey woven pattern, not natural linen. Nothing shows it is the published listing photo",
+          "listing-photo-note.txt: on file, but Kept could not read what it says",
+          "PayPal record: the buyer's note and message say slate grey vs natural linen, and the buyer has no photos yet"
+        ],
+        "evidence_missing": [
+          "No photos of the actual runner taken before shipping (the seller's notes confirm this)",
+          "No tracking or delivery record: the order has no trackers",
+          "No dated copy of the listing as published showing its photos and colour description",
+          "No explanation of how the item could arrive about 35 minutes after the order was placed"
+        ],
+        "reasons": [
+          "PayPal lists only accept_claim and make_offer for this case, so sending evidence is not an option at this stage.",
+          "Seller Protection shows ELIGIBLE, but only for ITEM_NOT_RECEIVED and UNAUTHORIZED_TRANSACTION. PayPal does not list 'not as described' for this payment, and the checklist marks it as not applying to this reason.",
+          "The seller took no photos before shipping, and there is no copy of the published listing, so nothing answers the buyer's colour claim.",
+          "The item is cheap (USD 36.00). USD 10.80 is exactly the policy cap of 30%, and a partial refund may close the case without losing the whole amount.",
+          "Past record: two earlier 'not as described' inquiries both closed on partial refunds (USD 7.20 and USD 8.10). This is shown for context only. It did not set the offer."
+        ],
+        "would_change": "A dated copy of the listing as it was published when the order was placed, showing the runner's colour in its photos and description.",
+        "offer_amount": "10.80",
+        "draft_note": "Hello, thank you for letting us know about the colour of the linen table runner. We're sorry it isn't what you expected. To put this right, we'd like to offer you a partial refund of USD 10.80, and you can keep the runner. We hope this works for you. If you have any questions, please reply here and we'll be glad to help."
+      },
+      "validation": {
+        "ok": true,
+        "action": "make_offer",
+        "cap": "10.80"
+      },
+      "at": "2026-11-12T04:04:14.080Z",
+      "model": "claude-opus-5-5",
+      "steps": 2,
+      "toolCalls": [
+        "get_dispute",
+        "submit_decision"
+      ],
+      "durationMs": 23138,
+      "basis": {
+        "stage": "INQUIRY",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "disputeState": "REQUIRED_ACTION",
+        "links": [
+          "self",
+          "accept_claim",
+          "send_message",
+          "escalate",
+          "make_offer"
+        ],
+        "amount": "36.00",
+        "dueAt": "2026-12-01T23:34:45.093Z"
+      }
+    },
+    "PP-R-GNF-10199630": {
+      "decision": {
+        "recommendation": "SETTLE",
+        "plain_ask": "The buyer says the $18.00 cotton tote arrived bright navy, but the listing photos showed undyed natural cotton. You don't have anything on file that answers this. Your notes only say \"Development case for CLI verification.\" There are no attachments, and we can't see your listing photos, the item description or a record of which colour you shipped. PayPal doesn't offer an option to send evidence for this case. It only offers make an offer or accept the claim.\n\nMy recommendation is to offer a partial refund of USD 5.40 and let the buyer keep the tote. That's the most your policy allows (30% of $18.00). In your last two \"not as described\" inquiries, PayPal recorded that your partial offers of $7.20 and $8.10 resolved the cases. That's background only. It doesn't tell us what will happen here.\n\nPayPal is holding $16.88 of this payment. I can't say when or whether it will be released. Please decide by 2026-11-29 23:37 UTC. If you did list the tote as navy, tell me before sending, because that changes the advice.",
+        "evidence_have": [
+          "PayPal order: one Cotton tote, USD 18.00, created 2026-11-11, shipping city San Jose",
+          "Buyer's claim and message: the tote arrived navy, not the natural cotton in the listing photos. The buyer says they have no photos yet.",
+          "Capture seller_protection: ELIGIBLE, but only for ITEM_NOT_RECEIVED and UNAUTHORIZED_TRANSACTION"
+        ],
+        "evidence_missing": [
+          "Listing photos and the item description showing the advertised colour",
+          "Any record (packing photo, SKU, supplier invoice) of the colour that was shipped",
+          "Any message to or from the buyer before the dispute (PayPal shows merchant_contacted: false)",
+          "No tracking on the order (trackers is empty), though delivery is not in dispute"
+        ],
+        "reasons": [
+          "The buyer's complaint is about colour against the listing, and nothing in your notes or PayPal's records shows what the listing showed or what was shipped.",
+          "PayPal's capture lists Seller Protection only for ITEM_NOT_RECEIVED and UNAUTHORIZED_TRANSACTION. It doesn't list 'not as described' for this payment, and the checklist marks applies_to_this_reason as false. Whether protection applies is PayPal's decision.",
+          "The item costs USD 18.00 and this is still an inquiry, so a small partial refund is a proportionate way to try to close it.",
+          "USD 5.40 is the most your policy allows (30% of USD 18.00, which is lower than USD 50.00), and make_offer is one of the actions PayPal lists for this case.",
+          "Past facts only: in your last two 'not as described' inquiries, partial offers of USD 7.20 and USD 8.10 were recorded as resolving the cases."
+        ],
+        "would_change": "The listing's photos or description showing the tote offered in navy, or a record showing natural cotton was the colour shipped on this order.",
+        "offer_amount": "5.40",
+        "draft_note": "Hi John,\n\nThank you for letting us know, and I'm sorry the tote's colour wasn't what you expected from the listing. We'd like to make this right without any hassle. We're offering a partial refund of USD 5.40, and you're welcome to keep the tote. If that works for you, please accept the offer and we'll consider the matter settled.\n\nKind regards,\nTest Store"
+      },
+      "validation": {
+        "ok": true,
+        "action": "make_offer",
+        "cap": "5.40"
+      },
+      "at": "2026-11-12T04:05:56.172Z",
+      "model": "claude-opus-5-5",
+      "steps": 2,
+      "toolCalls": [
+        "get_dispute",
+        "submit_decision"
+      ],
+      "durationMs": 18086,
+      "basis": {
+        "stage": "INQUIRY",
+        "status": "WAITING_FOR_SELLER_RESPONSE",
+        "disputeState": "REQUIRED_ACTION",
+        "links": [
+          "self",
+          "make_offer",
+          "accept_claim",
+          "escalate",
+          "send_message"
+        ],
+        "amount": "18.00",
+        "dueAt": "2026-12-01T23:37:05.267Z"
+      }
+    },
+    "PP-R-RPI-10199636": {
+      "decision": {
+        "recommendation": "FIGHT",
+        "plain_ask": "I recommend you send PayPal supporting information explaining that the parcel is still on its way. Here's why: the buyer opened this case about 47 minutes after paying (order 22:58 UTC, case 23:45 UTC on 11 Nov). You shipped by UPS the same day, and PayPal has the tracking number 1Z4F82V70391746210 on the order, marked SHIPPED. A parcel sent that day couldn't have arrived yet, so \"not received\" fits a parcel in transit, not a lost one.\n\nBefore you send:\n1. Check UPS and confirm the parcel is moving toward San Jose, the city on the order. If it already shows \"Delivered\" with a date, add that date to the note.\n2. PayPal hasn't given a response deadline. Your policy keeps a 48-hour buffer, so send soon.\n3. Your note says the shipping address matches the order. I can't check that from PayPal's records, so please make sure it's right.\n\nPayPal is holding USD 45.83 while the case is open. I can't say when or whether that money will be released.\n\nFor reference: you had one earlier \"item not received\" case, an inquiry where nothing was sent. It closed in the buyer's favour after a USD 5.00 partial refund on USD 20.00. That doesn't change this recommendation, and a partial-refund offer isn't available for this case anyway.",
+        "evidence_have": [
+          "UPS tracking number 1Z4F82V70391746210 is on the PayPal order (tracker status SHIPPED), and it matches your notes",
+          "Your note: shipped on 2026-11-11 via UPS, the same day as the order",
+          "Your note: the shipping address matches the order address (ship-to city on the order: San Jose)",
+          "PayPal's timeline: order 2026-11-11 22:58 UTC, case opened 23:45 UTC, under an hour later",
+          "Files: packing-slip.pdf, packing-slip.txt, ups-label.txt"
+        ],
+        "evidence_missing": [
+          "No 'Delivered' status or delivery date yet. Tracking shows only SHIPPED",
+          "I can't see in PayPal's data whether the parcel went to the address on the transaction (checklist: not_visible). Only your note says it did",
+          "I can't see whether the recipient address matches the transaction details (checklist: not_visible)",
+          "No current UPS scan history showing the parcel moving toward San Jose",
+          "PayPal hasn't given a response deadline"
+        ],
+        "reasons": [
+          "The buyer opened the case under an hour after paying. You shipped the same day, so a parcel in transit explains 'not received'.",
+          "PayPal has an online, trackable UPS number on the order, and it matches your notes. The checklist marks that item in_paypal_data.",
+          "PayPal lists Item Not Received for this payment: the capture's seller_protection is ELIGIBLE with categories ITEM_NOT_RECEIVED and UNAUTHORIZED_TRANSACTION, and the dispute shows EXPANDED_SELLER_PROTECTION. Whether protection actually applies is PayPal's call.",
+          "Gaps: there's no 'Delivered' status or date yet, and I can't confirm the ship-to and recipient address items in PayPal's data. Only your note covers the address.",
+          "PayPal lists only accept_claim and provide_supporting_info for this case. A partial-refund offer isn't available, and a full refund isn't warranted while the parcel is in transit with valid tracking."
+        ],
+        "would_change": null,
+        "offer_amount": null,
+        "draft_note": "Hello,\n\nThis order (transaction 59W40554PM409652T, Ceramic pour-over set, USD 48.00) was placed on 2026-11-11 at 22:58 UTC. We shipped it the same day, 2026-11-11, by UPS to the shipping address on the order in San Jose. The UPS tracking number is 1Z4F82V70391746210, and it is already recorded on this PayPal transaction.\n\nThe case was opened at 23:45 UTC on 2026-11-11, less than an hour after payment. The tracking shows the parcel as shipped and in the UPS network. It has not been lost, and there has not yet been time for it to arrive.\n\nWe ask that the case be reviewed with this in mind. The buyer can follow the parcel with the tracking number above. We are watching the tracking and will share the delivery date once UPS records it. If the parcel does not arrive in a reasonable time, we are happy to work with the buyer directly.\n\nThank you,\nTest Store"
+      },
+      "validation": {
+        "ok": true,
+        "action": "provide_supporting_info",
+        "cap": null
+      },
+      "at": "2026-11-12T04:05:07.133Z",
+      "model": "claude-opus-5-5",
+      "steps": 2,
+      "toolCalls": [
+        "get_dispute",
+        "submit_decision"
+      ],
+      "durationMs": 24258,
+      "basis": {
+        "stage": "CHARGEBACK",
+        "status": "UNDER_REVIEW",
+        "disputeState": "UNDER_PAYPAL_REVIEW",
+        "links": [
+          "self",
+          "accept_claim",
+          "adjudicate",
+          "require_evidence",
+          "provide_supporting_info"
+        ],
+        "amount": "48.00",
+        "dueAt": null
+      }
+    },
+    "PP-R-GMF-10199635": {
+      "decision": {
+        "recommendation": "FIGHT",
+        "plain_ask": "I recommend sending PayPal supporting information instead of refunding. The buyer paid at 22:58 UTC on Nov 11 and opened the claim 43 minutes later. You say you shipped by UPS that same day, and PayPal has the UPS tracking (1Z4F82V70392851434) with status SHIPPED. The parcel is most likely still on its way, not lost. The weak spot: neither PayPal's records nor your notes show a 'Delivered' scan yet. Please check UPS and add the delivery date and city to the note as soon as it shows delivered. PayPal can't confirm that the address matches. Your notes say it does, so please check the UPS label against the address on the PayPal transaction before sending. I couldn't tell what 'Spare of A.' means in your notes, so I left it out. Your one earlier not-received case closed with a USD 5.00 partial refund at the inquiry stage. That doesn't change this advice, and PayPal doesn't list a partial offer as an option this time. USD 45.83 is on hold. Whether it's released is up to PayPal. PayPal gave no response deadline, so please reply soon.",
+        "evidence_have": [
+          "UPS tracking 1Z4F82V70392851434 attached to the order in PayPal's records (status SHIPPED)",
+          "Seller's note: shipped 2026-11-11 via UPS, the same day as the order",
+          "Seller's note: shipping address matches the order address (San Jose)",
+          "packing-slip.pdf, packing-slip.txt, ups-label.txt (seller files)",
+          "PayPal timestamps: order 2026-11-11 22:58 UTC, claim opened 23:41 UTC, about 43 minutes later"
+        ],
+        "evidence_missing": [
+          "A UPS 'Delivered' status with a delivery date. PayPal's checklist marks this missing",
+          "Confirmation that the address on the label matches PayPal's transaction details. PayPal's checklist shows this as not visible to Kept",
+          "A response deadline. PayPal did not give one"
+        ],
+        "reasons": [
+          "The buyer says nothing arrived. PayPal's records show the claim was opened about 43 minutes after payment, and the seller says the item went out by UPS that same day. The record shows the parcel is in transit, not missing.",
+          "PayPal lists ITEM_NOT_RECEIVED among this payment's Seller Protection dispute categories, and the capture is marked ELIGIBLE. Whether protection applies is PayPal's decision.",
+          "Checklist: a verifiable tracking number is in PayPal's data. The 'Delivered' status is missing. Kept can't see the shipping address or recipient address. The seller says the address matches.",
+          "Refunding now could mean losing both the USD 48.00 and the item while it's still in transit with UPS. Sending supporting information is listed as an option for this case.",
+          "No partial-refund offer is possible because PayPal does not list make_offer here. The seller's one earlier not-received case closed with a USD 5.00 partial refund at the inquiry stage. That is noted only as background."
+        ],
+        "would_change": null,
+        "offer_amount": null,
+        "draft_note": "Hello, this is about dispute PP-R-GMF-10199635 for the Ceramic pour-over set (USD 48.00). The order was paid on 2026-11-11 at 22:58 UTC. We shipped it the same day, 2026-11-11, by UPS to the shipping address on the order in San Jose. The UPS tracking number is 1Z4F82V70392851434, and it is already on this transaction in PayPal. The claim was opened at 23:41 UTC, about 43 minutes after payment, before the parcel could reasonably have been delivered. UPS tracking shows the parcel shipped and in transit. We are watching the tracking and will update this case with the delivery date as soon as UPS shows the parcel delivered. We ask that the claim be reviewed with the tracking in mind. We are happy to help the buyer follow the parcel in the meantime. Thank you."
+      },
+      "validation": {
+        "ok": true,
+        "action": "provide_supporting_info",
+        "cap": null
+      },
+      "at": "2026-11-12T04:05:34.171Z",
+      "model": "claude-opus-5-5",
+      "steps": 2,
+      "toolCalls": [
+        "get_dispute",
+        "submit_decision"
+      ],
+      "durationMs": 22118,
+      "basis": {
+        "stage": "CHARGEBACK",
+        "status": "UNDER_REVIEW",
+        "disputeState": "UNDER_PAYPAL_REVIEW",
+        "links": [
+          "self",
+          "provide_supporting_info",
+          "accept_claim",
+          "adjudicate",
+          "require_evidence"
+        ],
+        "amount": "48.00",
+        "dueAt": null
+      }
+    },
     "PP-R-ADY-10199633": {
       "decision": {
         "recommendation": "FIGHT",
@@ -252,2007 +528,6 @@
     }
   ],
   "calls": [
-    {
-      "id": "95df19d1-18b0-446e-8a37-ea6abb997ed9",
-      "at": "2026-11-12T01:11:17.763Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
-      "status": 200,
-      "durationMs": 1820,
-      "requestId": null,
-      "debugId": "f943000f63514"
-    },
-    {
-      "id": "9bfb4de0-762e-43c1-a9b7-24a679126e27",
-      "at": "2026-11-12T01:11:17.763Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
-      "status": 200,
-      "durationMs": 1821,
-      "requestId": null,
-      "debugId": "f943000fc2b88"
-    },
-    {
-      "id": "650284a4-346c-461a-a5a7-1a127248eb12",
-      "at": "2026-11-12T01:11:17.765Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
-      "status": 200,
-      "durationMs": 2896,
-      "requestId": null,
-      "debugId": "f955005e38188"
-    },
-    {
-      "id": "becc4058-fbc9-4130-a392-e824189cd150",
-      "at": "2026-11-12T01:11:17.765Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
-      "status": 200,
-      "durationMs": 2897,
-      "requestId": null,
-      "debugId": "f9550057cdabe"
-    },
-    {
-      "id": "af694457-a795-41d1-9347-7ee77af9f438",
-      "at": "2026-11-12T01:11:17.765Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
-      "status": 200,
-      "durationMs": 3216,
-      "requestId": null,
-      "debugId": "f955005dd8113"
-    },
-    {
-      "id": "a6e5622d-2248-4519-8dad-76137b9a3f04",
-      "at": "2026-11-12T01:11:17.764Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
-      "status": 200,
-      "durationMs": 3457,
-      "requestId": null,
-      "debugId": "f95500598589c"
-    },
-    {
-      "id": "f560a975-6801-462f-af3a-bab58d10e2e7",
-      "at": "2026-11-12T01:11:21.222Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2DH68539417202354",
-      "status": 200,
-      "durationMs": 640,
-      "requestId": null,
-      "debugId": "f681973aea38b"
-    },
-    {
-      "id": "ed1d7b86-7816-4379-8000-1e424c8f745c",
-      "at": "2026-11-12T01:11:21.222Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/02A0291606763345L",
-      "status": 200,
-      "durationMs": 659,
-      "requestId": null,
-      "debugId": "f68197340c8fa"
-    },
-    {
-      "id": "6f422d3a-e385-4e78-929b-1b9542d7f6c6",
-      "at": "2026-11-12T01:11:21.222Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2WS2925138277954X",
-      "status": 200,
-      "durationMs": 849,
-      "requestId": null,
-      "debugId": "f681973252d0e"
-    },
-    {
-      "id": "3caaa864-4598-4da4-bdc9-d609ebbe5f1a",
-      "at": "2026-11-12T01:11:21.222Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/59W40554PM409652T",
-      "status": 200,
-      "durationMs": 949,
-      "requestId": null,
-      "debugId": "f681973aeb25e"
-    },
-    {
-      "id": "024bd55f-168d-477c-990f-82d10a963b3c",
-      "at": "2026-11-12T01:11:21.882Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/6LF66366PK137145V",
-      "status": 200,
-      "durationMs": 519,
-      "requestId": null,
-      "debugId": "f638909b90a27"
-    },
-    {
-      "id": "1e6f3ca4-a684-4d27-8451-e9cb95e2ee1b",
-      "at": "2026-11-12T01:11:21.862Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/4M013267KS7929009",
-      "status": 200,
-      "durationMs": 579,
-      "requestId": null,
-      "debugId": "f638909987674"
-    },
-    {
-      "id": "e8cbeb31-d6d4-4a8e-a83a-37ea3b03022c",
-      "at": "2026-11-12T01:11:22.171Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/61958196937699053",
-      "status": 200,
-      "durationMs": 770,
-      "requestId": null,
-      "debugId": "f638909ec1ff8"
-    },
-    {
-      "id": "f5166269-ed67-4789-8c6b-3856c19a5a7e",
-      "at": "2026-11-12T01:11:22.402Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/1VS093774J460400T",
-      "status": 200,
-      "durationMs": 699,
-      "requestId": null,
-      "debugId": "f638909ac14b8"
-    },
-    {
-      "id": "39df87aa-6b02-4967-a114-3d18fbb93659",
-      "at": "2026-11-12T01:11:22.072Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7VU02992SV414300C",
-      "status": 200,
-      "durationMs": 1439,
-      "requestId": null,
-      "debugId": "f638909bcdb3d"
-    },
-    {
-      "id": "ef6a1ed9-364a-45c5-b1e4-fba2cad6f243",
-      "at": "2026-11-12T01:11:22.441Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7FH08202AN770703L",
-      "status": 200,
-      "durationMs": 1190,
-      "requestId": null,
-      "debugId": "f638909298e90"
-    },
-    {
-      "id": "e906ea30-5052-4704-bcb1-1326727990f9",
-      "at": "2026-11-12T01:11:38.640Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes?page_size=50",
-      "status": 200,
-      "durationMs": 1622,
-      "requestId": null,
-      "debugId": "f283706b28387"
-    },
-    {
-      "id": "53d1fad6-6cc5-403b-93c6-216a952f0ff9",
-      "at": "2026-11-12T01:11:40.263Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
-      "status": 200,
-      "durationMs": 959,
-      "requestId": null,
-      "debugId": "f3885805ff7bd"
-    },
-    {
-      "id": "67314474-7866-4c3a-a601-0a8bda571490",
-      "at": "2026-11-12T01:11:40.263Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
-      "status": 200,
-      "durationMs": 1269,
-      "requestId": null,
-      "debugId": "f700120ed8e13"
-    },
-    {
-      "id": "bfed36e8-b598-41a6-8e5b-7680cbe47dbe",
-      "at": "2026-11-12T01:11:40.265Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
-      "status": 200,
-      "durationMs": 1347,
-      "requestId": null,
-      "debugId": "f700120a313dd"
-    },
-    {
-      "id": "bfeac58b-b334-4a6e-9e6c-55636b93de37",
-      "at": "2026-11-12T01:11:40.264Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
-      "status": 200,
-      "durationMs": 1348,
-      "requestId": null,
-      "debugId": "f7001201dc1db"
-    },
-    {
-      "id": "8b7b7831-f637-44b9-9390-ef08c3250463",
-      "at": "2026-11-12T01:11:40.264Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
-      "status": 200,
-      "durationMs": 1478,
-      "requestId": null,
-      "debugId": "f7001202da937"
-    },
-    {
-      "id": "3fb552e0-c026-42ca-aa6e-e9ec053216b6",
-      "at": "2026-11-12T01:11:40.263Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
-      "status": 200,
-      "durationMs": 1480,
-      "requestId": null,
-      "debugId": "f7001203b223f"
-    },
-    {
-      "id": "68636254-6277-4176-ad55-99d628eb47da",
-      "at": "2026-11-12T01:11:40.265Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
-      "status": 200,
-      "durationMs": 2197,
-      "requestId": null,
-      "debugId": "f282030b181dc"
-    },
-    {
-      "id": "20864f25-6eef-4b54-bb8b-47f311c86ab3",
-      "at": "2026-11-12T01:11:40.266Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
-      "status": 200,
-      "durationMs": 2406,
-      "requestId": null,
-      "debugId": "f2820306a7753"
-    },
-    {
-      "id": "5bf81e6c-1916-4ff8-b1ac-eab94c358395",
-      "at": "2026-11-12T01:11:40.265Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
-      "status": 200,
-      "durationMs": 2727,
-      "requestId": null,
-      "debugId": "f282030d7a25f"
-    },
-    {
-      "id": "4a4457a2-2f80-4081-bd0f-45056a3368b8",
-      "at": "2026-11-12T01:11:40.266Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
-      "status": 200,
-      "durationMs": 2806,
-      "requestId": null,
-      "debugId": "f28203008ed90"
-    },
-    {
-      "id": "ecca32e2-c339-439e-bd03-d3b2ec1324bb",
-      "at": "2026-11-12T01:11:43.073Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2WS2925138277954X",
-      "status": 200,
-      "durationMs": 648,
-      "requestId": null,
-      "debugId": "f4918663c8a8f"
-    },
-    {
-      "id": "5a3b58e8-3531-4216-9025-bbe19c7657a2",
-      "at": "2026-11-12T01:11:43.073Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2DH68539417202354",
-      "status": 200,
-      "durationMs": 813,
-      "requestId": null,
-      "debugId": "f4918663feee1"
-    },
-    {
-      "id": "95db4a10-43b8-46f0-8557-bc5d2463dc0a",
-      "at": "2026-11-12T01:11:43.073Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/02A0291606763345L",
-      "status": 200,
-      "durationMs": 815,
-      "requestId": null,
-      "debugId": "f491866ffee84"
-    },
-    {
-      "id": "fefeefb0-e490-4c15-a1d4-bd60d578d2a2",
-      "at": "2026-11-12T01:11:43.072Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/59W40554PM409652T",
-      "status": 200,
-      "durationMs": 817,
-      "requestId": null,
-      "debugId": "f49186667b222"
-    },
-    {
-      "id": "197ec914-e463-40c3-bfd2-4193e5dc0a52",
-      "at": "2026-11-12T01:11:43.887Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/6LF66366PK137145V",
-      "status": 200,
-      "durationMs": 535,
-      "requestId": null,
-      "debugId": "f219871c2139d"
-    },
-    {
-      "id": "c55ca01d-084f-4a22-b6b6-9ce5ebc1e745",
-      "at": "2026-11-12T01:11:43.889Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/61958196937699053",
-      "status": 200,
-      "durationMs": 734,
-      "requestId": null,
-      "debugId": "f21987155624f"
-    },
-    {
-      "id": "7b741c72-bcf2-44d4-9304-c0cee93ac396",
-      "at": "2026-11-12T01:11:43.721Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/4M013267KS7929009",
-      "status": 200,
-      "durationMs": 911,
-      "requestId": null,
-      "debugId": "f2198711331be"
-    },
-    {
-      "id": "20a7f3be-eaa5-477a-a959-951c3b1d4668",
-      "at": "2026-11-12T01:11:43.888Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7VU02992SV414300C",
-      "status": 200,
-      "durationMs": 764,
-      "requestId": null,
-      "debugId": "f2198718ecc7a"
-    },
-    {
-      "id": "a4ffc976-de4a-46d6-b29a-97a958f45ebc",
-      "at": "2026-11-12T01:11:44.624Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7FH08202AN770703L",
-      "status": 200,
-      "durationMs": 558,
-      "requestId": null,
-      "debugId": "f73636454c7ad"
-    },
-    {
-      "id": "7a8f6cf4-bbc6-4e0a-bc40-c04fe0eda017",
-      "at": "2026-11-12T01:11:44.423Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/1VS093774J460400T",
-      "status": 200,
-      "durationMs": 919,
-      "requestId": null,
-      "debugId": "f219871c69ea3"
-    },
-    {
-      "id": "223a0d9a-33ee-4fd3-8d59-12066d1dfd8b",
-      "at": "2026-11-12T01:12:00.359Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes?page_size=50",
-      "status": 200,
-      "durationMs": 1185,
-      "requestId": null,
-      "debugId": "f283849d49c9f"
-    },
-    {
-      "id": "f0103ed8-c54a-4f5f-9cb7-ef46dceed8f4",
-      "at": "2026-11-12T01:12:01.546Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
-      "status": 200,
-      "durationMs": 997,
-      "requestId": null,
-      "debugId": "f167973e93126"
-    },
-    {
-      "id": "724659c1-00c3-4099-a7ca-0882ca6b3448",
-      "at": "2026-11-12T01:12:01.545Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
-      "status": 200,
-      "durationMs": 1028,
-      "requestId": null,
-      "debugId": "f283849d84e54"
-    },
-    {
-      "id": "b92e2192-ba55-4ebc-8a87-e73d5d2fe47e",
-      "at": "2026-11-12T01:12:01.546Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
-      "status": 200,
-      "durationMs": 1519,
-      "requestId": null,
-      "debugId": "f1679734809b2"
-    },
-    {
-      "id": "fcd81f5d-ebaa-4c5f-bf84-278abdc62063",
-      "at": "2026-11-12T01:12:01.545Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
-      "status": 200,
-      "durationMs": 1608,
-      "requestId": null,
-      "debugId": "f167973201519"
-    },
-    {
-      "id": "93d360af-5326-4f5e-b1c7-c469e5703fc3",
-      "at": "2026-11-12T01:12:01.547Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
-      "status": 200,
-      "durationMs": 1616,
-      "requestId": null,
-      "debugId": "f167973134b8d"
-    },
-    {
-      "id": "0c4df485-00c4-482a-b475-56120266f2b7",
-      "at": "2026-11-12T01:12:01.545Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
-      "status": 200,
-      "durationMs": 1808,
-      "requestId": null,
-      "debugId": "f1679735c644b"
-    },
-    {
-      "id": "e6ef6784-2e17-4b02-afa6-cdfb7fc987d7",
-      "at": "2026-11-12T01:12:01.547Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
-      "status": 200,
-      "durationMs": 1966,
-      "requestId": null,
-      "debugId": "f299276c4a623"
-    },
-    {
-      "id": "4840d6b0-8703-4bb3-9d73-db84196f9034",
-      "at": "2026-11-12T01:12:01.548Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
-      "status": 200,
-      "durationMs": 2455,
-      "requestId": null,
-      "debugId": "f299276f0040e"
-    },
-    {
-      "id": "266e31bd-41c7-4011-a107-1f06122fc9f8",
-      "at": "2026-11-12T01:12:01.548Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
-      "status": 200,
-      "durationMs": 2925,
-      "requestId": null,
-      "debugId": "f299276056f38"
-    },
-    {
-      "id": "5a9d348e-79a8-4445-9ead-8c36ef28d275",
-      "at": "2026-11-12T01:12:01.547Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
-      "status": 200,
-      "durationMs": 3436,
-      "requestId": null,
-      "debugId": "f2992762ff3c7"
-    },
-    {
-      "id": "902763a0-f6c0-4f01-ba73-85860f3af798",
-      "at": "2026-11-12T01:12:04.984Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/02A0291606763345L",
-      "status": 200,
-      "durationMs": 510,
-      "requestId": null,
-      "debugId": "f10820456e0cb"
-    },
-    {
-      "id": "193eb1f7-7887-4b18-aa1f-422bd4feeb21",
-      "at": "2026-11-12T01:12:04.984Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2WS2925138277954X",
-      "status": 200,
-      "durationMs": 539,
-      "requestId": null,
-      "debugId": "f108204594eb1"
-    },
-    {
-      "id": "5b29d86c-4f33-4e41-b3a9-e5acae9c58ee",
-      "at": "2026-11-12T01:12:04.984Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/59W40554PM409652T",
-      "status": 200,
-      "durationMs": 589,
-      "requestId": null,
-      "debugId": "f108204df337d"
-    },
-    {
-      "id": "28f06f61-3639-486f-bca5-3d511734f281",
-      "at": "2026-11-12T01:12:04.984Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2DH68539417202354",
-      "status": 200,
-      "durationMs": 899,
-      "requestId": null,
-      "debugId": "f108204b30c52"
-    },
-    {
-      "id": "d47c3ef6-be63-4045-983d-4ab17d9b5d58",
-      "at": "2026-11-12T01:12:05.524Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/6LF66366PK137145V",
-      "status": 200,
-      "durationMs": 530,
-      "requestId": null,
-      "debugId": "f108204e8eac9"
-    },
-    {
-      "id": "492eaedc-8b1f-4279-9046-0b41b7923af6",
-      "at": "2026-11-12T01:12:05.494Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/4M013267KS7929009",
-      "status": 200,
-      "durationMs": 849,
-      "requestId": null,
-      "debugId": "f108204461060"
-    },
-    {
-      "id": "5161e156-0e39-41d0-960d-b541c6b7b8b8",
-      "at": "2026-11-12T01:12:05.884Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/61958196937699053",
-      "status": 200,
-      "durationMs": 660,
-      "requestId": null,
-      "debugId": "f167211355722"
-    },
-    {
-      "id": "b79dcf0f-420c-4c4e-940c-82569f479460",
-      "at": "2026-11-12T01:12:06.055Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/1VS093774J460400T",
-      "status": 200,
-      "durationMs": 808,
-      "requestId": null,
-      "debugId": "f167211267b2b"
-    },
-    {
-      "id": "67cc62e9-f7b8-4212-89c4-ac6512efbb30",
-      "at": "2026-11-12T01:12:05.574Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7VU02992SV414300C",
-      "status": 200,
-      "durationMs": 1309,
-      "requestId": null,
-      "debugId": "f1082041a4d89"
-    },
-    {
-      "id": "c9620232-19e8-4999-ae93-f08241b57275",
-      "at": "2026-11-12T01:12:06.344Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7FH08202AN770703L",
-      "status": 200,
-      "durationMs": 859,
-      "requestId": null,
-      "debugId": "f1672111bd414"
-    },
-    {
-      "id": "aa75f443-c347-401f-aa23-08bfaea1bcc7",
-      "at": "2026-11-12T01:12:22.216Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes?page_size=50",
-      "status": 200,
-      "durationMs": 1108,
-      "requestId": null,
-      "debugId": "f1816689f2478"
-    },
-    {
-      "id": "2f9dec8f-62e8-4ea1-96a9-08324c96d05f",
-      "at": "2026-11-12T01:12:23.324Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
-      "status": 200,
-      "durationMs": 700,
-      "requestId": null,
-      "debugId": "f181668fe3329"
-    },
-    {
-      "id": "f2194d97-c7c2-494f-91d1-a58667104120",
-      "at": "2026-11-12T01:12:23.326Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
-      "status": 200,
-      "durationMs": 1618,
-      "requestId": null,
-      "debugId": "f2199553a07a0"
-    },
-    {
-      "id": "b78e2743-f214-4951-ba31-11990af21cc3",
-      "at": "2026-11-12T01:12:23.325Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
-      "status": 200,
-      "durationMs": 1679,
-      "requestId": null,
-      "debugId": "f2199554fc8ff"
-    },
-    {
-      "id": "a5487059-592d-42cc-ae0d-ca1071cdbe04",
-      "at": "2026-11-12T01:12:23.325Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
-      "status": 200,
-      "durationMs": 1680,
-      "requestId": null,
-      "debugId": "f219955759b71"
-    },
-    {
-      "id": "de9ae60e-a94b-40eb-934b-4ae48dc16575",
-      "at": "2026-11-12T01:12:23.326Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
-      "status": 200,
-      "durationMs": 1989,
-      "requestId": null,
-      "debugId": "f2199556b0c7b"
-    },
-    {
-      "id": "84d2a500-36a6-4559-96a0-95804a3a8a48",
-      "at": "2026-11-12T01:12:23.327Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
-      "status": 200,
-      "durationMs": 2097,
-      "requestId": null,
-      "debugId": "f342136594674"
-    },
-    {
-      "id": "03ec299a-2629-445f-817a-ba3408c3de0a",
-      "at": "2026-11-12T01:12:23.328Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
-      "status": 200,
-      "durationMs": 2276,
-      "requestId": null,
-      "debugId": "f342136c712c3"
-    },
-    {
-      "id": "384e8296-139b-4d8c-b7c2-308afdf8d5b6",
-      "at": "2026-11-12T01:12:23.327Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
-      "status": 200,
-      "durationMs": 2287,
-      "requestId": null,
-      "debugId": "f342136c72ee4"
-    },
-    {
-      "id": "2e400874-e985-446f-bd6b-a31161078688",
-      "at": "2026-11-12T01:12:23.325Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
-      "status": 200,
-      "durationMs": 2379,
-      "requestId": null,
-      "debugId": "f219955c2e7f7"
-    },
-    {
-      "id": "8dd5c9d8-2633-4428-b55a-8ef3a0ecdff7",
-      "at": "2026-11-12T01:12:23.327Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
-      "status": 200,
-      "durationMs": 2937,
-      "requestId": null,
-      "debugId": "f342136e6c37d"
-    },
-    {
-      "id": "58aaaad3-8d76-43d2-92c2-3b4b6ff87dd4",
-      "at": "2026-11-12T01:12:26.265Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/59W40554PM409652T",
-      "status": 200,
-      "durationMs": 669,
-      "requestId": null,
-      "debugId": "f241435df6028"
-    },
-    {
-      "id": "96680a81-8211-4f45-8d19-df4397cb13ab",
-      "at": "2026-11-12T01:12:26.266Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2WS2925138277954X",
-      "status": 200,
-      "durationMs": 938,
-      "requestId": null,
-      "debugId": "f241435d87071"
-    },
-    {
-      "id": "dedb2bff-62e4-4697-965e-706ec0208ab4",
-      "at": "2026-11-12T01:12:26.265Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/02A0291606763345L",
-      "status": 200,
-      "durationMs": 1129,
-      "requestId": null,
-      "debugId": "f241435dc69fe"
-    },
-    {
-      "id": "c003ca36-4566-420a-a655-5f81d54b214c",
-      "at": "2026-11-12T01:12:26.266Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2DH68539417202354",
-      "status": 200,
-      "durationMs": 1438,
-      "requestId": null,
-      "debugId": "f241435403cee"
-    },
-    {
-      "id": "a11cd2a5-4215-4757-ad03-94d589efae12",
-      "at": "2026-11-12T01:12:26.935Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/4M013267KS7929009",
-      "status": 200,
-      "durationMs": 909,
-      "requestId": null,
-      "debugId": "f88450412489e"
-    },
-    {
-      "id": "d9187513-49d1-4eb8-902c-1aa8e98c30e5",
-      "at": "2026-11-12T01:12:27.705Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/61958196937699053",
-      "status": 200,
-      "durationMs": 520,
-      "requestId": null,
-      "debugId": "f682769151c1c"
-    },
-    {
-      "id": "963f44a8-20f7-4d66-ad45-feaa5c8a895b",
-      "at": "2026-11-12T01:12:27.394Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7VU02992SV414300C",
-      "status": 200,
-      "durationMs": 850,
-      "requestId": null,
-      "debugId": "f884504281e92"
-    },
-    {
-      "id": "f97e66ab-d554-40ae-8cac-c07fb173b01b",
-      "at": "2026-11-12T01:12:27.205Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/6LF66366PK137145V",
-      "status": 200,
-      "durationMs": 1239,
-      "requestId": null,
-      "debugId": "f884504a15f78"
-    },
-    {
-      "id": "130d72ef-5255-4173-909e-12ddfe1d53d0",
-      "at": "2026-11-12T01:12:27.845Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/1VS093774J460400T",
-      "status": 200,
-      "durationMs": 829,
-      "requestId": null,
-      "debugId": "f682769184492"
-    },
-    {
-      "id": "eed505f2-58c2-4c7e-9323-832823330220",
-      "at": "2026-11-12T01:12:28.226Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7FH08202AN770703L",
-      "status": 200,
-      "durationMs": 958,
-      "requestId": null,
-      "debugId": "f682769460cd0"
-    },
-    {
-      "id": "2984a804-846d-482c-9913-894c08c1c335",
-      "at": "2026-11-12T01:12:44.200Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes?page_size=50",
-      "status": 200,
-      "durationMs": 3015,
-      "requestId": null,
-      "debugId": "f1692232b5eaa"
-    },
-    {
-      "id": "3f88c69a-3d28-487f-826b-1ad6eb22a70f",
-      "at": "2026-11-12T01:12:47.215Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
-      "status": 200,
-      "durationMs": 800,
-      "requestId": null,
-      "debugId": "f255696b3f6c7"
-    },
-    {
-      "id": "1ca041d5-e6fe-4d94-9515-6bdf8db9c02f",
-      "at": "2026-11-12T01:12:47.216Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
-      "status": 503,
-      "durationMs": 1329,
-      "requestId": null,
-      "debugId": null
-    },
-    {
-      "id": "3eefa974-4e35-492b-9564-08c93f85d863",
-      "at": "2026-11-12T01:12:47.216Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
-      "status": 200,
-      "durationMs": 1790,
-      "requestId": null,
-      "debugId": "f82605508d9e1"
-    },
-    {
-      "id": "036f51a7-1e8b-4b70-8114-5ccfc97138ed",
-      "at": "2026-11-12T01:12:47.217Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
-      "status": 200,
-      "durationMs": 1898,
-      "requestId": null,
-      "debugId": "f826055a9bf4b"
-    },
-    {
-      "id": "30e10afe-e479-4fc8-bc77-504c36766881",
-      "at": "2026-11-12T01:12:47.217Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
-      "status": 200,
-      "durationMs": 1998,
-      "requestId": null,
-      "debugId": "f8260552bd3cc"
-    },
-    {
-      "id": "b9ad7c0b-fdb1-4af5-977f-78ae646aa0b2",
-      "at": "2026-11-12T01:12:47.215Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
-      "status": 200,
-      "durationMs": 2410,
-      "requestId": null,
-      "debugId": "f826055ee3ea6"
-    },
-    {
-      "id": "8951e231-7c2a-44ee-8c71-ada6e073be55",
-      "at": "2026-11-12T01:12:47.217Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
-      "status": 200,
-      "durationMs": 2418,
-      "requestId": null,
-      "debugId": "f983826e8ae28"
-    },
-    {
-      "id": "14dbc5cb-166e-4e0d-bd79-a3adb597abdd",
-      "at": "2026-11-12T01:12:47.218Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
-      "status": 200,
-      "durationMs": 2667,
-      "requestId": null,
-      "debugId": "f9838267fdd70"
-    },
-    {
-      "id": "addb4103-ec2b-4cbd-9916-0d168ec691f3",
-      "at": "2026-11-12T01:12:47.219Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
-      "status": 200,
-      "durationMs": 2756,
-      "requestId": null,
-      "debugId": "f983826bf2ec4"
-    },
-    {
-      "id": "243e2e84-6865-4d39-b1a7-6429b5058c29",
-      "at": "2026-11-12T01:12:47.218Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
-      "status": 200,
-      "durationMs": 3367,
-      "requestId": null,
-      "debugId": "f9838261fe406"
-    },
-    {
-      "id": "7cd26cf4-cb1a-4951-84d2-bc9e536e8f80",
-      "at": "2026-11-12T01:12:50.056Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
-      "status": 200,
-      "durationMs": 728,
-      "requestId": null,
-      "debugId": "f5631571526ed",
-      "retried": true
-    },
-    {
-      "id": "57236ead-5199-4079-b1c0-fa5cf566b992",
-      "at": "2026-11-12T01:12:50.785Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2DH68539417202354",
-      "status": 200,
-      "durationMs": 920,
-      "requestId": null,
-      "debugId": "f295434ee8265"
-    },
-    {
-      "id": "211f4913-c76f-44de-909e-764764d4a26e",
-      "at": "2026-11-12T01:12:50.785Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2WS2925138277954X",
-      "status": 200,
-      "durationMs": 921,
-      "requestId": null,
-      "debugId": "f295434a72bf1"
-    },
-    {
-      "id": "9fe07b23-b749-4054-900e-33bf8f94a768",
-      "at": "2026-11-12T01:12:50.785Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/02A0291606763345L",
-      "status": 200,
-      "durationMs": 1122,
-      "requestId": null,
-      "debugId": "f295434c71415"
-    },
-    {
-      "id": "4fc95fce-ba7e-4429-b071-a523ba92fb6c",
-      "at": "2026-11-12T01:12:50.785Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/59W40554PM409652T",
-      "status": 200,
-      "durationMs": 1130,
-      "requestId": null,
-      "debugId": "f295434d9a36c"
-    },
-    {
-      "id": "b8d8b5d0-09f7-47cc-92f5-eba726a1e506",
-      "at": "2026-11-12T01:12:51.706Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/4M013267KS7929009",
-      "status": 200,
-      "durationMs": 769,
-      "requestId": null,
-      "debugId": "f7673962bfe2d"
-    },
-    {
-      "id": "3a74dd66-c5ee-4817-860f-da3420199a4e",
-      "at": "2026-11-12T01:12:51.706Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/6LF66366PK137145V",
-      "status": 200,
-      "durationMs": 819,
-      "requestId": null,
-      "debugId": "f767396e8c588"
-    },
-    {
-      "id": "e75ed533-c5c0-4f9e-80c0-6ded855222d6",
-      "at": "2026-11-12T01:12:51.908Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7VU02992SV414300C",
-      "status": 200,
-      "durationMs": 957,
-      "requestId": null,
-      "debugId": "f7673963f029e"
-    },
-    {
-      "id": "4163e175-5d2a-4e70-93a4-0d9badd1ff36",
-      "at": "2026-11-12T01:12:51.916Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/61958196937699053",
-      "status": 200,
-      "durationMs": 1249,
-      "requestId": null,
-      "debugId": "f767396b73d50"
-    },
-    {
-      "id": "3b6e6e76-03eb-477a-b53f-d4372212bcce",
-      "at": "2026-11-12T01:12:52.476Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/1VS093774J460400T",
-      "status": 200,
-      "durationMs": 1239,
-      "requestId": null,
-      "debugId": "f767396d9bcc8"
-    },
-    {
-      "id": "666304d7-f50b-417a-9102-ae2aa944de2c",
-      "at": "2026-11-12T01:12:52.526Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7FH08202AN770703L",
-      "status": 200,
-      "durationMs": 1229,
-      "requestId": null,
-      "debugId": "f7673967f9f02"
-    },
-    {
-      "id": "bc328423-e2ee-46fc-9ebc-6878b72df768",
-      "at": "2026-11-12T01:13:08.761Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes?page_size=50",
-      "status": 200,
-      "durationMs": 1502,
-      "requestId": null,
-      "debugId": "f493575c31f6e"
-    },
-    {
-      "id": "f5f7cf35-b3a9-436d-a8df-d0f00b89b550",
-      "at": "2026-11-12T01:13:10.265Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
-      "status": 200,
-      "durationMs": 1346,
-      "requestId": null,
-      "debugId": "f5854201628d6"
-    },
-    {
-      "id": "b9bbb942-85ae-4ae1-9a07-07bd5f824693",
-      "at": "2026-11-12T01:13:10.266Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
-      "status": 200,
-      "durationMs": 1537,
-      "requestId": null,
-      "debugId": "f585420f572f7"
-    },
-    {
-      "id": "b9498584-77f1-4394-abad-724d67f79945",
-      "at": "2026-11-12T01:13:10.264Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
-      "status": 200,
-      "durationMs": 1548,
-      "requestId": null,
-      "debugId": "f8305526b75d4"
-    },
-    {
-      "id": "f3bd620d-fd86-4ff1-94d8-9212faf320c8",
-      "at": "2026-11-12T01:13:10.264Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
-      "status": 200,
-      "durationMs": 1689,
-      "requestId": null,
-      "debugId": "f585420284879"
-    },
-    {
-      "id": "ed1b4f0f-57a1-4737-b861-04b4a3422487",
-      "at": "2026-11-12T01:13:10.265Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
-      "status": 200,
-      "durationMs": 1748,
-      "requestId": null,
-      "debugId": "f585420468d82"
-    },
-    {
-      "id": "5f3a9101-0617-43da-b4c8-57e27ea072f2",
-      "at": "2026-11-12T01:13:10.267Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
-      "status": 200,
-      "durationMs": 1916,
-      "requestId": null,
-      "debugId": "f8247479a52ca"
-    },
-    {
-      "id": "6f522633-3330-4cdc-b20b-4ab0ff0ba9a9",
-      "at": "2026-11-12T01:13:10.266Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
-      "status": 200,
-      "durationMs": 2067,
-      "requestId": null,
-      "debugId": "f585420d39c95"
-    },
-    {
-      "id": "aeb179cf-aae6-4fd5-9ecf-c057163a6b0d",
-      "at": "2026-11-12T01:13:10.268Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
-      "status": 200,
-      "durationMs": 2125,
-      "requestId": null,
-      "debugId": "f824747819eae"
-    },
-    {
-      "id": "303c3bca-3972-4979-828b-d68601e019ff",
-      "at": "2026-11-12T01:13:10.266Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
-      "status": 200,
-      "durationMs": 2487,
-      "requestId": null,
-      "debugId": "f824747144ee8"
-    },
-    {
-      "id": "14d77575-3be6-4326-a85b-23ce033218ee",
-      "at": "2026-11-12T01:13:10.267Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
-      "status": 200,
-      "durationMs": 2756,
-      "requestId": null,
-      "debugId": "f82474799dc83"
-    },
-    {
-      "id": "221f96fd-2e49-4a0b-a8f4-02d4cc86b92d",
-      "at": "2026-11-12T01:13:13.023Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2WS2925138277954X",
-      "status": 200,
-      "durationMs": 650,
-      "requestId": null,
-      "debugId": "f980369ca31ee"
-    },
-    {
-      "id": "d62d3f50-e114-47d4-9681-ab409fbc8026",
-      "at": "2026-11-12T01:13:13.023Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/02A0291606763345L",
-      "status": 200,
-      "durationMs": 920,
-      "requestId": null,
-      "debugId": "f9803695e75fb"
-    },
-    {
-      "id": "25d47406-0e1f-4144-a926-2709283d7f53",
-      "at": "2026-11-12T01:13:13.024Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2DH68539417202354",
-      "status": 200,
-      "durationMs": 920,
-      "requestId": null,
-      "debugId": "f980369cab6ea"
-    },
-    {
-      "id": "15914726-ea91-4007-8848-a906ceedee3d",
-      "at": "2026-11-12T01:13:13.023Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/59W40554PM409652T",
-      "status": 200,
-      "durationMs": 1400,
-      "requestId": null,
-      "debugId": "f980369bbdb9e"
-    },
-    {
-      "id": "f599be3d-1e22-4cfc-b498-3c45232f09a0",
-      "at": "2026-11-12T01:13:13.943Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/6LF66366PK137145V",
-      "status": 200,
-      "durationMs": 920,
-      "requestId": null,
-      "debugId": "f6422211d0411"
-    },
-    {
-      "id": "8208d507-82d8-4649-bd48-a7cd148e27aa",
-      "at": "2026-11-12T01:13:13.944Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7VU02992SV414300C",
-      "status": 200,
-      "durationMs": 1119,
-      "requestId": null,
-      "debugId": "f64222161cfa2"
-    },
-    {
-      "id": "b44dcd8d-c26b-4d64-bcf9-29289973e252",
-      "at": "2026-11-12T01:13:13.674Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/4M013267KS7929009",
-      "status": 200,
-      "durationMs": 1419,
-      "requestId": null,
-      "debugId": "f6422210ecea8"
-    },
-    {
-      "id": "4eb81a80-0c95-4e9b-ac3e-a02ede6116c7",
-      "at": "2026-11-12T01:13:14.423Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/61958196937699053",
-      "status": 200,
-      "durationMs": 701,
-      "requestId": null,
-      "debugId": "f64222102c9bf"
-    },
-    {
-      "id": "743bfc1f-9554-4720-a7f1-0f4d0e4049d1",
-      "at": "2026-11-12T01:13:14.864Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/1VS093774J460400T",
-      "status": 200,
-      "durationMs": 829,
-      "requestId": null,
-      "debugId": "f21150648751c"
-    },
-    {
-      "id": "8e121411-c926-4d20-b221-8eece4a4dde4",
-      "at": "2026-11-12T01:13:15.063Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7FH08202AN770703L",
-      "status": 200,
-      "durationMs": 880,
-      "requestId": null,
-      "debugId": "f211506df8557"
-    },
-    {
-      "id": "ba0db435-9fb3-494e-8a6d-31860e43c6aa",
-      "at": "2026-11-12T01:13:30.959Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes?page_size=50",
-      "status": 200,
-      "durationMs": 1105,
-      "requestId": null,
-      "debugId": "f291713b7dce1"
-    },
-    {
-      "id": "35b7faf6-4b35-4095-8096-df5ac6c49d54",
-      "at": "2026-11-12T01:13:32.065Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
-      "status": 200,
-      "durationMs": 929,
-      "requestId": null,
-      "debugId": "f7600581ed149"
-    },
-    {
-      "id": "4581334b-d4e3-491f-a8d2-f4555f4e2d90",
-      "at": "2026-11-12T01:13:32.066Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
-      "status": 200,
-      "durationMs": 1157,
-      "requestId": null,
-      "debugId": "f76005870f876"
-    },
-    {
-      "id": "06267e31-1805-44d2-b9b9-615943211468",
-      "at": "2026-11-12T01:13:32.064Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
-      "status": 200,
-      "durationMs": 1360,
-      "requestId": null,
-      "debugId": "f76005830fa11"
-    },
-    {
-      "id": "1104fc4c-6b92-4ebb-ac98-8596b7827741",
-      "at": "2026-11-12T01:13:32.066Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
-      "status": 200,
-      "durationMs": 1657,
-      "requestId": null,
-      "debugId": "f76005888b4e9"
-    },
-    {
-      "id": "d665e715-0546-4900-b6bb-f8e85c38b173",
-      "at": "2026-11-12T01:13:32.064Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
-      "status": 200,
-      "durationMs": 1670,
-      "requestId": null,
-      "debugId": "f7600580dea44"
-    },
-    {
-      "id": "10c48475-a650-44bb-aaf8-cb042d97d72c",
-      "at": "2026-11-12T01:13:32.065Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
-      "status": 200,
-      "durationMs": 1843,
-      "requestId": null,
-      "debugId": "f7600586ae572"
-    },
-    {
-      "id": "d719a8d9-bbc9-467c-af72-88abb2ba1263",
-      "at": "2026-11-12T01:13:32.067Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
-      "status": 200,
-      "durationMs": 2046,
-      "requestId": null,
-      "debugId": "f661682dede6b"
-    },
-    {
-      "id": "ad68f98c-3460-41e8-8963-ff11bf6f66b9",
-      "at": "2026-11-12T01:13:32.068Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
-      "status": 200,
-      "durationMs": 2086,
-      "requestId": null,
-      "debugId": "f6616826c17c2"
-    },
-    {
-      "id": "0ce36aa5-13ab-4e6f-8d2f-49385f0900e2",
-      "at": "2026-11-12T01:13:32.067Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
-      "status": 200,
-      "durationMs": 2356,
-      "requestId": null,
-      "debugId": "f661682a93a89"
-    },
-    {
-      "id": "b6cf7a1a-236c-4028-ac03-d584fa793f75",
-      "at": "2026-11-12T01:13:32.067Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
-      "status": 200,
-      "durationMs": 2517,
-      "requestId": null,
-      "debugId": "f661682882d0d"
-    },
-    {
-      "id": "4fa9e9ba-8815-4716-a793-f3a2d6b15f99",
-      "at": "2026-11-12T01:13:34.585Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2WS2925138277954X",
-      "status": 200,
-      "durationMs": 958,
-      "requestId": null,
-      "debugId": "f350205fae54c"
-    },
-    {
-      "id": "29d941f0-645c-4160-9564-8f3d59e5f212",
-      "at": "2026-11-12T01:13:34.585Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2DH68539417202354",
-      "status": 200,
-      "durationMs": 960,
-      "requestId": null,
-      "debugId": "f3502052218ab"
-    },
-    {
-      "id": "42968907-b68d-4f1e-b6c2-3b2cc5941600",
-      "at": "2026-11-12T01:13:34.585Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/02A0291606763345L",
-      "status": 200,
-      "durationMs": 1189,
-      "requestId": null,
-      "debugId": "f3502050c53c7"
-    },
-    {
-      "id": "26dd9f7f-7536-41c2-a796-40be0b75921b",
-      "at": "2026-11-12T01:13:34.584Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/59W40554PM409652T",
-      "status": 200,
-      "durationMs": 1489,
-      "requestId": null,
-      "debugId": "f35020587fb6e"
-    },
-    {
-      "id": "7260b8c4-5cb0-43c2-80c1-c2073a391b74",
-      "at": "2026-11-12T01:13:35.544Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/4M013267KS7929009",
-      "status": 200,
-      "durationMs": 779,
-      "requestId": null,
-      "debugId": "f350205cc35f5"
-    },
-    {
-      "id": "7312f1e3-a2c5-42f4-b87b-637a4ad10682",
-      "at": "2026-11-12T01:13:35.774Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7VU02992SV414300C",
-      "status": 200,
-      "durationMs": 930,
-      "requestId": null,
-      "debugId": "f309676297cf3"
-    },
-    {
-      "id": "f0350406-0836-48e5-a78c-11b115c2687b",
-      "at": "2026-11-12T01:13:35.545Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/6LF66366PK137145V",
-      "status": 200,
-      "durationMs": 1358,
-      "requestId": null,
-      "debugId": "f3502051c93fc"
-    },
-    {
-      "id": "b8a184b1-003a-456c-bbd3-5fcbe330c006",
-      "at": "2026-11-12T01:13:36.324Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/1VS093774J460400T",
-      "status": 200,
-      "durationMs": 630,
-      "requestId": null,
-      "debugId": "f309676b3f1ba"
-    },
-    {
-      "id": "2ca2e654-e580-47d4-b797-a03fcd14f706",
-      "at": "2026-11-12T01:13:36.074Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/61958196937699053",
-      "status": 200,
-      "durationMs": 910,
-      "requestId": null,
-      "debugId": "f3096768f1c8c"
-    },
-    {
-      "id": "c51fbd7c-29d5-4cae-abef-56d20ea0ca1f",
-      "at": "2026-11-12T01:13:36.704Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7FH08202AN770703L",
-      "status": 200,
-      "durationMs": 879,
-      "requestId": null,
-      "debugId": "f420903eccb4e"
-    },
-    {
-      "id": "3b0ebb78-2bc7-4e67-b119-0e4270f3d6b1",
-      "at": "2026-11-12T01:13:52.605Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes?page_size=50",
-      "status": 200,
-      "durationMs": 2269,
-      "requestId": null,
-      "debugId": "f65654420718e"
-    },
-    {
-      "id": "10142fdd-8c65-4dd5-a12d-b1b72ceca839",
-      "at": "2026-11-12T01:13:54.875Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
-      "status": 200,
-      "durationMs": 789,
-      "requestId": null,
-      "debugId": "f3440520e88e9"
-    },
-    {
-      "id": "e7abe7da-f57e-470e-a574-ae6ffe25823d",
-      "at": "2026-11-12T01:13:54.876Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
-      "status": 200,
-      "durationMs": 1118,
-      "requestId": null,
-      "debugId": "f344052cbc170"
-    },
-    {
-      "id": "3e5bcb91-2a38-4968-bcce-530b8ddfc8ca",
-      "at": "2026-11-12T01:13:54.876Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
-      "status": 200,
-      "durationMs": 1128,
-      "requestId": null,
-      "debugId": "f344052b5f2ec"
-    },
-    {
-      "id": "8ac64c68-ca89-46f9-a5b6-dc4052165c7e",
-      "at": "2026-11-12T01:13:54.877Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
-      "status": 200,
-      "durationMs": 1437,
-      "requestId": null,
-      "debugId": "f344052698f95"
-    },
-    {
-      "id": "4df6f8f3-742e-43c5-aa95-eb5ca8e27ba6",
-      "at": "2026-11-12T01:13:54.876Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
-      "status": 200,
-      "durationMs": 1534,
-      "requestId": null,
-      "debugId": "f344052108a38"
-    },
-    {
-      "id": "c6457da6-f01c-4f73-8b0a-79cbbee23b4f",
-      "at": "2026-11-12T01:13:54.875Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
-      "status": 200,
-      "durationMs": 1542,
-      "requestId": null,
-      "debugId": "f34405281907a"
-    },
-    {
-      "id": "eb3dcd42-e06d-4a56-8db8-e6419959352f",
-      "at": "2026-11-12T01:13:54.878Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
-      "status": 200,
-      "durationMs": 1946,
-      "requestId": null,
-      "debugId": "f545531dd7476"
-    },
-    {
-      "id": "f666beeb-2429-491b-84e6-108d0a54780a",
-      "at": "2026-11-12T01:13:54.877Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
-      "status": 200,
-      "durationMs": 2267,
-      "requestId": null,
-      "debugId": "f5455319b550d"
-    },
-    {
-      "id": "779dff62-5d79-408c-b9a9-c8d19efc5b19",
-      "at": "2026-11-12T01:13:54.877Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
-      "status": 200,
-      "durationMs": 2467,
-      "requestId": null,
-      "debugId": "f54553168df43"
-    },
-    {
-      "id": "4a18b836-19b8-41f5-97c7-5a46a8030e1b",
-      "at": "2026-11-12T01:13:54.877Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
-      "status": 200,
-      "durationMs": 2707,
-      "requestId": null,
-      "debugId": "f54553137aa9e"
-    },
-    {
-      "id": "fc28f15e-4ad5-4090-b48b-041742f40b7b",
-      "at": "2026-11-12T01:13:57.585Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2DH68539417202354",
-      "status": 200,
-      "durationMs": 759,
-      "requestId": null,
-      "debugId": "f8807030eab89"
-    },
-    {
-      "id": "7a9aef4c-4b51-4928-9630-7da06894acd3",
-      "at": "2026-11-12T01:13:57.585Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/02A0291606763345L",
-      "status": 200,
-      "durationMs": 760,
-      "requestId": null,
-      "debugId": "f88070360dba3"
-    },
-    {
-      "id": "c9082c98-57c2-4a20-8946-6581266c59a0",
-      "at": "2026-11-12T01:13:57.585Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/59W40554PM409652T",
-      "status": 200,
-      "durationMs": 920,
-      "requestId": null,
-      "debugId": "f8807032211ef"
-    },
-    {
-      "id": "75ef47e3-8cfe-4695-a6a8-ad7bfa9311e0",
-      "at": "2026-11-12T01:13:57.585Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2WS2925138277954X",
-      "status": 200,
-      "durationMs": 1359,
-      "requestId": null,
-      "debugId": "f880703dd0843"
-    },
-    {
-      "id": "049bbfbe-861f-4e3f-872d-1eaa9d71515f",
-      "at": "2026-11-12T01:13:58.505Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7VU02992SV414300C",
-      "status": 200,
-      "durationMs": 599,
-      "requestId": null,
-      "debugId": "f458923fc82b9"
-    },
-    {
-      "id": "294491d0-73fc-47a3-908e-3401d3443fb3",
-      "at": "2026-11-12T01:13:58.345Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/6LF66366PK137145V",
-      "status": 200,
-      "durationMs": 1029,
-      "requestId": null,
-      "debugId": "f4589239242ce"
-    },
-    {
-      "id": "f4c81935-9342-4d69-8285-9c92545ea74d",
-      "at": "2026-11-12T01:13:58.345Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/4M013267KS7929009",
-      "status": 200,
-      "durationMs": 1229,
-      "requestId": null,
-      "debugId": "f45892357c814"
-    },
-    {
-      "id": "bfaac547-8b84-401c-9bf9-1b0d18b37760",
-      "at": "2026-11-12T01:13:58.945Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/61958196937699053",
-      "status": 200,
-      "durationMs": 670,
-      "requestId": null,
-      "debugId": "f584473d739dd"
-    },
-    {
-      "id": "3f85c21a-f1b7-4dc7-b0bf-b88901c10b3b",
-      "at": "2026-11-12T01:13:59.375Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7FH08202AN770703L",
-      "status": 200,
-      "durationMs": 799,
-      "requestId": null,
-      "debugId": "f584473290c70"
-    },
-    {
-      "id": "59cdfebe-fd61-4336-87be-cd464d2fd065",
-      "at": "2026-11-12T01:13:59.105Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/1VS093774J460400T",
-      "status": 200,
-      "durationMs": 1239,
-      "requestId": null,
-      "debugId": "f584473cf1f82"
-    },
-    {
-      "id": "04027e6b-6c26-4396-82a5-53fb2a87e03f",
-      "at": "2026-11-12T01:14:15.366Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes?page_size=50",
-      "status": 200,
-      "durationMs": 1621,
-      "requestId": null,
-      "debugId": "f6392830393ad"
-    },
-    {
-      "id": "11296db6-6f94-4aa2-87f3-1c2a6fc1ab9e",
-      "at": "2026-11-12T01:14:16.988Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
-      "status": 200,
-      "durationMs": 879,
-      "requestId": null,
-      "debugId": "f4930846d59c7"
-    },
-    {
-      "id": "1ba17bc1-3665-48c8-a862-aaa62d240256",
-      "at": "2026-11-12T01:14:16.989Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
-      "status": 200,
-      "durationMs": 879,
-      "requestId": null,
-      "debugId": "f493084e72e76"
-    },
-    {
-      "id": "91aa4e72-ae6b-455f-bcd4-65376b77c3e9",
-      "at": "2026-11-12T01:14:16.990Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
-      "status": 200,
-      "durationMs": 1198,
-      "requestId": null,
-      "debugId": "f493084df9834"
-    },
-    {
-      "id": "08945d73-db3e-4db3-90ab-3f371bafaa60",
-      "at": "2026-11-12T01:14:16.989Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
-      "status": 200,
-      "durationMs": 1378,
-      "requestId": null,
-      "debugId": "f493084e87c22"
-    },
-    {
-      "id": "71c30399-bc00-406e-b220-2084411505e5",
-      "at": "2026-11-12T01:14:16.988Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
-      "status": 200,
-      "durationMs": 1470,
-      "requestId": null,
-      "debugId": "f493084e3b73d"
-    },
-    {
-      "id": "5b76b71c-ec62-4574-8bca-e8cc97488465",
-      "at": "2026-11-12T01:14:16.989Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
-      "status": 200,
-      "durationMs": 1578,
-      "requestId": null,
-      "debugId": "f49308452a56f"
-    },
-    {
-      "id": "641f2792-7cdf-4663-8f4e-44a3671b405b",
-      "at": "2026-11-12T01:14:16.990Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
-      "status": 200,
-      "durationMs": 2397,
-      "requestId": null,
-      "debugId": "f112966774ff9"
-    },
-    {
-      "id": "9f5834ae-db88-4016-9433-1a45f4e20bb7",
-      "at": "2026-11-12T01:14:16.991Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
-      "status": 200,
-      "durationMs": 2636,
-      "requestId": null,
-      "debugId": "f569324660ddf"
-    },
-    {
-      "id": "7c8d7939-057c-49ad-b2fc-5185d0f98607",
-      "at": "2026-11-12T01:14:16.990Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
-      "status": 200,
-      "durationMs": 2638,
-      "requestId": null,
-      "debugId": "f569324ea2375"
-    },
-    {
-      "id": "d0c27be5-f0fc-43af-b94e-33d1a62058c9",
-      "at": "2026-11-12T01:14:16.991Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
-      "status": 200,
-      "durationMs": 3676,
-      "requestId": null,
-      "debugId": "f5693246dc9af"
-    },
-    {
-      "id": "bad98428-4eae-4e32-ac5a-c4e87a50ba26",
-      "at": "2026-11-12T01:14:20.669Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/02A0291606763345L",
-      "status": 200,
-      "durationMs": 648,
-      "requestId": null,
-      "debugId": "f80300179e4e0"
-    },
-    {
-      "id": "b4c9e075-97f0-4754-b71b-57e7b90b5739",
-      "at": "2026-11-12T01:14:20.668Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/59W40554PM409652T",
-      "status": 200,
-      "durationMs": 919,
-      "requestId": null,
-      "debugId": "f8030012ba23b"
-    },
-    {
-      "id": "077a7947-d27b-4eda-a5ea-fc64d682e2b8",
-      "at": "2026-11-12T01:14:20.669Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2WS2925138277954X",
-      "status": 200,
-      "durationMs": 1240,
-      "requestId": null,
-      "debugId": "f803001257f6a"
-    },
-    {
-      "id": "a289e780-a4ed-47e0-bafa-9bdc9cfb0476",
-      "at": "2026-11-12T01:14:20.669Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2DH68539417202354",
-      "status": 200,
-      "durationMs": 1241,
-      "requestId": null,
-      "debugId": "f803001831929"
-    },
-    {
-      "id": "470e72b3-898d-4d00-b810-578e37d1df1d",
-      "at": "2026-11-12T01:14:21.318Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/4M013267KS7929009",
-      "status": 200,
-      "durationMs": 1229,
-      "requestId": null,
-      "debugId": "f803001c318cb"
-    },
-    {
-      "id": "7ac0167a-a305-4e97-8a94-b608584bb807",
-      "at": "2026-11-12T01:14:21.910Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7VU02992SV414300C",
-      "status": 200,
-      "durationMs": 738,
-      "requestId": null,
-      "debugId": "f833310e8bf73"
-    },
-    {
-      "id": "deb302c6-684e-4e81-8833-92b7842bd546",
-      "at": "2026-11-12T01:14:21.588Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/6LF66366PK137145V",
-      "status": 200,
-      "durationMs": 1149,
-      "requestId": null,
-      "debugId": "f8333109c51e6"
-    },
-    {
-      "id": "08806850-0dd5-4d12-b556-a8ce27826083",
-      "at": "2026-11-12T01:14:21.910Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/61958196937699053",
-      "status": 200,
-      "durationMs": 1157,
-      "requestId": null,
-      "debugId": "f83331073c1fc"
-    },
-    {
-      "id": "9ddc6c12-74da-4d1a-a672-ced0577f0f87",
-      "at": "2026-11-12T01:14:22.547Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/1VS093774J460400T",
-      "status": 200,
-      "durationMs": 560,
-      "requestId": null,
-      "debugId": "f83331057af0f"
-    },
-    {
-      "id": "1f57c597-e9b1-4041-8eec-44e053d1ca1e",
-      "at": "2026-11-12T01:14:22.648Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/7FH08202AN770703L",
-      "status": 200,
-      "durationMs": 1019,
-      "requestId": null,
-      "debugId": "f3011040ad27c"
-    },
-    {
-      "id": "4d0e8e1f-4c3a-4f1b-9bd2-f55ed83960be",
-      "at": "2026-11-12T01:14:38.686Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes?page_size=50",
-      "status": 200,
-      "durationMs": 1862,
-      "requestId": null,
-      "debugId": "f766851fd79ce"
-    },
-    {
-      "id": "46219593-4569-486c-9e19-c951038c2659",
-      "at": "2026-11-12T01:14:40.549Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
-      "status": 200,
-      "durationMs": 769,
-      "requestId": null,
-      "debugId": "f840854e81ae9"
-    },
-    {
-      "id": "16cb29e0-96ef-431e-9f1f-359ba9f5a7ba",
-      "at": "2026-11-12T01:14:40.550Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
-      "status": 200,
-      "durationMs": 1428,
-      "requestId": null,
-      "debugId": "f840854a0d43c"
-    },
-    {
-      "id": "d1c699de-2cd9-46bf-823d-6ba777174315",
-      "at": "2026-11-12T01:14:40.549Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
-      "status": 200,
-      "durationMs": 1629,
-      "requestId": null,
-      "debugId": "f840854e5150b"
-    },
-    {
-      "id": "3362fcfb-24b6-4fa3-9d30-845eb10fcadf",
-      "at": "2026-11-12T01:14:40.551Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
-      "status": 200,
-      "durationMs": 1657,
-      "requestId": null,
-      "debugId": "f8408546cc1fb"
-    },
-    {
-      "id": "bfc83b90-c3bc-4ed9-a6a2-abef7e5bc2d4",
-      "at": "2026-11-12T01:14:40.551Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
-      "status": 200,
-      "durationMs": 1687,
-      "requestId": null,
-      "debugId": "f840854444405"
-    },
-    {
-      "id": "6310a95b-2bdd-450f-827a-1f40d6526e59",
-      "at": "2026-11-12T01:14:40.550Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
-      "status": 200,
-      "durationMs": 1878,
-      "requestId": null,
-      "debugId": "f84085433ae99"
-    },
-    {
-      "id": "3e94551c-6d88-410a-aebf-187f53682c51",
-      "at": "2026-11-12T01:14:40.552Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
-      "status": 200,
-      "durationMs": 1916,
-      "requestId": null,
-      "debugId": "f357212362727"
-    },
-    {
-      "id": "7eebb024-b044-4c60-a099-96b79b01525b",
-      "at": "2026-11-12T01:14:40.552Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
-      "status": 200,
-      "durationMs": 1936,
-      "requestId": null,
-      "debugId": "f3572121675d3"
-    },
-    {
-      "id": "87742a6a-5810-48b6-a43f-f2c5481802c7",
-      "at": "2026-11-12T01:14:40.552Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
-      "status": 200,
-      "durationMs": 2356,
-      "requestId": null,
-      "debugId": "f357212f0370d"
-    },
-    {
-      "id": "18a14ecc-06c8-41c9-94af-2a7964ff3655",
-      "at": "2026-11-12T01:14:40.553Z",
-      "method": "GET",
-      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
-      "status": 200,
-      "durationMs": 2995,
-      "requestId": null,
-      "debugId": "f3572125cc06d"
-    },
-    {
-      "id": "379ceb13-909d-4e22-a11a-a55e996a20c8",
-      "at": "2026-11-12T01:14:43.549Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2DH68539417202354",
-      "status": 200,
-      "durationMs": 699,
-      "requestId": null,
-      "debugId": "f4010873e288a"
-    },
-    {
-      "id": "9591d573-5409-422f-9dba-c2bbc13a5092",
-      "at": "2026-11-12T01:14:43.549Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/59W40554PM409652T",
-      "status": 200,
-      "durationMs": 999,
-      "requestId": null,
-      "debugId": "f4010878c991f"
-    },
-    {
-      "id": "a82014d8-c2c7-4076-80da-a0528e6c0855",
-      "at": "2026-11-12T01:14:43.549Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/2WS2925138277954X",
-      "status": 200,
-      "durationMs": 1000,
-      "requestId": null,
-      "debugId": "f401087816161"
-    },
-    {
-      "id": "8d0e7eea-5252-4781-aa83-49a55e6cb159",
-      "at": "2026-11-12T01:14:44.248Z",
-      "method": "GET",
-      "path": "/v2/payments/captures/4M013267KS7929009",
-      "status": 200,
-      "durationMs": 860,
-      "requestId": null,
-      "debugId": "f4010875199bc"
-    },
     {
       "id": "4b29fc11-9ba5-4306-8407-dddc1230bb52",
       "at": "2026-11-12T01:14:44.549Z",
@@ -5252,6 +3527,2006 @@
       "durationMs": 1199,
       "requestId": null,
       "debugId": "f1310060e2687"
+    },
+    {
+      "id": "e59b78e4-5f47-4be9-9b46-8e304ccbf829",
+      "at": "2026-11-12T03:42:54.432Z",
+      "method": "POST",
+      "path": "/v1/oauth2/token",
+      "status": 200,
+      "durationMs": 393,
+      "requestId": null,
+      "debugId": "f83445355f752"
+    },
+    {
+      "id": "2b274ff4-c1a8-4cc3-9ab1-5bce294127c9",
+      "at": "2026-11-12T03:42:54.827Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 431,
+      "requestId": null,
+      "debugId": "f8344539eb700"
+    },
+    {
+      "id": "81069433-6c84-4ea5-aec3-25bd85c163a1",
+      "at": "2026-11-12T03:42:55.259Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 1062,
+      "requestId": null,
+      "debugId": "f83445301d9c8"
+    },
+    {
+      "id": "52d07209-bb33-4658-95f1-9baa2256ef5a",
+      "at": "2026-11-12T03:42:55.321Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1099,
+      "requestId": null,
+      "debugId": "f57437502e8bf"
+    },
+    {
+      "id": "9f1b9f8c-1d5c-4c5b-8ada-3abc4d4993e3",
+      "at": "2026-11-12T03:42:55.320Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1100,
+      "requestId": null,
+      "debugId": "f574375848354"
+    },
+    {
+      "id": "ce6faea4-b8e6-40a6-b995-0bd27ca39e42",
+      "at": "2026-11-12T03:42:55.261Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1160,
+      "requestId": null,
+      "debugId": "f574375ea9258"
+    },
+    {
+      "id": "0bab357e-42ab-437a-8277-b77a20849457",
+      "at": "2026-11-12T03:42:55.323Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 1099,
+      "requestId": null,
+      "debugId": "f574375b15c54"
+    },
+    {
+      "id": "81794d6f-3436-485c-a859-fa2b2e24ee95",
+      "at": "2026-11-12T03:42:55.419Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 1003,
+      "requestId": null,
+      "debugId": "f5743750a891b"
+    },
+    {
+      "id": "b0ee5160-9450-45db-8607-f0ecab638bad",
+      "at": "2026-11-12T03:42:55.323Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 1100,
+      "requestId": null,
+      "debugId": "f574375eb2863"
+    },
+    {
+      "id": "dca1bd71-cf8d-4e67-9093-1a841be86585",
+      "at": "2026-11-12T03:42:55.421Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 1101,
+      "requestId": null,
+      "debugId": "f574375a719f1"
+    },
+    {
+      "id": "e4a16aa9-4caa-4001-a06a-77e2bf5a8d23",
+      "at": "2026-11-12T03:42:55.322Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1205,
+      "requestId": null,
+      "debugId": "f5743756bfe0e"
+    },
+    {
+      "id": "b1b071a7-85bb-4ec7-8a51-c60b77ff8cd1",
+      "at": "2026-11-12T03:42:55.260Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1361,
+      "requestId": null,
+      "debugId": "f574375d9f2ef"
+    },
+    {
+      "id": "b1388a82-861f-4ba8-89ad-8720e1101f8c",
+      "at": "2026-11-12T03:42:56.622Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 308,
+      "requestId": null,
+      "debugId": "f88428411726a"
+    },
+    {
+      "id": "9cf9659e-2e7c-47a2-aa40-a62e97a31d53",
+      "at": "2026-11-12T03:42:56.622Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 318,
+      "requestId": null,
+      "debugId": "f884284ee8441"
+    },
+    {
+      "id": "e7fc8297-8dbf-4b81-a3e5-8b88bd095cb0",
+      "at": "2026-11-12T03:42:56.622Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 397,
+      "requestId": null,
+      "debugId": "f8842847585c2"
+    },
+    {
+      "id": "548dbd7c-0ef8-4456-bcce-5b179b4df7b0",
+      "at": "2026-11-12T03:42:56.622Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 400,
+      "requestId": null,
+      "debugId": "f8842842aace3"
+    },
+    {
+      "id": "78035a23-9856-499f-bc64-e65ff90958c0",
+      "at": "2026-11-12T03:42:56.931Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 336,
+      "requestId": null,
+      "debugId": "f884284c2e96d"
+    },
+    {
+      "id": "5b4faf64-3c43-4475-a026-3b14fd96ef5e",
+      "at": "2026-11-12T03:42:56.941Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 350,
+      "requestId": null,
+      "debugId": "f8842849c1aaf"
+    },
+    {
+      "id": "830ad762-2ef8-4f43-a24b-c8643f2a1dbb",
+      "at": "2026-11-12T03:42:57.020Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 345,
+      "requestId": null,
+      "debugId": "f884284708346"
+    },
+    {
+      "id": "9b07956c-caec-4101-adcf-fd46651ab22d",
+      "at": "2026-11-12T03:42:57.022Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 346,
+      "requestId": null,
+      "debugId": "f88428400880b"
+    },
+    {
+      "id": "cece217b-f726-4815-a382-9163d2196508",
+      "at": "2026-11-12T03:42:57.292Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 344,
+      "requestId": null,
+      "debugId": "f884284f19d2d"
+    },
+    {
+      "id": "0455bb7a-186d-48a6-b3b4-97705594eef3",
+      "at": "2026-11-12T03:42:57.268Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 372,
+      "requestId": null,
+      "debugId": "f884284751b0f"
+    },
+    {
+      "id": "17915dcf-211b-4a71-a4e6-7b229962f51c",
+      "at": "2026-11-12T04:03:48.786Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 434,
+      "requestId": null,
+      "debugId": "f207063cb4bcf"
+    },
+    {
+      "id": "a37892c1-8573-419a-9924-bd2d5be1e539",
+      "at": "2026-11-12T04:03:49.221Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 333,
+      "requestId": null,
+      "debugId": "f207063cf631c"
+    },
+    {
+      "id": "2c4876e0-af4e-4f44-9ab5-f29ff349a17f",
+      "at": "2026-11-12T04:03:49.222Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/2BT240571K4299024",
+      "status": 200,
+      "durationMs": 461,
+      "requestId": null,
+      "debugId": "f2070637e12e0"
+    },
+    {
+      "id": "ebc3f445-7514-42ee-927d-64b2c3ec98c3",
+      "at": "2026-11-12T04:03:49.691Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 297,
+      "requestId": null,
+      "debugId": "f724387b0aef8"
+    },
+    {
+      "id": "ed5116df-c298-445b-9401-99b7ec759b92",
+      "at": "2026-11-12T04:03:49.997Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 349,
+      "requestId": null,
+      "debugId": "f7243870dac77"
+    },
+    {
+      "id": "c22fc27c-ae83-4dd5-8096-d5cdf591b56a",
+      "at": "2026-11-12T04:03:49.998Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 931,
+      "requestId": null,
+      "debugId": "f7243874c4ed7"
+    },
+    {
+      "id": "da502c7f-7361-4f36-ab9f-fa7f392c1e64",
+      "at": "2026-11-12T04:04:15.134Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 436,
+      "requestId": null,
+      "debugId": "f258871895484"
+    },
+    {
+      "id": "7bc7f751-18d8-4e72-86c8-d04051b972e6",
+      "at": "2026-11-12T04:04:15.571Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 380,
+      "requestId": null,
+      "debugId": "f465117fd3368"
+    },
+    {
+      "id": "3607e2df-cddd-4299-a5f3-3634e7a0bcc1",
+      "at": "2026-11-12T04:04:15.571Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/9T763053VJ940711E",
+      "status": 200,
+      "durationMs": 693,
+      "requestId": null,
+      "debugId": "f4651173a3588"
+    },
+    {
+      "id": "4655ccb0-f725-42bc-a987-d7f483fb3f9d",
+      "at": "2026-11-12T04:04:16.266Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 279,
+      "requestId": null,
+      "debugId": "f46511788ae50"
+    },
+    {
+      "id": "ae0335d7-557c-46ca-9c3e-97469ac6770a",
+      "at": "2026-11-12T04:04:16.546Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 495,
+      "requestId": null,
+      "debugId": "f319495086091"
+    },
+    {
+      "id": "be75076b-7c57-4d64-b455-0445a18a5746",
+      "at": "2026-11-12T04:04:16.546Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 878,
+      "requestId": null,
+      "debugId": "f31949528f71e"
+    },
+    {
+      "id": "0945d5cd-8846-41d3-8349-ed374142dc63",
+      "at": "2026-11-12T04:04:41.299Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 370,
+      "requestId": null,
+      "debugId": "f6306090d9da7"
+    },
+    {
+      "id": "6eb0cfc0-4832-4f5d-9e38-00a6ffd9646d",
+      "at": "2026-11-12T04:04:41.671Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 409,
+      "requestId": null,
+      "debugId": "f208271c76593"
+    },
+    {
+      "id": "2738d6df-006b-4191-92c7-ba75ec5bc3be",
+      "at": "2026-11-12T04:04:41.671Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/7M8551384K263612M",
+      "status": 200,
+      "durationMs": 540,
+      "requestId": null,
+      "debugId": "f208271ca0734"
+    },
+    {
+      "id": "ff406e9c-1b27-4eed-a904-8f28102fd25c",
+      "at": "2026-11-12T04:04:42.213Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 313,
+      "requestId": null,
+      "debugId": "f208271f97526"
+    },
+    {
+      "id": "20a0930f-7d03-4ee8-b20d-7cee69c735f5",
+      "at": "2026-11-12T04:04:42.527Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 347,
+      "requestId": null,
+      "debugId": "f62450309fe89"
+    },
+    {
+      "id": "c3de784f-a638-4b12-a906-e4f263df35cf",
+      "at": "2026-11-12T04:05:09.468Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1046,
+      "requestId": null,
+      "debugId": "f8363704e3647"
+    },
+    {
+      "id": "c5314a1a-8767-47d8-ad70-17c0368ba6a6",
+      "at": "2026-11-12T04:05:10.515Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 334,
+      "requestId": null,
+      "debugId": "f9076016e73dc"
+    },
+    {
+      "id": "c2f91163-6031-439f-b0c8-ddbd71fe8f32",
+      "at": "2026-11-12T04:05:10.515Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/5U397600KM385363Y",
+      "status": 200,
+      "durationMs": 446,
+      "requestId": null,
+      "debugId": "f9076019f846b"
+    },
+    {
+      "id": "59ace839-17cd-4828-ae82-f1471a03220c",
+      "at": "2026-11-12T04:05:10.964Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 374,
+      "requestId": null,
+      "debugId": "f9076013a3155"
+    },
+    {
+      "id": "89858117-ca06-4fef-83c2-6f2ec747d6ed",
+      "at": "2026-11-12T04:05:11.339Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 712,
+      "requestId": null,
+      "debugId": "f907601f4912b"
+    },
+    {
+      "id": "e0b7bf1d-c404-42c6-944d-0c906fff5cae",
+      "at": "2026-11-12T04:05:35.865Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1079,
+      "requestId": null,
+      "debugId": "f733881057cfc"
+    },
+    {
+      "id": "dd314e0d-06a8-4a52-b4ec-cb66adf26e58",
+      "at": "2026-11-12T04:05:36.945Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 400,
+      "requestId": null,
+      "debugId": "f466456712747"
+    },
+    {
+      "id": "d1bfd663-4f14-4d82-8a22-3a853ede1950",
+      "at": "2026-11-12T04:05:36.946Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/6SD67488YV9012713",
+      "status": 200,
+      "durationMs": 510,
+      "requestId": null,
+      "debugId": "f4664564e53ba"
+    },
+    {
+      "id": "89454f4b-696f-4da1-9aa9-0c303512a2e2",
+      "at": "2026-11-12T04:05:37.458Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 245,
+      "requestId": null,
+      "debugId": "f466456c8ccf7"
+    },
+    {
+      "id": "f95bb434-9e8f-48c1-8071-33ab5ea8cffb",
+      "at": "2026-11-12T04:05:37.704Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 335,
+      "requestId": null,
+      "debugId": "f215142cbb28d"
+    },
+    {
+      "id": "278efc03-e980-4af4-b9dc-807054759a22",
+      "at": "2026-11-12T04:05:37.705Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 376,
+      "requestId": null,
+      "debugId": "f215142f6bf1e"
+    },
+    {
+      "id": "b3c1b5ee-d5d3-4720-841a-d4b40849a29f",
+      "at": "2026-11-12T04:08:37.632Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 463,
+      "requestId": null,
+      "debugId": "f504189c39420"
+    },
+    {
+      "id": "68f62c3f-d7ed-4d5c-8d70-e262986da029",
+      "at": "2026-11-12T04:08:38.096Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 345,
+      "requestId": null,
+      "debugId": "f5041898b7534"
+    },
+    {
+      "id": "4cb60eeb-9b5a-4bde-814d-208c44d5bbeb",
+      "at": "2026-11-12T04:08:38.096Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 351,
+      "requestId": null,
+      "debugId": "f5041896db3a3"
+    },
+    {
+      "id": "733adc07-2922-49b7-84de-028d6e18ebbd",
+      "at": "2026-11-12T04:08:38.102Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 453,
+      "requestId": null,
+      "debugId": "f504189ccc719"
+    },
+    {
+      "id": "f35d975c-0131-4abe-956d-cdeab7b50263",
+      "at": "2026-11-12T04:08:38.098Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 459,
+      "requestId": null,
+      "debugId": "f504189446ce9"
+    },
+    {
+      "id": "6d66cd06-4c3c-47ea-9858-8eef3adbc838",
+      "at": "2026-11-12T04:08:38.099Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 472,
+      "requestId": null,
+      "debugId": "f5041898b4328"
+    },
+    {
+      "id": "2046bfa3-947e-44f7-9449-fc8921336ab9",
+      "at": "2026-11-12T04:08:38.100Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 520,
+      "requestId": null,
+      "debugId": "f5041896b493e"
+    },
+    {
+      "id": "a095fc48-f162-44a4-a332-82e56eb2688f",
+      "at": "2026-11-12T04:08:38.102Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 519,
+      "requestId": null,
+      "debugId": "f5041898e566a"
+    },
+    {
+      "id": "39a80e2b-4028-4d1e-a397-4c93d0e3ca07",
+      "at": "2026-11-12T04:08:38.097Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 536,
+      "requestId": null,
+      "debugId": "f504189aef7d0"
+    },
+    {
+      "id": "a2648eda-423d-4549-865b-0b064166a49b",
+      "at": "2026-11-12T04:08:38.101Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 620,
+      "requestId": null,
+      "debugId": "f504189cb6c9c"
+    },
+    {
+      "id": "ab3228ed-a458-4ee0-89d3-26e2fab1f05b",
+      "at": "2026-11-12T04:08:38.100Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 622,
+      "requestId": null,
+      "debugId": "f50418991cc72"
+    },
+    {
+      "id": "68c94ee6-054e-4064-947e-5707c696ce43",
+      "at": "2026-11-12T04:08:38.723Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 269,
+      "requestId": null,
+      "debugId": "f400936a85c9c"
+    },
+    {
+      "id": "f159bb54-5510-47b9-8dec-9910503e6495",
+      "at": "2026-11-12T04:08:38.723Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 299,
+      "requestId": null,
+      "debugId": "f400936a5b6f0"
+    },
+    {
+      "id": "ca5fb637-6631-4f5a-b728-5d22f1606a5c",
+      "at": "2026-11-12T04:08:38.723Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 319,
+      "requestId": null,
+      "debugId": "f4009364a6219"
+    },
+    {
+      "id": "20b8596b-0ca6-4ccb-97cc-0cdfccc80787",
+      "at": "2026-11-12T04:08:38.722Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 321,
+      "requestId": null,
+      "debugId": "f4009360b4654"
+    },
+    {
+      "id": "ce5c0f75-5d12-45f3-8452-6f1453c1819b",
+      "at": "2026-11-12T04:08:38.995Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 309,
+      "requestId": null,
+      "debugId": "f400936d130d2"
+    },
+    {
+      "id": "477e8e2b-c767-4389-8a8a-72531336ac4c",
+      "at": "2026-11-12T04:08:39.023Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 295,
+      "requestId": null,
+      "debugId": "f400936d0aeb3"
+    },
+    {
+      "id": "92422d4b-6069-465b-a55a-82bc787e91f9",
+      "at": "2026-11-12T04:08:39.043Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 331,
+      "requestId": null,
+      "debugId": "f400936c00b85"
+    },
+    {
+      "id": "b7ff9519-c042-47ac-b943-7a6c6de6b3bd",
+      "at": "2026-11-12T04:08:39.319Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 363,
+      "requestId": null,
+      "debugId": "f400936557c9c"
+    },
+    {
+      "id": "c0dc0e07-cda5-421c-ae75-4a5fe4c74aa1",
+      "at": "2026-11-12T04:08:39.043Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 702,
+      "requestId": null,
+      "debugId": "f40093653a6f5"
+    },
+    {
+      "id": "c68747f1-de95-44f0-94fb-f19bd4bdf36e",
+      "at": "2026-11-12T04:08:39.305Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 466,
+      "requestId": null,
+      "debugId": "f4009361178e0"
+    },
+    {
+      "id": "193833db-7991-4794-aacb-ea108eb75f6d",
+      "at": "2026-11-12T04:08:48.852Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 559,
+      "requestId": null,
+      "debugId": "f5741764d7c33"
+    },
+    {
+      "id": "6a7503c8-1588-4605-a38c-61fd6ead1d0b",
+      "at": "2026-11-12T04:08:49.413Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 334,
+      "requestId": null,
+      "debugId": "f574176784c48"
+    },
+    {
+      "id": "6be45d90-d695-490b-ba44-c0b1fe3a72ca",
+      "at": "2026-11-12T04:08:49.413Z",
+      "method": "GET",
+      "path": "/v2/checkout/orders/7M8551384K263612M",
+      "status": 200,
+      "durationMs": 383,
+      "requestId": null,
+      "debugId": "f574176eec431"
+    },
+    {
+      "id": "458babab-c567-41e9-8954-9be42dc139a5",
+      "at": "2026-11-12T04:08:55.763Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 352,
+      "requestId": null,
+      "debugId": "f611375d3eaa7"
+    },
+    {
+      "id": "2f3c93f9-fb01-40ab-b765-4d6c704d9eba",
+      "at": "2026-11-12T04:08:56.116Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 330,
+      "requestId": null,
+      "debugId": "f6113755594b4"
+    },
+    {
+      "id": "3d2fa122-7a15-41aa-ba22-9da7d0c0fb35",
+      "at": "2026-11-12T04:08:56.119Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1003,
+      "requestId": null,
+      "debugId": "f611375ed4d42"
+    },
+    {
+      "id": "aa546fea-cde3-4de2-8122-75334f060339",
+      "at": "2026-11-12T04:08:56.118Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1102,
+      "requestId": null,
+      "debugId": "f611375aeabc2"
+    },
+    {
+      "id": "5a031a1c-5e0b-4a0f-a363-99098a0937c4",
+      "at": "2026-11-12T04:08:56.116Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1104,
+      "requestId": null,
+      "debugId": "f61137556c9ae"
+    },
+    {
+      "id": "fb296e98-2d81-446e-8024-c60e88a0aecf",
+      "at": "2026-11-12T04:08:56.120Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1102,
+      "requestId": null,
+      "debugId": "f61137596b20c"
+    },
+    {
+      "id": "2e045756-61a7-4372-832d-518fa6779378",
+      "at": "2026-11-12T04:08:56.123Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 1100,
+      "requestId": null,
+      "debugId": "f611375d1312e"
+    },
+    {
+      "id": "132d40ed-c547-4735-a03b-54e4944ec8c6",
+      "at": "2026-11-12T04:08:56.121Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 1103,
+      "requestId": null,
+      "debugId": "f611375d5c1db"
+    },
+    {
+      "id": "6cdaeed5-ec1f-40ac-9ad5-d052ba25850e",
+      "at": "2026-11-12T04:08:56.122Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 1102,
+      "requestId": null,
+      "debugId": "f61137592146b"
+    },
+    {
+      "id": "5701997d-b6bb-4e86-a879-cc0b6ab0edda",
+      "at": "2026-11-12T04:08:56.117Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 1107,
+      "requestId": null,
+      "debugId": "f6113750c5d15"
+    },
+    {
+      "id": "a24415ba-ae73-42ea-af64-912c016b54f2",
+      "at": "2026-11-12T04:08:56.122Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 1512,
+      "requestId": null,
+      "debugId": "f6113756e12c9"
+    },
+    {
+      "id": "217d8992-3d3f-49b3-958a-206765bb9533",
+      "at": "2026-11-12T04:08:57.651Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 294,
+      "requestId": null,
+      "debugId": "f794895194db9"
+    },
+    {
+      "id": "eabe1971-5ef7-4010-9b61-d0e81613cda0",
+      "at": "2026-11-12T04:08:57.651Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 304,
+      "requestId": null,
+      "debugId": "f7948958d64cb"
+    },
+    {
+      "id": "c7bbfb05-8cb6-46bc-aea9-4b73f95cc977",
+      "at": "2026-11-12T04:08:57.652Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 338,
+      "requestId": null,
+      "debugId": "f79489573d593"
+    },
+    {
+      "id": "5cf7d912-f741-44ae-b410-6bc47a36bb28",
+      "at": "2026-11-12T04:08:57.652Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 369,
+      "requestId": null,
+      "debugId": "f7948954cdb7b"
+    },
+    {
+      "id": "9e835381-9c87-4eb1-bae5-950e1abaa29e",
+      "at": "2026-11-12T04:08:57.946Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 277,
+      "requestId": null,
+      "debugId": "f794895ea32c8"
+    },
+    {
+      "id": "4c31fe39-92c5-40c7-b771-82d3739a7168",
+      "at": "2026-11-12T04:08:57.956Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 289,
+      "requestId": null,
+      "debugId": "f794895fab44d"
+    },
+    {
+      "id": "0ebf5fe8-e2c6-4318-8cda-262818fcb2fd",
+      "at": "2026-11-12T04:08:57.992Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 413,
+      "requestId": null,
+      "debugId": "f7948952181a1"
+    },
+    {
+      "id": "4660cea3-b02d-45fd-96cb-94c419ed407b",
+      "at": "2026-11-12T04:08:58.021Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 386,
+      "requestId": null,
+      "debugId": "f794895a117dc"
+    },
+    {
+      "id": "6b5cace9-591e-4ad5-920a-6981005215ad",
+      "at": "2026-11-12T04:08:58.247Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 314,
+      "requestId": null,
+      "debugId": "f794895fb9b18"
+    },
+    {
+      "id": "9e69c3ff-c700-44cd-9586-cc7e9d61cc9a",
+      "at": "2026-11-12T04:08:58.228Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 373,
+      "requestId": null,
+      "debugId": "f794895e22c34"
+    },
+    {
+      "id": "e9fd6700-42af-4d2d-b550-c26d89def33f",
+      "at": "2026-11-12T04:09:13.941Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 399,
+      "requestId": null,
+      "debugId": "f93604505cb25"
+    },
+    {
+      "id": "59f46882-c82c-4e27-b01b-53e48d9a73b8",
+      "at": "2026-11-12T04:09:14.346Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 500,
+      "requestId": null,
+      "debugId": "f13345900d589"
+    },
+    {
+      "id": "d7b554ea-a9e9-4a60-b1ae-a4ea4ae2404e",
+      "at": "2026-11-12T04:09:14.344Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 584,
+      "requestId": null,
+      "debugId": "f9360458c4742"
+    },
+    {
+      "id": "8d7f81d6-5109-45f8-9e78-80078568d0a5",
+      "at": "2026-11-12T04:09:14.357Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 627,
+      "requestId": null,
+      "debugId": "f13345993c711"
+    },
+    {
+      "id": "bbb79072-a847-408e-8a6f-fb38a4f5892c",
+      "at": "2026-11-12T04:09:14.349Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 647,
+      "requestId": null,
+      "debugId": "f13345947ebfe"
+    },
+    {
+      "id": "02c0e947-ebf8-4c8b-8b43-2bdf2d0aa4a3",
+      "at": "2026-11-12T04:09:14.350Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 683,
+      "requestId": null,
+      "debugId": "f13345965f189"
+    },
+    {
+      "id": "174516d1-2ad1-4438-8d7e-cd1dfbea9261",
+      "at": "2026-11-12T04:09:14.358Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 738,
+      "requestId": null,
+      "debugId": "f133459222cd1"
+    },
+    {
+      "id": "21b71884-e809-46bb-81c8-3fbc1d18d3fd",
+      "at": "2026-11-12T04:09:14.356Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 752,
+      "requestId": null,
+      "debugId": "f133459472698"
+    },
+    {
+      "id": "3b56a341-dfdb-4eb3-8ac9-c6a328855344",
+      "at": "2026-11-12T04:09:14.356Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 889,
+      "requestId": null,
+      "debugId": "f133459b24a19"
+    },
+    {
+      "id": "c9e2872c-79b8-4191-8fc2-ecbb52667ee1",
+      "at": "2026-11-12T04:09:14.344Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 1095,
+      "requestId": null,
+      "debugId": "f936045fa3793"
+    },
+    {
+      "id": "ca31b85c-6603-427e-8de0-13ec8c8b20c7",
+      "at": "2026-11-12T04:09:14.348Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 1108,
+      "requestId": null,
+      "debugId": "f133459e7dfe0"
+    },
+    {
+      "id": "30108785-18a7-494c-98d7-7826975d6191",
+      "at": "2026-11-12T04:09:15.458Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 345,
+      "requestId": null,
+      "debugId": "f133459edf26b"
+    },
+    {
+      "id": "eed32413-81e7-4d37-a2b7-702cc21e21e4",
+      "at": "2026-11-12T04:09:15.458Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 411,
+      "requestId": null,
+      "debugId": "f133459266398"
+    },
+    {
+      "id": "3f7396de-280d-490f-8cf7-38602dde33ba",
+      "at": "2026-11-12T04:09:15.458Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 418,
+      "requestId": null,
+      "debugId": "f133459a43c82"
+    },
+    {
+      "id": "e2c335e0-2142-4dc6-8de9-7a42d0c1f7a7",
+      "at": "2026-11-12T04:09:15.457Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 433,
+      "requestId": null,
+      "debugId": "f133459b9b574"
+    },
+    {
+      "id": "14e68f42-0d2d-45cc-a56a-8241af577990",
+      "at": "2026-11-12T04:09:15.804Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 317,
+      "requestId": null,
+      "debugId": "f7988569bac46"
+    },
+    {
+      "id": "dd268604-5201-4347-b36d-47c8915615f0",
+      "at": "2026-11-12T04:09:15.878Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 296,
+      "requestId": null,
+      "debugId": "f798856313fb7"
+    },
+    {
+      "id": "fa4e9cae-9ca1-4113-9466-db57a36b5105",
+      "at": "2026-11-12T04:09:15.872Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 306,
+      "requestId": null,
+      "debugId": "f798856044dd2"
+    },
+    {
+      "id": "4df21c9a-d8bd-4096-bbaf-30060913f2bf",
+      "at": "2026-11-12T04:09:15.891Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 362,
+      "requestId": null,
+      "debugId": "f79885608745d"
+    },
+    {
+      "id": "221f2e28-1b73-46a5-b739-5130b934dea0",
+      "at": "2026-11-12T04:09:16.175Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 349,
+      "requestId": null,
+      "debugId": "f7988569ff153"
+    },
+    {
+      "id": "c6973a83-17de-4a63-8600-4749ac0058a9",
+      "at": "2026-11-12T04:09:16.122Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 406,
+      "requestId": null,
+      "debugId": "f7988560f04c9"
+    },
+    {
+      "id": "a100b166-2e7a-44f2-aa00-362f3695b64a",
+      "at": "2026-11-12T04:17:59.593Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 328,
+      "requestId": null,
+      "debugId": "ca592baebecdf"
+    },
+    {
+      "id": "6d3c9b53-3e8c-4c84-b292-402b543f91be",
+      "at": "2026-11-12T04:17:59.922Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 901,
+      "requestId": null,
+      "debugId": "ca592baedb994"
+    },
+    {
+      "id": "2b1621b2-3f5b-4301-af2e-26137a6d6039",
+      "at": "2026-11-12T04:17:59.938Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 981,
+      "requestId": null,
+      "debugId": "ca592baeffd80"
+    },
+    {
+      "id": "7065b30f-c177-4fc1-9804-11c5df3ec907",
+      "at": "2026-11-12T04:17:59.926Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 993,
+      "requestId": null,
+      "debugId": "ca592baeeccbd"
+    },
+    {
+      "id": "2a5067b5-4a24-4da2-abcb-47f39f83257f",
+      "at": "2026-11-12T04:17:59.923Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 996,
+      "requestId": null,
+      "debugId": "ca592baef7a58"
+    },
+    {
+      "id": "52cb3664-2b49-4316-8625-fd9812c81baa",
+      "at": "2026-11-12T04:17:59.947Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 975,
+      "requestId": null,
+      "debugId": "ca592baf0991e"
+    },
+    {
+      "id": "cf000a55-8aaa-4f79-81c3-4e2b365801ba",
+      "at": "2026-11-12T04:17:59.944Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 979,
+      "requestId": null,
+      "debugId": "ca592baf00b7a"
+    },
+    {
+      "id": "99559372-6b16-4599-82b8-9da842e33e95",
+      "at": "2026-11-12T04:17:59.930Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 993,
+      "requestId": null,
+      "debugId": "ca592baf1dad2"
+    },
+    {
+      "id": "f1248e05-692c-46c1-a2a9-97a27fec547c",
+      "at": "2026-11-12T04:17:59.947Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 976,
+      "requestId": null,
+      "debugId": "ca592baf098f5"
+    },
+    {
+      "id": "60da1306-b9c9-4348-9609-41d8ffc1b165",
+      "at": "2026-11-12T04:17:59.943Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 1238,
+      "requestId": null,
+      "debugId": "ca592baf00ec7"
+    },
+    {
+      "id": "0a05db9d-5a81-4d5c-99b5-78b073bb4dc0",
+      "at": "2026-11-12T04:17:59.937Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1495,
+      "requestId": null,
+      "debugId": "ca592baf13b96"
+    },
+    {
+      "id": "4833391c-29ee-4d98-bca9-e86fb2bc749b",
+      "at": "2026-11-12T04:18:01.433Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 250,
+      "requestId": null,
+      "debugId": "ca592baf6f91f"
+    },
+    {
+      "id": "7f3115ea-6695-4bad-a3de-70c0f158d69d",
+      "at": "2026-11-12T04:18:01.433Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 367,
+      "requestId": null,
+      "debugId": "ca592baf6ffc0"
+    },
+    {
+      "id": "384f3c2e-5a92-4cfa-b60a-5d1a7dbb104e",
+      "at": "2026-11-12T04:18:01.433Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 395,
+      "requestId": null,
+      "debugId": "ca592baf6fa3a"
+    },
+    {
+      "id": "f9b4db0c-3af4-4068-a282-954dd0c04807",
+      "at": "2026-11-12T04:18:01.684Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 243,
+      "requestId": null,
+      "debugId": "ca592baf88d4e"
+    },
+    {
+      "id": "cab22dfa-b253-4a32-ab77-efe0adb14b8f",
+      "at": "2026-11-12T04:18:01.433Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 516,
+      "requestId": null,
+      "debugId": "ca592baf6fb26"
+    },
+    {
+      "id": "22892d66-7a40-4ae2-b547-92f7c640f877",
+      "at": "2026-11-12T04:18:01.802Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 271,
+      "requestId": null,
+      "debugId": "ca592baf94d8d"
+    },
+    {
+      "id": "a74b319a-bec2-417d-abd8-0f73ca9c7714",
+      "at": "2026-11-12T04:18:01.950Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 293,
+      "requestId": null,
+      "debugId": "ca592bafa3c1f"
+    },
+    {
+      "id": "d422dbce-0b97-4279-81fa-3029adb9899b",
+      "at": "2026-11-12T04:18:01.928Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 323,
+      "requestId": null,
+      "debugId": "ca592bafa086a"
+    },
+    {
+      "id": "03615d6f-837a-468d-bee9-4e8fe085dc06",
+      "at": "2026-11-12T04:18:01.829Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 576,
+      "requestId": null,
+      "debugId": "ca592baf97941"
+    },
+    {
+      "id": "4a928944-bc84-4ea2-b4c9-b4b7f19842a8",
+      "at": "2026-11-12T04:18:02.075Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 387,
+      "requestId": null,
+      "debugId": "ca592bafafa92"
+    },
+    {
+      "id": "6411c4af-456e-4451-9f46-aaf81736b5df",
+      "at": "2026-11-12T04:18:45.553Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 284,
+      "requestId": null,
+      "debugId": "ca592bc0b1990"
+    },
+    {
+      "id": "d93a03f9-d264-40fd-8193-d27380c592e5",
+      "at": "2026-11-12T04:18:45.842Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 417,
+      "requestId": null,
+      "debugId": "ca592bc0d39f2"
+    },
+    {
+      "id": "4d49ab4f-10cf-41c6-aa3b-165de30bdfd4",
+      "at": "2026-11-12T04:18:45.843Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 466,
+      "requestId": null,
+      "debugId": "ca592bc0d3e2b"
+    },
+    {
+      "id": "62c01ebd-675d-4809-8f55-9cc14b393992",
+      "at": "2026-11-12T04:18:45.842Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 475,
+      "requestId": null,
+      "debugId": "ca592bc0cad5f"
+    },
+    {
+      "id": "29e57179-85ef-4bf2-bcfa-7f0b3b2f11e4",
+      "at": "2026-11-12T04:18:45.844Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 496,
+      "requestId": null,
+      "debugId": "ca592bc0dbce1"
+    },
+    {
+      "id": "131d31da-410e-4d2c-9215-469b190b3908",
+      "at": "2026-11-12T04:18:45.843Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 607,
+      "requestId": null,
+      "debugId": "ca592bc0dbcff"
+    },
+    {
+      "id": "d4c9b731-48b9-4b25-8439-ae9ee0118654",
+      "at": "2026-11-12T04:18:45.855Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 649,
+      "requestId": null,
+      "debugId": "ca592bc0dca1d"
+    },
+    {
+      "id": "689e3706-e8fd-486e-b257-176e84554d10",
+      "at": "2026-11-12T04:18:45.845Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 675,
+      "requestId": null,
+      "debugId": "ca592bc0dbf28"
+    },
+    {
+      "id": "842eeef8-2180-4817-adff-55a7850371da",
+      "at": "2026-11-12T04:18:45.859Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 713,
+      "requestId": null,
+      "debugId": "ca592bc0e6c2b"
+    },
+    {
+      "id": "01c78e23-e185-46a0-b753-0b4b7e70c070",
+      "at": "2026-11-12T04:18:45.856Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 1304,
+      "requestId": null,
+      "debugId": "ca592bc0e6cfb"
+    },
+    {
+      "id": "d88711e6-2187-4bb1-81cb-f4e0d900e200",
+      "at": "2026-11-12T04:18:45.859Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 1418,
+      "requestId": null,
+      "debugId": "ca592bc0e5877"
+    },
+    {
+      "id": "0e7f2311-b229-4ec3-b6de-8b9092511f73",
+      "at": "2026-11-12T04:18:47.278Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 254,
+      "requestId": null,
+      "debugId": "ca592bc158bfa"
+    },
+    {
+      "id": "41ec4440-9615-4713-8402-a6f082bbe09f",
+      "at": "2026-11-12T04:18:47.279Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 259,
+      "requestId": null,
+      "debugId": "ca592bc158f41"
+    },
+    {
+      "id": "8da36bf7-9321-4ab3-8b97-c2d430ceff29",
+      "at": "2026-11-12T04:18:47.279Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 287,
+      "requestId": null,
+      "debugId": "ca592bc1588b1"
+    },
+    {
+      "id": "6624b5ec-8215-4df8-9ddd-a73701e0c311",
+      "at": "2026-11-12T04:18:47.279Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 344,
+      "requestId": null,
+      "debugId": "ca592bc158c82"
+    },
+    {
+      "id": "c808be87-61f0-48f3-b70f-5a80bbfed059",
+      "at": "2026-11-12T04:18:47.538Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 233,
+      "requestId": null,
+      "debugId": "ca592bc172b09"
+    },
+    {
+      "id": "42e5865f-06d9-44db-bb56-71e3263da978",
+      "at": "2026-11-12T04:18:47.533Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 260,
+      "requestId": null,
+      "debugId": "ca592bc171f2a"
+    },
+    {
+      "id": "f3ce8c49-1f94-4b94-8089-f3d8c3942999",
+      "at": "2026-11-12T04:18:47.625Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 246,
+      "requestId": null,
+      "debugId": "ca592bc17aa7e"
+    },
+    {
+      "id": "8b3765b8-c201-40fb-b2d3-75598335f29b",
+      "at": "2026-11-12T04:18:47.566Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 313,
+      "requestId": null,
+      "debugId": "ca592bc175d17"
+    },
+    {
+      "id": "ae758248-b303-4573-ac5b-6e9e961a347d",
+      "at": "2026-11-12T04:18:47.772Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 273,
+      "requestId": null,
+      "debugId": "ca592bc189f2d"
+    },
+    {
+      "id": "e4818618-bc46-4d40-adfd-96eaffe3a5aa",
+      "at": "2026-11-12T04:18:47.797Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 283,
+      "requestId": null,
+      "debugId": "ca592bc18bb33"
+    },
+    {
+      "id": "5b127869-bc91-47d7-883a-13fd56498915",
+      "at": "2026-11-12T04:20:46.694Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 334,
+      "requestId": null,
+      "debugId": "ca592bf0029d4"
+    },
+    {
+      "id": "a44413ea-cd39-40c3-a5c3-cf9811e48dbc",
+      "at": "2026-11-12T04:20:47.030Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 393,
+      "requestId": null,
+      "debugId": "ca592bf028f2f"
+    },
+    {
+      "id": "ee022855-785c-48b5-81cf-e9ea26e7fb99",
+      "at": "2026-11-12T04:20:47.030Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 470,
+      "requestId": null,
+      "debugId": "ca592bf031dc1"
+    },
+    {
+      "id": "ae55357e-92f6-436a-b52e-e7db16be82ba",
+      "at": "2026-11-12T04:20:47.031Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 490,
+      "requestId": null,
+      "debugId": "ca592bf032fde"
+    },
+    {
+      "id": "63285126-6194-49f9-b682-ae4353dcb232",
+      "at": "2026-11-12T04:20:47.037Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 601,
+      "requestId": null,
+      "debugId": "ca592bf03e939"
+    },
+    {
+      "id": "f3da1748-f026-448c-ae19-108c9da70faf",
+      "at": "2026-11-12T04:20:47.037Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 659,
+      "requestId": null,
+      "debugId": "ca592bf03dc23"
+    },
+    {
+      "id": "53bb8ce6-41ad-44a7-9625-36dbe560ff51",
+      "at": "2026-11-12T04:20:47.040Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 681,
+      "requestId": null,
+      "debugId": "ca592bf046c35"
+    },
+    {
+      "id": "f4d762f0-8864-408c-b0fb-f0e84bdfbc11",
+      "at": "2026-11-12T04:20:47.038Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 751,
+      "requestId": null,
+      "debugId": "ca592bf03ecfd"
+    },
+    {
+      "id": "3f026ddc-130f-4fb7-9bf2-97bd5eda9e03",
+      "at": "2026-11-12T04:20:47.038Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 758,
+      "requestId": null,
+      "debugId": "ca592bf040f93"
+    },
+    {
+      "id": "802add93-7c8f-4334-bc1c-6493441c98e0",
+      "at": "2026-11-12T04:20:47.035Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 915,
+      "requestId": null,
+      "debugId": "ca592bf032d21"
+    },
+    {
+      "id": "f50e9a8e-f3d7-403f-a466-00239145b181",
+      "at": "2026-11-12T04:20:47.036Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 1130,
+      "requestId": null,
+      "debugId": "ca592bf032a7b"
+    },
+    {
+      "id": "2a306c8d-5c6d-4e7f-a37b-1652e0709d06",
+      "at": "2026-11-12T04:20:48.168Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 239,
+      "requestId": null,
+      "debugId": "ca592bf091c36"
+    },
+    {
+      "id": "077a4bd5-2f47-4054-b0aa-e140019a2cbe",
+      "at": "2026-11-12T04:20:48.168Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 269,
+      "requestId": null,
+      "debugId": "ca592bf091ba2"
+    },
+    {
+      "id": "68aa7159-6854-471c-8f7e-4c0dcbf97f3e",
+      "at": "2026-11-12T04:20:48.168Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 283,
+      "requestId": null,
+      "debugId": "ca592bf091f82"
+    },
+    {
+      "id": "b9edb70e-9709-49ae-a435-a714dc6a6c31",
+      "at": "2026-11-12T04:20:48.168Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 368,
+      "requestId": null,
+      "debugId": "ca592bf091c27"
+    },
+    {
+      "id": "6f70d7d7-3cfb-495d-a0ad-3e236cd34e62",
+      "at": "2026-11-12T04:20:48.408Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 234,
+      "requestId": null,
+      "debugId": "ca592bf0a8fe1"
+    },
+    {
+      "id": "b24873a7-f672-4aea-bdc7-aaa7f3df8d79",
+      "at": "2026-11-12T04:20:48.442Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 232,
+      "requestId": null,
+      "debugId": "ca592bf0acf0f"
+    },
+    {
+      "id": "98b249eb-dbc2-4de5-9624-b61fa6347a91",
+      "at": "2026-11-12T04:20:48.451Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 252,
+      "requestId": null,
+      "debugId": "ca592bf0adc08"
+    },
+    {
+      "id": "3684c967-c35d-4691-87b8-b9527ba41677",
+      "at": "2026-11-12T04:20:48.538Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 241,
+      "requestId": null,
+      "debugId": "ca592bf0b6a1f"
+    },
+    {
+      "id": "acab5b1a-04ba-4b9c-8797-418f370f85ee",
+      "at": "2026-11-12T04:20:48.647Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 277,
+      "requestId": null,
+      "debugId": "ca592bf0c0bd1"
+    },
+    {
+      "id": "d931b00a-2433-4781-8fcf-8a5727970356",
+      "at": "2026-11-12T04:20:48.676Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 284,
+      "requestId": null,
+      "debugId": "ca592bf0c39fa"
+    },
+    {
+      "id": "335b0d3c-4ba9-40d1-93f6-06ba622ad53b",
+      "at": "2026-11-12T04:21:15.673Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes?page_size=50",
+      "status": 200,
+      "durationMs": 304,
+      "requestId": null,
+      "debugId": "ca592bfb5783d"
+    },
+    {
+      "id": "078b62da-3c6c-4154-9466-a52b85e145dc",
+      "at": "2026-11-12T04:21:15.985Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GNF-10199630",
+      "status": 200,
+      "durationMs": 413,
+      "requestId": null,
+      "debugId": "ca592bfb7db09"
+    },
+    {
+      "id": "7f2b3892-4f4e-4f9e-856c-da1d64b5107d",
+      "at": "2026-11-12T04:21:15.986Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-PGK-10199629",
+      "status": 200,
+      "durationMs": 460,
+      "requestId": null,
+      "debugId": "ca592bfb7dd20"
+    },
+    {
+      "id": "b71ba3da-84a8-4a2b-8782-4c6574f675ee",
+      "at": "2026-11-12T04:21:15.991Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-BDX-10199626",
+      "status": 200,
+      "durationMs": 495,
+      "requestId": null,
+      "debugId": "ca592bfb7ed37"
+    },
+    {
+      "id": "d8151578-1d70-475f-86e8-64b1ccffb3b9",
+      "at": "2026-11-12T04:21:15.992Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LKL-10196413",
+      "status": 200,
+      "durationMs": 500,
+      "requestId": null,
+      "debugId": "ca592bfb86ba2"
+    },
+    {
+      "id": "a97c04b6-a766-47ad-9cb2-79307524e683",
+      "at": "2026-11-12T04:21:15.993Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-CWP-10196411",
+      "status": 200,
+      "durationMs": 612,
+      "requestId": null,
+      "debugId": "ca592bfb87dda"
+    },
+    {
+      "id": "fa74de9d-faf3-42bb-8929-b96e59d9cd72",
+      "at": "2026-11-12T04:21:15.979Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-RPI-10199636",
+      "status": 200,
+      "durationMs": 861,
+      "requestId": null,
+      "debugId": "ca592bfb72a28"
+    },
+    {
+      "id": "1f0cfd41-7b52-4951-8f50-6c4a2ff04d14",
+      "at": "2026-11-12T04:21:15.981Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-ADY-10199633",
+      "status": 200,
+      "durationMs": 987,
+      "requestId": null,
+      "debugId": "ca592bfb7ce3c"
+    },
+    {
+      "id": "da678167-375e-4527-8e12-911b419f9105",
+      "at": "2026-11-12T04:21:15.979Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-GMF-10199635",
+      "status": 200,
+      "durationMs": 1027,
+      "requestId": null,
+      "debugId": "ca592bfb7c9ee"
+    },
+    {
+      "id": "f27ff026-b3ca-44f5-9486-904ca7121a17",
+      "at": "2026-11-12T04:21:15.988Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-LGS-10199627",
+      "status": 200,
+      "durationMs": 1044,
+      "requestId": null,
+      "debugId": "ca592bfb85c44"
+    },
+    {
+      "id": "43ab495e-1b29-464c-8b33-0422de4f6992",
+      "at": "2026-11-12T04:21:15.991Z",
+      "method": "GET",
+      "path": "/v1/customer/disputes/PP-R-KRB-10199621",
+      "status": 200,
+      "durationMs": 1058,
+      "requestId": null,
+      "debugId": "ca592bfb86bb9"
+    },
+    {
+      "id": "44a91a32-0810-4330-89d7-2185465407cf",
+      "at": "2026-11-12T04:21:17.050Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/59W40554PM409652T",
+      "status": 200,
+      "durationMs": 229,
+      "requestId": null,
+      "debugId": "ca592bfbd992d"
+    },
+    {
+      "id": "e80a643e-e0e4-4643-8cf1-6809075bc385",
+      "at": "2026-11-12T04:21:17.051Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2DH68539417202354",
+      "status": 200,
+      "durationMs": 254,
+      "requestId": null,
+      "debugId": "ca592bfbd9863"
+    },
+    {
+      "id": "e4fce1da-9781-4eb6-871b-210f9fad29d5",
+      "at": "2026-11-12T04:21:17.050Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/02A0291606763345L",
+      "status": 200,
+      "durationMs": 261,
+      "requestId": null,
+      "debugId": "ca592bfbd9d47"
+    },
+    {
+      "id": "050a0c9c-ec4a-4772-b89c-d130d1f9d1b9",
+      "at": "2026-11-12T04:21:17.050Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/2WS2925138277954X",
+      "status": 200,
+      "durationMs": 272,
+      "requestId": null,
+      "debugId": "ca592bfbd9c60"
+    },
+    {
+      "id": "4ee4875a-4676-4610-8620-ef12954ca0fa",
+      "at": "2026-11-12T04:21:17.281Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/4M013267KS7929009",
+      "status": 200,
+      "durationMs": 241,
+      "requestId": null,
+      "debugId": "ca592bfbf0aba"
+    },
+    {
+      "id": "90da9a08-5780-48cd-9aab-34764db1cf34",
+      "at": "2026-11-12T04:21:17.307Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/6LF66366PK137145V",
+      "status": 200,
+      "durationMs": 253,
+      "requestId": null,
+      "debugId": "ca592bfbf2cb7"
+    },
+    {
+      "id": "dd2c6346-574d-4243-88a9-797d5f181b79",
+      "at": "2026-11-12T04:21:17.314Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7VU02992SV414300C",
+      "status": 200,
+      "durationMs": 307,
+      "requestId": null,
+      "debugId": "ca592bfbf383b"
+    },
+    {
+      "id": "66080096-47a9-4f67-a0fa-eee0214f0a7f",
+      "at": "2026-11-12T04:21:17.324Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/61958196937699053",
+      "status": 200,
+      "durationMs": 299,
+      "requestId": null,
+      "debugId": "ca592bfbf4dc2"
+    },
+    {
+      "id": "c99cc13d-4ba9-4e16-83fc-39370fa1b8c3",
+      "at": "2026-11-12T04:21:17.524Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/1VS093774J460400T",
+      "status": 200,
+      "durationMs": 255,
+      "requestId": null,
+      "debugId": "ca592bfc08cbf"
+    },
+    {
+      "id": "2dd327aa-da96-422e-8651-ebb084dba800",
+      "at": "2026-11-12T04:21:17.564Z",
+      "method": "GET",
+      "path": "/v2/payments/captures/7FH08202AN770703L",
+      "status": 200,
+      "durationMs": 322,
+      "requestId": null,
+      "debugId": "ca592bfc0c85e"
     }
   ],
   "unknownOutcomes": {},
